@@ -90,4 +90,19 @@ export class AppConfigService {
   get fmpSaveFixtures(): boolean {
     return this.configService.get('FMP_SAVE_FIXTURES', { infer: true });
   }
+
+  /** Whether the daily fund sync scheduler is active. */
+  get syncSchedulerEnabled(): boolean {
+    return this.configService.get('SYNC_SCHEDULER_ENABLED', { infer: true });
+  }
+
+  /** Cron expression for the daily fund synchronization job. */
+  get syncCronExpression(): string {
+    return this.configService.get('SYNC_CRON_EXPRESSION', { infer: true });
+  }
+
+  /** Optional fund symbols to sync; empty means all persisted funds. */
+  get syncFundSymbols(): readonly string[] {
+    return this.configService.get('SYNC_FUND_SYMBOLS', { infer: true });
+  }
 }

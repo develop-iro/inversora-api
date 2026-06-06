@@ -33,7 +33,29 @@ export const envSchema = z.object({
     .enum(['true', 'false'])
     .default('false')
     .transform((value) => value === 'true'),
+  SYNC_SCHEDULER_ENABLED: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
+  SYNC_CRON_EXPRESSION: z.string().min(1).default('0 6 * * *'),
+  SYNC_FUND_SYMBOLS: z
+    .string()
+    .default('')
+    .transform((value) => parseFundSymbolList(value)),
 });
+
+/**
+ * Parses a comma-separated fund symbol list from environment configuration.
+ *
+ * @param value - Raw comma-separated symbol string.
+ * @returns Normalized uppercase symbols.
+ */
+function parseFundSymbolList(value: string): readonly string[] {
+  return value
+    .split(',')
+    .map((symbol) => symbol.trim().toUpperCase())
+    .filter((symbol) => symbol.length > 0);
+}
 
 /** Validated, typed environment configuration. */
 export type Env = z.infer<typeof envSchema>;

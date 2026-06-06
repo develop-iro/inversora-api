@@ -52,5 +52,8 @@ describe('AppConfigService', () => {
     expect(service.fmpBaseUrl).toBe('https://financialmodelingprep.com');
     expect(service.fmpUsesMocks).toBe(true);
     expect(service.fmpSaveFixtures).toBe(false);
+    expect(service.syncSchedulerEnabled).toBe(false);
+    expect(service.syncCronExpression).toBe('0 6 * * *');
+    expect(service.syncFundSymbols).toEqual([]);
   });
 });
