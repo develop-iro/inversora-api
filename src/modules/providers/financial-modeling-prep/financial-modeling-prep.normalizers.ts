@@ -1,6 +1,7 @@
 import {
   indexFundDetailSchema,
   indexFundHistoricalPriceSchema,
+  indexFundHoldingSchema,
   indexFundPriceSummarySchema,
   indexFundProfileSchema,
   indexFundSearchResultSchema,
@@ -8,12 +9,14 @@ import {
 import type {
   IndexFundDetail,
   IndexFundHistoricalPrice,
+  IndexFundHolding,
   IndexFundPriceSummary,
   IndexFundProfile,
   IndexFundSearchResult,
 } from './financial-modeling-prep.domain.schemas';
 import { isIndexFundSearchResult } from './index-fund.filters';
 import type {
+  FmpFundHolding,
   FmpFundProfile,
   FmpHistoricalPrice,
   FmpSearchResult,
@@ -152,6 +155,36 @@ export function normalizeIndexFundHistoricalPrices(
       }),
     )
     .sort((left, right) => right.date.localeCompare(left.date));
+}
+
+/**
+ * Maps raw FMP fund holdings to normalized holding rows.
+ *
+ * @param holdings - Raw FMP fund holdings.
+ * @returns Normalized holdings sorted by weight descending.
+ */
+export function normalizeIndexFundHoldings(
+  holdings: readonly FmpFundHolding[],
+): IndexFundHolding[] {
+  return holdings
+    .map((holding) => {
+      const name = holding.name ?? holding.asset;
+
+      if (name === undefined || name.trim() === '') {
+        return null;
+      }
+
+      return indexFundHoldingSchema.parse({
+        asset: holding.asset,
+        name,
+        isin: holding.isin,
+        weightPercentage: holding.weightPercentage ?? 0,
+        marketValue: holding.marketValue,
+        sharesNumber: holding.sharesNumber,
+      });
+    })
+    .filter((holding): holding is IndexFundHolding => holding !== null)
+    .sort((left, right) => right.weightPercentage - left.weightPercentage);
 }
 
 /**

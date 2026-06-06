@@ -76,3 +76,16 @@ export const indexFundDetailSchema = indexFundProfileSchema.extend({
 
 /** Inferred type for an index fund detail aggregate. */
 export type IndexFundDetail = z.infer<typeof indexFundDetailSchema>;
+
+/** Zod schema for a normalized index fund holding. */
+export const indexFundHoldingSchema = z.object({
+  asset: z.string().optional(),
+  name: z.string().min(1),
+  isin: z.string().optional(),
+  weightPercentage: z.number().nonnegative(),
+  marketValue: z.number().nonnegative().optional(),
+  sharesNumber: z.number().nonnegative().optional(),
+});
+
+/** Inferred type for a normalized index fund holding. */
+export type IndexFundHolding = z.infer<typeof indexFundHoldingSchema>;
