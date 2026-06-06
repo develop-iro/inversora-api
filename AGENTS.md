@@ -13,6 +13,9 @@ Purpose: help AI coding agents become productive quickly in this NestJS TypeScri
 - `npm run db:up` : start local PostgreSQL via Docker Compose
 - `npm run db:validate` : validate PostgreSQL connection
 - `npm run db:down` : stop PostgreSQL container
+- `npm run prisma:generate` : generate Prisma client
+- `npm run prisma:migrate:deploy` : apply migrations
+- `npm run prisma:validate` : validate Prisma schema and DB connection
 
 **Key Files**
 

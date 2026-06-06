@@ -1,0 +1,1 @@
+-- Initial migration: sets up Prisma migration tracking on PostgreSQL.
