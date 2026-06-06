@@ -8,6 +8,8 @@ export interface FundSyncOptions {
   historyFrom?: string;
   /** Optional upper bound for provider historical price requests. */
   historyTo?: string;
+  /** When true, runs a price history sync after metadata upsert. */
+  incrementalPrices?: boolean;
 }
 
 /** Result of a single fund synchronization run. */

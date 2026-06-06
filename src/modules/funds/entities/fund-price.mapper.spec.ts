@@ -1,5 +1,6 @@
 import { Decimal } from '@prisma/client/runtime/library';
 import {
+  addDaysToIsoDate,
   formatFundPriceDate,
   mapIndexFundHistoricalPriceToUpsertInput,
   mapPrismaFundPriceToFundPrice,
@@ -25,6 +26,7 @@ describe('fund-price.mapper', () => {
 
     expect(parsed.toISOString()).toBe('2024-01-31T00:00:00.000Z');
     expect(formatFundPriceDate(parsed)).toBe('2024-01-31');
+    expect(addDaysToIsoDate('2024-01-31', 1)).toBe('2024-02-01');
   });
 
   it('should map provider prices and Prisma rows to domain entities', () => {
