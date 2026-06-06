@@ -5,14 +5,16 @@ Backend API para [Invesora](https://github.com/), una aplicación móvil para de
 ## Stack
 
 - [NestJS](https://nestjs.com/) + TypeScript
+- PostgreSQL (local via Docker Compose)
 - ESLint + Prettier
 
-Próximamente: PostgreSQL, Prisma y Financial Modeling Prep.
+Próximamente: Prisma y Financial Modeling Prep.
 
 ## Requisitos
 
 - Node.js 20+
 - npm 10+
+- [Docker](https://www.docker.com/) y Docker Compose
 
 ## Instalación
 
@@ -24,6 +26,26 @@ Copia el archivo de variables de entorno:
 
 ```bash
 cp .env.example .env
+```
+
+### Base de datos local (PostgreSQL)
+
+Arranca PostgreSQL con Docker Compose:
+
+```bash
+npm run db:up
+```
+
+Valida la conexión:
+
+```bash
+npm run db:validate
+```
+
+Los datos persisten en el volumen Docker `postgres_data`. Para detener el contenedor:
+
+```bash
+npm run db:down
 ```
 
 ## Desarrollo
@@ -60,6 +82,10 @@ Respuesta:
 | `npm run format`     | Formatea el código con Prettier      |
 | `npm run test`       | Ejecuta tests unitarios              |
 | `npm run test:e2e`   | Ejecuta tests end-to-end             |
+| `npm run db:up`      | Arranca PostgreSQL con Docker        |
+| `npm run db:down`    | Detiene PostgreSQL                   |
+| `npm run db:validate`| Valida la conexión a PostgreSQL      |
+| `npm run db:logs`    | Muestra logs del contenedor          |
 
 ## Estructura del proyecto
 
