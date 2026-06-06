@@ -17,6 +17,15 @@ enum FundCategory {
   INDEX @map("index")
 }
 
+/// Exposure dimension used to group persisted allocation slices.
+enum FundAllocationCategory {
+  SECTORIAL        @map("sectorial")
+  REGIONAL         @map("regional")
+  ASSET_ALLOCATION @map("asset-allocation")
+  CAPITALIZATION   @map("capitalization")
+  PORTFOLIO        @map("portfolio")
+}
+
 /// Persisted index fund entity used as the main domain record in Invesora.
 model Fund {
   id           String       @id @default(uuid())
@@ -38,10 +47,51 @@ model Fund {
   score         Decimal?     @db.Decimal(5, 2)
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
-  prices       FundPrice[]
+  prices      FundPrice[]
+  holdings    FundHolding[]
+  allocations FundAllocation[]
 
   @@unique([symbol, provider])
   @@map("funds")
+}
+
+/// Individual position within a fund portfolio snapshot.
+model FundHolding {
+  id               String   @id @default(uuid())
+  fundId           String
+  asOf             DateTime @db.Date
+  rank             Int
+  asset            String?
+  name             String
+  isin             String?
+  weightPercentage Decimal  @db.Decimal(8, 4)
+  marketValue      Decimal? @db.Decimal(20, 2)
+  sharesNumber     Decimal? @db.Decimal(20, 6)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  fund             Fund     @relation(fields: [fundId], references: [id], onDelete: Cascade)
+
+  @@unique([fundId, asOf, rank])
+  @@index([fundId, asOf])
+  @@map("fund_holdings")
+}
+
+/// Weighted allocation slice within a fund exposure snapshot.
+model FundAllocation {
+  id        String                 @id @default(uuid())
+  fundId    String
+  asOf      DateTime               @db.Date
+  category  FundAllocationCategory
+  label     String
+  weight    Decimal                @db.Decimal(8, 4)
+  sortOrder Int                    @default(0)
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+  fund      Fund                   @relation(fields: [fundId], references: [id], onDelete: Cascade)
+
+  @@unique([fundId, asOf, category, label])
+  @@index([fundId, asOf, category])
+  @@map("fund_allocations")
 }
 
 /// End-of-day price point persisted for fund performance charts.

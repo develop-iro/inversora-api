@@ -2,6 +2,7 @@ import {
   buildIndexFundDetail,
   buildIndexFundPriceSummary,
   normalizeIndexFundHistoricalPrices,
+  normalizeIndexFundHoldings,
   normalizeIndexFundProfile,
   normalizeIndexFundSearchResults,
 } from './financial-modeling-prep.normalizers';
@@ -143,5 +144,37 @@ describe('FinancialModelingPrep normalizers', () => {
       },
       history,
     });
+  });
+
+  it('should normalize fund holdings sorted by weight descending', () => {
+    expect(
+      normalizeIndexFundHoldings([
+        {
+          asset: 'MSFT',
+          name: 'Microsoft Corporation',
+          weightPercentage: 6.8,
+        },
+        {
+          asset: 'AAPL',
+          name: 'Apple Inc.',
+          weightPercentage: 7.12,
+        },
+        {
+          name: '',
+          weightPercentage: 1,
+        },
+      ]),
+    ).toEqual([
+      {
+        asset: 'AAPL',
+        name: 'Apple Inc.',
+        weightPercentage: 7.12,
+      },
+      {
+        asset: 'MSFT',
+        name: 'Microsoft Corporation',
+        weightPercentage: 6.8,
+      },
+    ]);
   });
 });
