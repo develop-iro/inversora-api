@@ -3,11 +3,11 @@ import { z } from 'zod';
 import { AppConfigService } from '../../../shared/config/config.service';
 import { ExternalHttpError } from '../../../shared/http/external-http.error';
 import type {
-  IndexFundDetail,
-  IndexFundHistoricalPrice,
-  IndexFundProfile,
-  IndexFundSearchResult,
-} from './financial-modeling-prep.domain.schemas';
+  FmpIndexFundDetail,
+  FmpIndexFundHistoricalPrice,
+  FmpIndexFundProfile,
+  FmpIndexFundSearchResult,
+} from './fmp-index-fund.schemas';
 import { FinancialModelingPrepClient } from './financial-modeling-prep.client';
 import { FMP_PROVIDER_NAME } from './financial-modeling-prep.constants';
 import {
@@ -57,7 +57,7 @@ export class FinancialModelingPrepProvider {
   async searchIndexFunds(
     query: string,
     options?: SearchIndexFundsOptions,
-  ): Promise<IndexFundSearchResult[]> {
+  ): Promise<FmpIndexFundSearchResult[]> {
     const normalizedQuery = query.trim();
 
     if (!normalizedQuery) {
@@ -87,7 +87,7 @@ export class FinancialModelingPrepProvider {
   async getIndexFundHistory(
     symbol: string,
     options?: IndexFundHistoryOptions,
-  ): Promise<IndexFundHistoricalPrice[]> {
+  ): Promise<FmpIndexFundHistoricalPrice[]> {
     const rawPrices = await this.loadHistoricalPrices(symbol, options);
 
     return normalizeIndexFundHistoricalPrices(rawPrices);
@@ -107,7 +107,7 @@ export class FinancialModelingPrepProvider {
   async getIndexFundDetail(
     symbol: string,
     options?: IndexFundDetailOptions,
-  ): Promise<IndexFundDetail> {
+  ): Promise<FmpIndexFundDetail> {
     const normalizedSymbol = symbol.trim().toUpperCase();
     const [profile, rawPrices] = await Promise.all([
       this.resolveIndexFundProfile(normalizedSymbol),
@@ -132,7 +132,7 @@ export class FinancialModelingPrepProvider {
 
   private async resolveIndexFundProfile(
     symbol: string,
-  ): Promise<IndexFundProfile> {
+  ): Promise<FmpIndexFundProfile> {
     const searchResult = await this.findSearchResultBySymbol(symbol);
 
     if (this.config.fmpUsesMocks) {

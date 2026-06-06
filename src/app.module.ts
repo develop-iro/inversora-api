@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { FundsModule } from './modules/funds/funds.module';
 import { HealthModule } from './modules/health/health.module';
 import { ProvidersModule } from './modules/providers/providers.module';
 import { AppConfigModule } from './shared/config/config.module';
@@ -11,6 +12,7 @@ import { HttpClientModule } from './shared/http/http-client.module';
     HttpClientModule,
     PrismaModule,
     ProvidersModule,
+    FundsModule,
     HealthModule,
   ],
 })
