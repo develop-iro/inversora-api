@@ -12,10 +12,12 @@ import { FundListItemResponseDto, FundListResponseDto } from '../dto/fund-list-r
 import { FundChartResponseDto } from '../dto/fund-chart-response.dto';
 import { FundCountryExposureResponseDto } from '../dto/fund-country-exposure-response.dto';
 import { FundHoldingsResponseDto } from '../dto/fund-holdings-response.dto';
+import { FundSectorExposureResponseDto } from '../dto/fund-sector-exposure-response.dto';
 import type { FundListResponse } from '../entities/fund-list.schema';
 import type { FundChartResponse } from '../entities/fund-chart.schema';
 import type { FundCountryExposureResponse } from '../entities/fund-country-exposure.schema';
 import type { FundHoldingsResponse } from '../entities/fund-holdings.schema';
+import type { FundSectorExposureResponse } from '../entities/fund-sector-exposure.schema';
 import type { Fund } from '../entities/fund.schema';
 import { FundsService } from '../services/funds.service';
 
@@ -76,6 +78,33 @@ export class FundsController {
   @ApiQuery({ name: 'maxTer', required: false, type: Number, example: 0.5 })
   listFunds(@Query() query: Record<string, unknown>): Promise<FundListResponse> {
     return this.fundsService.listFunds(query);
+  }
+
+  @Get(':id/exposure/sectors')
+  @ApiOperation({ summary: 'Get fund sector exposure' })
+  @ApiParam({
+    name: 'id',
+    description: 'Fund UUID',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @ApiQuery({
+    name: 'asOf',
+    required: false,
+    type: String,
+    description: 'Snapshot date (YYYY-MM-DD). Latest snapshot is used when omitted.',
+    example: '2024-01-31',
+  })
+  @ApiOkResponse({
+    description: 'Sector exposure for the requested snapshot.',
+    type: FundSectorExposureResponseDto,
+  })
+  @ApiBadRequestResponse({ description: 'Invalid fund id or query parameters.' })
+  @ApiNotFoundResponse({ description: 'Fund not found.' })
+  getFundSectorExposure(
+    @Param('id') id: string,
+    @Query() query: Record<string, unknown>,
+  ): Promise<FundSectorExposureResponse> {
+    return this.fundsService.getFundSectorExposure(id, query);
   }
 
   @Get(':id/exposure/countries')

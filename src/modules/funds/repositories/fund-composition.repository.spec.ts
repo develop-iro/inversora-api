@@ -137,6 +137,40 @@ describe('FundCompositionRepository', () => {
     });
   });
 
+  it('should read sector allocations for the latest snapshot', async () => {
+    const fundId = '550e8400-e29b-41d4-a716-446655440000';
+
+    prisma.fundAllocation.findFirst.mockResolvedValueOnce({
+      asOf: parseFundPriceDate('2024-01-31'),
+    });
+    prisma.fundAllocation.findMany.mockResolvedValueOnce([
+      {
+        id: '550e8400-e29b-41d4-a716-446655440030',
+        fundId,
+        asOf: parseFundPriceDate('2024-01-31'),
+        category: PrismaFundAllocationCategory.SECTORIAL,
+        label: 'Tecnología',
+        weight: { toNumber: () => 31.5 },
+        sortOrder: 0,
+        createdAt: new Date('2024-02-01T00:00:00.000Z'),
+        updatedAt: new Date('2024-02-01T00:00:00.000Z'),
+      },
+    ]);
+
+    await expect(
+      repository.findAllocationsByCategory(fundId, 'sectorial'),
+    ).resolves.toEqual({
+      asOf: '2024-01-31',
+      allocations: [
+        expect.objectContaining({
+          category: 'sectorial',
+          label: 'Tecnología',
+          weight: 31.5,
+        }),
+      ],
+    });
+  });
+
   it('should read holdings for the latest snapshot', async () => {
     const fundId = '550e8400-e29b-41d4-a716-446655440000';
 
