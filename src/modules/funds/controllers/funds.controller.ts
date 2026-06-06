@@ -10,8 +10,10 @@ import {
 } from '@nestjs/swagger';
 import { FundListItemResponseDto, FundListResponseDto } from '../dto/fund-list-response.dto';
 import { FundChartResponseDto } from '../dto/fund-chart-response.dto';
+import { FundHoldingsResponseDto } from '../dto/fund-holdings-response.dto';
 import type { FundListResponse } from '../entities/fund-list.schema';
 import type { FundChartResponse } from '../entities/fund-chart.schema';
+import type { FundHoldingsResponse } from '../entities/fund-holdings.schema';
 import type { Fund } from '../entities/fund.schema';
 import { FundsService } from '../services/funds.service';
 
@@ -72,6 +74,33 @@ export class FundsController {
   @ApiQuery({ name: 'maxTer', required: false, type: Number, example: 0.5 })
   listFunds(@Query() query: Record<string, unknown>): Promise<FundListResponse> {
     return this.fundsService.listFunds(query);
+  }
+
+  @Get(':id/holdings')
+  @ApiOperation({ summary: 'Get fund portfolio holdings' })
+  @ApiParam({
+    name: 'id',
+    description: 'Fund UUID',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @ApiQuery({
+    name: 'asOf',
+    required: false,
+    type: String,
+    description: 'Snapshot date (YYYY-MM-DD). Latest snapshot is used when omitted.',
+    example: '2024-01-31',
+  })
+  @ApiOkResponse({
+    description: 'Ranked fund holdings for the requested snapshot.',
+    type: FundHoldingsResponseDto,
+  })
+  @ApiBadRequestResponse({ description: 'Invalid fund id or query parameters.' })
+  @ApiNotFoundResponse({ description: 'Fund not found.' })
+  getFundHoldings(
+    @Param('id') id: string,
+    @Query() query: Record<string, unknown>,
+  ): Promise<FundHoldingsResponse> {
+    return this.fundsService.getFundHoldings(id, query);
   }
 
   @Get(':id/chart')

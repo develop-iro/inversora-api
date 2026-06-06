@@ -101,4 +101,39 @@ describe('FundCompositionRepository', () => {
     expect(prisma.fundHolding.createMany).toHaveBeenCalledTimes(1);
     expect(prisma.fundAllocation.createMany).toHaveBeenCalledTimes(1);
   });
+
+  it('should read holdings for the latest snapshot', async () => {
+    const fundId = '550e8400-e29b-41d4-a716-446655440000';
+
+    prisma.fundHolding.findFirst.mockResolvedValueOnce({
+      asOf: parseFundPriceDate('2024-01-31'),
+    });
+    prisma.fundHolding.findMany.mockResolvedValueOnce([
+      {
+        id: '550e8400-e29b-41d4-a716-446655440010',
+        fundId,
+        asOf: parseFundPriceDate('2024-01-31'),
+        rank: 1,
+        asset: 'AAPL',
+        name: 'Apple Inc.',
+        isin: 'US0378331005',
+        weightPercentage: { toNumber: () => 7.12 },
+        marketValue: null,
+        sharesNumber: null,
+        createdAt: new Date('2024-02-01T00:00:00.000Z'),
+        updatedAt: new Date('2024-02-01T00:00:00.000Z'),
+      },
+    ]);
+
+    await expect(repository.findHoldings(fundId)).resolves.toEqual({
+      asOf: '2024-01-31',
+      holdings: [
+        expect.objectContaining({
+          rank: 1,
+          asset: 'AAPL',
+          name: 'Apple Inc.',
+        }),
+      ],
+    });
+  });
 });

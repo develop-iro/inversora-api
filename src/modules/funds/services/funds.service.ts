@@ -20,7 +20,11 @@ import {
   fundChartQuerySchema,
 } from '../entities/fund-chart.schema';
 import type { FundChartResponse } from '../entities/fund-chart.schema';
+import { buildFundHoldingsResponse } from '../entities/fund-holdings.mapper';
+import { fundHoldingsQuerySchema } from '../entities/fund-holdings.schema';
+import type { FundHoldingsResponse } from '../entities/fund-holdings.schema';
 import { FundsRepository } from '../repositories/funds.repository';
+import { FundCompositionService } from './fund-composition.service';
 import { FundPricesService } from './fund-prices.service';
 
 /**
@@ -31,6 +35,7 @@ export class FundsService {
   constructor(
     private readonly fundsRepository: FundsRepository,
     private readonly fundPricesService: FundPricesService,
+    private readonly fundCompositionService: FundCompositionService,
   ) {}
 
   /**
@@ -75,6 +80,37 @@ export class FundsService {
   }
 
   /**
+   * Returns ranked portfolio holdings for a fund snapshot.
+   *
+   * @param id - Fund UUID from the route parameter.
+   * @param rawQuery - Raw HTTP query parameters.
+   * @returns Holdings snapshot for the requested or latest date.
+   */
+  async getFundHoldings(
+    id: string,
+    rawQuery: Record<string, unknown>,
+  ): Promise<FundHoldingsResponse> {
+    const fundId = this.parseFundId(id);
+    const fund = await this.fundsRepository.findById(fundId);
+
+    if (fund === null) {
+      throw new NotFoundException(`Fund ${fundId} was not found`);
+    }
+
+    const query = this.parseHoldingsQuery(rawQuery);
+    const snapshot = await this.fundCompositionService.getHoldings(
+      fundId,
+      query.asOf,
+    );
+
+    return buildFundHoldingsResponse(
+      fundId,
+      snapshot?.asOf ?? null,
+      snapshot?.holdings ?? [],
+    );
+  }
+
+  /**
    * Returns indexed historical price points for chart rendering.
    *
    * @param id - Fund UUID from the route parameter.
@@ -110,6 +146,19 @@ export class FundsService {
       range.to,
       prices,
     );
+  }
+
+  private parseHoldingsQuery(rawQuery: Record<string, unknown>) {
+    const parsed = fundHoldingsQuerySchema.safeParse(rawQuery);
+
+    if (!parsed.success) {
+      throw new BadRequestException({
+        message: 'Invalid fund holdings query parameters',
+        issues: z.treeifyError(parsed.error),
+      });
+    }
+
+    return parsed.data;
   }
 
   private parseChartQuery(rawQuery: Record<string, unknown>) {
