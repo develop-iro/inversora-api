@@ -1,17 +1,17 @@
 import {
-  fmpIndexFundDetailSchema,
-  fmpIndexFundHistoricalPriceSchema,
-  fmpIndexFundPriceSummarySchema,
-  fmpIndexFundProfileSchema,
-  fmpIndexFundSearchResultSchema,
-} from './fmp-index-fund.schemas';
+  indexFundDetailSchema,
+  indexFundHistoricalPriceSchema,
+  indexFundPriceSummarySchema,
+  indexFundProfileSchema,
+  indexFundSearchResultSchema,
+} from './financial-modeling-prep.domain.schemas';
 import type {
-  FmpIndexFundDetail,
-  FmpIndexFundHistoricalPrice,
-  FmpIndexFundPriceSummary,
-  FmpIndexFundProfile,
-  FmpIndexFundSearchResult,
-} from './fmp-index-fund.schemas';
+  IndexFundDetail,
+  IndexFundHistoricalPrice,
+  IndexFundPriceSummary,
+  IndexFundProfile,
+  IndexFundSearchResult,
+} from './financial-modeling-prep.domain.schemas';
 import { isIndexFundSearchResult } from './index-fund.filters';
 import type {
   FmpFundProfile,
@@ -43,15 +43,15 @@ export function extractBenchmarkFromName(name: string): string | undefined {
 }
 
 /**
- * Maps a raw FMP search result to the FMP-normalized index fund search shape.
+ * Maps a raw FMP search result to the normalized index fund search shape.
  *
  * @param result - Raw FMP search result.
- * @returns FMP-normalized index fund search result.
+ * @returns Normalized index fund search result.
  */
 export function normalizeIndexFundSearchResult(
   result: FmpSearchResult,
-): FmpIndexFundSearchResult {
-  return fmpIndexFundSearchResultSchema.parse({
+): IndexFundSearchResult {
+  return indexFundSearchResultSchema.parse({
     symbol: result.symbol,
     name: result.name,
     currency: result.currency,
@@ -61,33 +61,33 @@ export function normalizeIndexFundSearchResult(
 }
 
 /**
- * Maps raw FMP search results to FMP-normalized index fund search results.
+ * Maps raw FMP search results to normalized index fund search results.
  *
  * @param results - Raw FMP search results.
- * @returns FMP-normalized index fund search results.
+ * @returns Normalized index fund search results.
  */
 export function normalizeIndexFundSearchResults(
   results: readonly FmpSearchResult[],
-): FmpIndexFundSearchResult[] {
+): IndexFundSearchResult[] {
   return results
     .filter(isIndexFundSearchResult)
     .map((result) => normalizeIndexFundSearchResult(result));
 }
 
 /**
- * Maps a raw FMP fund profile to the FMP-normalized index fund profile shape.
+ * Maps a raw FMP fund profile to the normalized index fund profile shape.
  *
  * @param profile - Raw FMP fund profile.
  * @param searchResult - Optional search metadata used to enrich the profile.
- * @returns FMP-normalized index fund profile.
+ * @returns Normalized index fund profile.
  */
 export function normalizeIndexFundProfile(
   profile: FmpFundProfile,
   searchResult?: FmpSearchResult,
-): FmpIndexFundProfile {
+): IndexFundProfile {
   const name = profile.name ?? searchResult?.name ?? profile.symbol;
 
-  return fmpIndexFundProfileSchema.parse({
+  return indexFundProfileSchema.parse({
     symbol: profile.symbol,
     name,
     description: profile.description,
@@ -109,15 +109,15 @@ export function normalizeIndexFundProfile(
 }
 
 /**
- * Builds a partial FMP-normalized profile from a search result.
+ * Builds a partial index fund profile from a search result.
  *
  * @param searchResult - Raw FMP search result.
- * @returns FMP-normalized index fund profile with search-derived fields only.
+ * @returns Normalized index fund profile with search-derived fields only.
  */
 export function normalizeIndexFundProfileFromSearch(
   searchResult: FmpSearchResult,
-): FmpIndexFundProfile {
-  return fmpIndexFundProfileSchema.parse({
+): IndexFundProfile {
+  return indexFundProfileSchema.parse({
     symbol: searchResult.symbol,
     name: searchResult.name,
     currency: searchResult.currency,
@@ -129,17 +129,17 @@ export function normalizeIndexFundProfileFromSearch(
 }
 
 /**
- * Maps raw FMP historical prices to FMP-normalized price points.
+ * Maps raw FMP historical prices to normalized price points.
  *
  * @param prices - Raw FMP historical prices.
- * @returns FMP-normalized historical prices sorted by date descending.
+ * @returns Normalized historical prices sorted by date descending.
  */
 export function normalizeIndexFundHistoricalPrices(
   prices: readonly FmpHistoricalPrice[],
-): FmpIndexFundHistoricalPrice[] {
+): IndexFundHistoricalPrice[] {
   return prices
     .map((price) =>
-      fmpIndexFundHistoricalPriceSchema.parse({
+      indexFundHistoricalPriceSchema.parse({
         date: price.date,
         open: price.open,
         high: price.high,
@@ -155,15 +155,15 @@ export function normalizeIndexFundHistoricalPrices(
 }
 
 /**
- * Builds derived price statistics from an FMP-normalized historical series.
+ * Builds derived price statistics from a normalized historical series.
  *
- * @param prices - FMP-normalized historical prices sorted by date descending.
- * @returns FMP-derived price summary for the provided window.
+ * @param prices - Normalized historical prices sorted by date descending.
+ * @returns Derived price summary for the provided window.
  * @throws {Error} When the historical series is empty.
  */
 export function buildIndexFundPriceSummary(
-  prices: readonly FmpIndexFundHistoricalPrice[],
-): FmpIndexFundPriceSummary {
+  prices: readonly IndexFundHistoricalPrice[],
+): IndexFundPriceSummary {
   if (prices.length === 0) {
     throw new Error('Cannot build price summary from an empty historical series');
   }
@@ -184,7 +184,7 @@ export function buildIndexFundPriceSummary(
       ? 0
       : ((latest.close - oldest.close) / oldest.close) * 100;
 
-  return fmpIndexFundPriceSummarySchema.parse({
+  return indexFundPriceSummarySchema.parse({
     latestDate: latest.date,
     latestClose: latest.close,
     periodStartDate: oldest.date,
@@ -197,19 +197,19 @@ export function buildIndexFundPriceSummary(
 }
 
 /**
- * Builds the FMP-normalized index fund detail aggregate.
+ * Builds the normalized index fund detail aggregate.
  *
- * @param profile - FMP-normalized index fund profile.
- * @param prices - FMP-normalized historical prices.
+ * @param profile - Normalized index fund profile.
+ * @param prices - Normalized historical prices.
  * @param includeHistory - Whether to include the full historical series.
- * @returns FMP index fund detail aggregate.
+ * @returns Index fund detail aggregate.
  */
 export function buildIndexFundDetail(
-  profile: FmpIndexFundProfile,
-  prices: readonly FmpIndexFundHistoricalPrice[],
+  profile: IndexFundProfile,
+  prices: readonly IndexFundHistoricalPrice[],
   includeHistory = false,
-): FmpIndexFundDetail {
-  return fmpIndexFundDetailSchema.parse({
+): IndexFundDetail {
+  return indexFundDetailSchema.parse({
     ...profile,
     priceSummary: buildIndexFundPriceSummary(prices),
     history: includeHistory ? [...prices] : undefined,
