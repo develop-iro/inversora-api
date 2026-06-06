@@ -5,6 +5,7 @@ import { fundPriceDateSchema } from './fund-price.schema';
 export const fundAllocationCategorySchema = z.enum([
   'sectorial',
   'regional',
+  'countries',
   'assetAllocation',
   'capitalization',
   'portfolio',

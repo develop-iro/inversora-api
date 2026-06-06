@@ -36,6 +36,8 @@ export function mapFundAllocationCategoryToPrisma(
       return PrismaFundAllocationCategory.SECTORIAL;
     case 'regional':
       return PrismaFundAllocationCategory.REGIONAL;
+    case 'countries':
+      return PrismaFundAllocationCategory.COUNTRIES;
     case 'assetAllocation':
       return PrismaFundAllocationCategory.ASSET_ALLOCATION;
     case 'capitalization':
@@ -63,6 +65,8 @@ export function mapPrismaFundAllocationCategory(
       return 'sectorial';
     case PrismaFundAllocationCategory.REGIONAL:
       return 'regional';
+    case PrismaFundAllocationCategory.COUNTRIES:
+      return 'countries';
     case PrismaFundAllocationCategory.ASSET_ALLOCATION:
       return 'assetAllocation';
     case PrismaFundAllocationCategory.CAPITALIZATION:

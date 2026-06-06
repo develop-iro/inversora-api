@@ -1,3 +1,4 @@
+import { FundAllocationCategory as PrismaFundAllocationCategory } from '@prisma/client';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../../shared/database/prisma.service';
 import { parseFundPriceDate } from '../entities/fund-price.mapper';
@@ -100,6 +101,40 @@ describe('FundCompositionRepository', () => {
     });
     expect(prisma.fundHolding.createMany).toHaveBeenCalledTimes(1);
     expect(prisma.fundAllocation.createMany).toHaveBeenCalledTimes(1);
+  });
+
+  it('should read country allocations for the latest snapshot', async () => {
+    const fundId = '550e8400-e29b-41d4-a716-446655440000';
+
+    prisma.fundAllocation.findFirst.mockResolvedValueOnce({
+      asOf: parseFundPriceDate('2024-01-31'),
+    });
+    prisma.fundAllocation.findMany.mockResolvedValueOnce([
+      {
+        id: '550e8400-e29b-41d4-a716-446655440020',
+        fundId,
+        asOf: parseFundPriceDate('2024-01-31'),
+        category: PrismaFundAllocationCategory.COUNTRIES,
+        label: 'Estados Unidos',
+        weight: { toNumber: () => 62.4 },
+        sortOrder: 0,
+        createdAt: new Date('2024-02-01T00:00:00.000Z'),
+        updatedAt: new Date('2024-02-01T00:00:00.000Z'),
+      },
+    ]);
+
+    await expect(
+      repository.findAllocationsByCategory(fundId, 'countries'),
+    ).resolves.toEqual({
+      asOf: '2024-01-31',
+      allocations: [
+        expect.objectContaining({
+          category: 'countries',
+          label: 'Estados Unidos',
+          weight: 62.4,
+        }),
+      ],
+    });
   });
 
   it('should read holdings for the latest snapshot', async () => {

@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import type { IndexFundHolding } from '../../providers/financial-modeling-prep/financial-modeling-prep.domain.schemas';
 import { mapIndexFundHoldingsToUpsertInputs } from '../entities/fund-composition.mapper';
 import type {
+  FundAllocation,
+  FundAllocationCategory,
   FundComposition,
   FundHolding,
   ReplaceFundCompositionInput,
@@ -66,6 +68,26 @@ export class FundCompositionService {
         upsertFundAllocationInputSchema.parse(allocation),
       ),
     });
+  }
+
+  /**
+   * Returns allocation slices for a fund exposure category.
+   *
+   * @param fundId - Persisted fund identifier.
+   * @param category - Exposure allocation category.
+   * @param asOf - Optional snapshot date; latest snapshot is used when omitted.
+   * @returns Snapshot date and allocations, or `null` when no data exists.
+   */
+  async getAllocationsByCategory(
+    fundId: string,
+    category: FundAllocationCategory,
+    asOf?: string,
+  ): Promise<{ asOf: string; allocations: FundAllocation[] } | null> {
+    return this.fundCompositionRepository.findAllocationsByCategory(
+      fundId,
+      category,
+      asOf,
+    );
   }
 
   /**

@@ -21,6 +21,7 @@ enum FundCategory {
 enum FundAllocationCategory {
   SECTORIAL        @map("sectorial")
   REGIONAL         @map("regional")
+  COUNTRIES        @map("countries")
   ASSET_ALLOCATION @map("asset-allocation")
   CAPITALIZATION   @map("capitalization")
   PORTFOLIO        @map("portfolio")

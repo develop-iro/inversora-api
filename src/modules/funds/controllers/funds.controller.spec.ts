@@ -4,7 +4,13 @@ import { FundsService } from '../services/funds.service';
 
 describe('FundsController', () => {
   let controller: FundsController;
-  let service: { listFunds: jest.Mock; getFundById: jest.Mock; getFundChart: jest.Mock; getFundHoldings: jest.Mock };
+  let service: {
+    listFunds: jest.Mock;
+    getFundById: jest.Mock;
+    getFundChart: jest.Mock;
+    getFundHoldings: jest.Mock;
+    getFundCountryExposure: jest.Mock;
+  };
 
   beforeEach(async () => {
     service = {
@@ -33,6 +39,11 @@ describe('FundsController', () => {
         fundId: '550e8400-e29b-41d4-a716-446655440000',
         asOf: '2024-01-31',
         holdings: [],
+      }),
+      getFundCountryExposure: jest.fn().mockResolvedValue({
+        fundId: '550e8400-e29b-41d4-a716-446655440000',
+        asOf: '2024-01-31',
+        countries: [],
       }),
     };
 
@@ -81,5 +92,14 @@ describe('FundsController', () => {
     await controller.getFundHoldings(fundId, query);
 
     expect(service.getFundHoldings).toHaveBeenCalledWith(fundId, query);
+  });
+
+  it('should delegate country exposure reads to the service', async () => {
+    const fundId = '550e8400-e29b-41d4-a716-446655440000';
+    const query = { asOf: '2024-01-31' };
+
+    await controller.getFundCountryExposure(fundId, query);
+
+    expect(service.getFundCountryExposure).toHaveBeenCalledWith(fundId, query);
   });
 });

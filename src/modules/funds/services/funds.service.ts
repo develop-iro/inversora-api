@@ -23,6 +23,12 @@ import type { FundChartResponse } from '../entities/fund-chart.schema';
 import { buildFundHoldingsResponse } from '../entities/fund-holdings.mapper';
 import { fundHoldingsQuerySchema } from '../entities/fund-holdings.schema';
 import type { FundHoldingsResponse } from '../entities/fund-holdings.schema';
+import { buildFundCountryExposureResponse } from '../entities/fund-country-exposure.mapper';
+import {
+  FUND_COUNTRY_EXPOSURE_CATEGORY,
+  fundExposureQuerySchema,
+} from '../entities/fund-country-exposure.schema';
+import type { FundCountryExposureResponse } from '../entities/fund-country-exposure.schema';
 import { FundsRepository } from '../repositories/funds.repository';
 import { FundCompositionService } from './fund-composition.service';
 import { FundPricesService } from './fund-prices.service';
@@ -77,6 +83,38 @@ export class FundsService {
     }
 
     return fundSchema.parse(fund);
+  }
+
+  /**
+   * Returns country-level geographic exposure for a fund snapshot.
+   *
+   * @param id - Fund UUID from the route parameter.
+   * @param rawQuery - Raw HTTP query parameters.
+   * @returns Country exposure snapshot for the requested or latest date.
+   */
+  async getFundCountryExposure(
+    id: string,
+    rawQuery: Record<string, unknown>,
+  ): Promise<FundCountryExposureResponse> {
+    const fundId = this.parseFundId(id);
+    const fund = await this.fundsRepository.findById(fundId);
+
+    if (fund === null) {
+      throw new NotFoundException(`Fund ${fundId} was not found`);
+    }
+
+    const query = this.parseExposureQuery(rawQuery);
+    const snapshot = await this.fundCompositionService.getAllocationsByCategory(
+      fundId,
+      FUND_COUNTRY_EXPOSURE_CATEGORY,
+      query.asOf,
+    );
+
+    return buildFundCountryExposureResponse(
+      fundId,
+      snapshot?.asOf ?? null,
+      snapshot?.allocations ?? [],
+    );
   }
 
   /**
@@ -146,6 +184,19 @@ export class FundsService {
       range.to,
       prices,
     );
+  }
+
+  private parseExposureQuery(rawQuery: Record<string, unknown>) {
+    const parsed = fundExposureQuerySchema.safeParse(rawQuery);
+
+    if (!parsed.success) {
+      throw new BadRequestException({
+        message: 'Invalid fund exposure query parameters',
+        issues: z.treeifyError(parsed.error),
+      });
+    }
+
+    return parsed.data;
   }
 
   private parseHoldingsQuery(rawQuery: Record<string, unknown>) {
