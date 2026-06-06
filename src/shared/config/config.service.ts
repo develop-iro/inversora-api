@@ -70,4 +70,24 @@ export class AppConfigService {
       infer: true,
     });
   }
+
+  /** Financial Modeling Prep API key. */
+  get fmpApiKey(): string {
+    return this.configService.get('FMP_API_KEY', { infer: true });
+  }
+
+  /** Financial Modeling Prep API base URL. */
+  get fmpBaseUrl(): string {
+    return this.configService.get('FMP_BASE_URL', { infer: true });
+  }
+
+  /** Whether FMP responses are served from committed fixtures. */
+  get fmpUsesMocks(): boolean {
+    return this.configService.get('FMP_DATA_SOURCE', { infer: true }) === 'mock';
+  }
+
+  /** Whether successful live FMP responses are persisted as fixtures. */
+  get fmpSaveFixtures(): boolean {
+    return this.configService.get('FMP_SAVE_FIXTURES', { infer: true });
+  }
 }

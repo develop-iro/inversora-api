@@ -1,0 +1,30 @@
+[
+  {
+    "symbol": "VGSTX",
+    "name": "Vanguard STAR Fund",
+    "currency": "USD",
+    "exchangeFullName": "NASDAQ",
+    "exchange": "NASDAQ"
+  },
+  {
+    "symbol": "VFIAX",
+    "name": "Vanguard 500 Index Fund Admiral Shares",
+    "currency": "USD",
+    "exchangeFullName": "NASDAQ",
+    "exchange": "NASDAQ"
+  },
+  {
+    "symbol": "VTSAX",
+    "name": "Vanguard Total Stock Market Index Fund Admiral Shares",
+    "currency": "USD",
+    "exchangeFullName": "NASDAQ",
+    "exchange": "NASDAQ"
+  },
+  {
+    "symbol": "VTI",
+    "name": "Vanguard Total Stock Market ETF",
+    "currency": "USD",
+    "exchangeFullName": "New York Stock Exchange Arca",
+    "exchange": "AMEX"
+  }
+]

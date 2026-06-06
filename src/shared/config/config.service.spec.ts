@@ -12,6 +12,7 @@ const validEnv = {
   POSTGRES_HOST: 'localhost',
   POSTGRES_PORT: '5432',
   DATABASE_URL: 'postgresql://inversora:inversora@localhost:5432/inversora',
+  FMP_API_KEY: 'test-fmp-api-key',
 };
 
 describe('AppConfigService', () => {
@@ -47,5 +48,9 @@ describe('AppConfigService', () => {
     expect(service.httpClientTimeoutMs).toBe(10_000);
     expect(service.httpClientMaxRetries).toBe(3);
     expect(service.httpClientRetryDelayMs).toBe(500);
+    expect(service.fmpApiKey).toBe('test-fmp-api-key');
+    expect(service.fmpBaseUrl).toBe('https://financialmodelingprep.com');
+    expect(service.fmpUsesMocks).toBe(true);
+    expect(service.fmpSaveFixtures).toBe(false);
   });
 });

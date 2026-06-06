@@ -1,0 +1,17 @@
+[
+  {
+    "symbol": "SPY",
+    "name": "State Street SPDR S&P 500 ETF Trust",
+    "description": "The fund seeks to provide investment results that, before expenses, correspond generally to the price and yield performance of the S&P 500 Index.",
+    "isin": "US78462F1030",
+    "assetClass": "Equity",
+    "domicile": "US",
+    "expenseRatio": 0.0945,
+    "assetsUnderManagement": 520000000000,
+    "nav": 482.88,
+    "navCurrency": "USD",
+    "holdingsCount": 503,
+    "inceptionDate": "1993-01-22",
+    "etfCompany": "State Street"
+  }
+]
