@@ -1,5 +1,6 @@
 import {
   createFundInputSchema,
+  fundIdParamSchema,
   fundSchema,
   updateFundInputSchema,
 } from './fund.schema';
@@ -129,5 +130,25 @@ describe('fundSchema', () => {
         trackingError: 0.04,
       },
     });
+  });
+});
+
+describe('fundIdParamSchema', () => {
+  it('should validate fund route ids', () => {
+    expect(
+      fundIdParamSchema.parse({
+        id: '550e8400-e29b-41d4-a716-446655440000',
+      }),
+    ).toEqual({
+      id: '550e8400-e29b-41d4-a716-446655440000',
+    });
+  });
+
+  it('should reject invalid fund route ids', () => {
+    expect(() =>
+      fundIdParamSchema.parse({
+        id: 'invalid-id',
+      }),
+    ).toThrow();
   });
 });

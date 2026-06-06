@@ -87,6 +87,20 @@ export class FundsRepository {
   }
 
   /**
+   * Finds a persisted fund by primary key.
+   *
+   * @param id - Fund identifier.
+   * @returns Persisted fund or `null`.
+   */
+  async findById(id: string): Promise<Fund | null> {
+    const record = await this.prisma.fund.findUnique({
+      where: { id },
+    });
+
+    return record === null ? null : mapPrismaFundToFund(record);
+  }
+
+  /**
    * Creates or updates a fund keyed by symbol and provider.
    *
    * @param input - Validated upsert input.

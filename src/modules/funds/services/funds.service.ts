@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { z } from 'zod';
 import {
   buildFundListMeta,
@@ -10,6 +10,8 @@ import {
   fundListResponseSchema,
 } from '../entities/fund-list.schema';
 import type { FundListQuery, FundListResponse } from '../entities/fund-list.schema';
+import { fundIdParamSchema, fundSchema } from '../entities/fund.schema';
+import type { Fund } from '../entities/fund.schema';
 import { FundsRepository } from '../repositories/funds.repository';
 
 /**
@@ -41,6 +43,36 @@ export class FundsService {
       data: items,
       meta: buildFundListMeta(query.page, query.limit, total),
     });
+  }
+
+  /**
+   * Returns a persisted fund by identifier.
+   *
+   * @param id - Fund UUID from the route parameter.
+   * @returns Fund detail entity.
+   */
+  async getFundById(id: string): Promise<Fund> {
+    const fundId = this.parseFundId(id);
+    const fund = await this.fundsRepository.findById(fundId);
+
+    if (fund === null) {
+      throw new NotFoundException(`Fund ${fundId} was not found`);
+    }
+
+    return fundSchema.parse(fund);
+  }
+
+  private parseFundId(id: string): string {
+    const parsed = fundIdParamSchema.safeParse({ id });
+
+    if (!parsed.success) {
+      throw new BadRequestException({
+        message: 'Invalid fund id',
+        issues: z.treeifyError(parsed.error),
+      });
+    }
+
+    return parsed.data.id;
   }
 
   private parseListQuery(rawQuery: Record<string, unknown>): FundListQuery {

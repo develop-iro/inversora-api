@@ -135,6 +135,21 @@ describe('FundsRepository', () => {
     });
   });
 
+  it('should find a fund by id', async () => {
+    prisma.fund.findUnique.mockResolvedValueOnce(prismaFundRow);
+
+    await expect(
+      repository.findById('550e8400-e29b-41d4-a716-446655440000'),
+    ).resolves.toMatchObject({
+      symbol: 'SPY',
+      provider: 'financial-modeling-prep',
+    });
+
+    expect(prisma.fund.findUnique).toHaveBeenCalledWith({
+      where: { id: '550e8400-e29b-41d4-a716-446655440000' },
+    });
+  });
+
   it('should upsert a fund and report when a new row is created', async () => {
     await expect(
       repository.upsert({
