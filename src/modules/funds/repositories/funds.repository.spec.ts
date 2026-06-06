@@ -33,7 +33,9 @@ describe('FundsRepository', () => {
       findMany: jest.Mock;
       findUnique: jest.Mock;
       upsert: jest.Mock;
+      count: jest.Mock;
     };
+    $transaction: jest.Mock;
   };
 
   beforeEach(async () => {
@@ -42,8 +44,17 @@ describe('FundsRepository', () => {
         findMany: jest.fn().mockResolvedValue([]),
         findUnique: jest.fn().mockResolvedValue(null),
         upsert: jest.fn().mockResolvedValue(prismaFundRow),
+        count: jest.fn().mockResolvedValue(0),
       },
+      $transaction: jest.fn(),
     };
+    prisma.$transaction.mockImplementation(async (operations: unknown[]) => {
+      if (Array.isArray(operations)) {
+        return Promise.all(operations.map((operation) => operation));
+      }
+
+      return operations;
+    });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -90,6 +101,37 @@ describe('FundsRepository', () => {
 
     expect(prisma.fund.findMany).toHaveBeenCalledWith({
       orderBy: { symbol: 'asc' },
+    });
+  });
+
+  it('should query paginated funds with filters and total count', async () => {
+    prisma.fund.findMany.mockResolvedValueOnce([prismaFundRow]);
+    prisma.fund.count.mockResolvedValueOnce(1);
+
+    await expect(
+      repository.findMany({
+        where: { currency: 'USD' },
+        orderBy: { score: 'desc' },
+        skip: 20,
+        take: 10,
+      }),
+    ).resolves.toEqual({
+      items: [
+        expect.objectContaining({
+          symbol: 'SPY',
+        }),
+      ],
+      total: 1,
+    });
+
+    expect(prisma.fund.findMany).toHaveBeenCalledWith({
+      where: { currency: 'USD' },
+      orderBy: { score: 'desc' },
+      skip: 20,
+      take: 10,
+    });
+    expect(prisma.fund.count).toHaveBeenCalledWith({
+      where: { currency: 'USD' },
     });
   });
 
