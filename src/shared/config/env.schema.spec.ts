@@ -22,6 +22,9 @@ describe('validateEnv', () => {
       POSTGRES_HOST: 'localhost',
       POSTGRES_PORT: 5432,
       DATABASE_URL: 'postgresql://inversora:inversora@localhost:5432/inversora',
+      HTTP_CLIENT_TIMEOUT_MS: 10_000,
+      HTTP_CLIENT_MAX_RETRIES: 3,
+      HTTP_CLIENT_RETRY_DELAY_MS: 500,
     });
   });
 
@@ -43,6 +46,9 @@ describe('validateEnv', () => {
       POSTGRES_HOST: 'localhost',
       POSTGRES_PORT: 5432,
       DATABASE_URL: 'postgresql://inversora:inversora@localhost:5432/inversora',
+      HTTP_CLIENT_TIMEOUT_MS: 10_000,
+      HTTP_CLIENT_MAX_RETRIES: 3,
+      HTTP_CLIENT_RETRY_DELAY_MS: 500,
     });
   });
 

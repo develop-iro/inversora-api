@@ -20,6 +20,9 @@ export const envSchema = z.object({
       /^postgresql:\/\/.+/,
       'DATABASE_URL must be a PostgreSQL connection string',
     ),
+  HTTP_CLIENT_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
+  HTTP_CLIENT_MAX_RETRIES: z.coerce.number().int().min(0).default(3),
+  HTTP_CLIENT_RETRY_DELAY_MS: z.coerce.number().int().positive().default(500),
 });
 
 /** Validated, typed environment configuration. */
