@@ -6,9 +6,10 @@ Backend API para [Invesora](https://github.com/), una aplicación móvil para de
 
 - [NestJS](https://nestjs.com/) + TypeScript
 - PostgreSQL (local via Docker Compose)
+- [Prisma](https://www.prisma.io/) ORM
 - ESLint + Prettier
 
-Próximamente: Prisma y Financial Modeling Prep.
+Próximamente: Financial Modeling Prep.
 
 ## Requisitos
 
@@ -40,6 +41,13 @@ Valida la conexión:
 
 ```bash
 npm run db:validate
+```
+
+Aplica las migraciones de Prisma y valida la conexión ORM:
+
+```bash
+npm run prisma:migrate:deploy
+npm run prisma:validate
 ```
 
 Los datos persisten en el volumen Docker `postgres_data`. Para detener el contenedor:
@@ -86,6 +94,11 @@ Respuesta:
 | `npm run db:down`    | Detiene PostgreSQL                   |
 | `npm run db:validate`| Valida la conexión a PostgreSQL      |
 | `npm run db:logs`    | Muestra logs del contenedor          |
+| `npm run prisma:generate` | Genera el cliente Prisma         |
+| `npm run prisma:migrate:dev` | Crea y aplica migraciones (dev) |
+| `npm run prisma:migrate:deploy` | Aplica migraciones (prod/CI) |
+| `npm run prisma:validate` | Valida schema y conexión Prisma  |
+| `npm run prisma:studio` | Abre Prisma Studio               |
 
 ## Estructura del proyecto
 
@@ -94,9 +107,11 @@ src/
   modules/          # Módulos de dominio (health, funds, scoring, ...)
     health/
   shared/           # Utilidades compartidas
+    database/       # Prisma module y service
     config/
     errors/
     http/
+prisma/             # Schema y migraciones
   app.module.ts
   main.ts
 ```
