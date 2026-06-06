@@ -23,6 +23,16 @@ export const envSchema = z.object({
   HTTP_CLIENT_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
   HTTP_CLIENT_MAX_RETRIES: z.coerce.number().int().min(0).default(3),
   HTTP_CLIENT_RETRY_DELAY_MS: z.coerce.number().int().positive().default(500),
+  FMP_API_KEY: z.string().min(1),
+  FMP_BASE_URL: z
+    .string()
+    .url()
+    .default('https://financialmodelingprep.com'),
+  FMP_DATA_SOURCE: z.enum(['mock', 'live']).default('mock'),
+  FMP_SAVE_FIXTURES: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
 });
 
 /** Validated, typed environment configuration. */
