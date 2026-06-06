@@ -6,3 +6,33 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+/// External data provider that supplied the fund metadata.
+enum FundProvider {
+  FINANCIAL_MODELING_PREP @map("financial-modeling-prep")
+}
+
+/// High-level fund classification used by Invesora.
+enum FundCategory {
+  INDEX @map("index")
+}
+
+/// Persisted index fund entity used as the main domain record in Invesora.
+model Fund {
+  id           String       @id @default(uuid())
+  symbol       String
+  isin         String?      @unique
+  name         String
+  provider     FundProvider
+  category     FundCategory
+  currency     String       @db.Char(3)
+  benchmark    String?
+  expenseRatio Decimal?     @db.Decimal(8, 4)
+  riskLevel    Int?
+  score        Decimal?     @db.Decimal(5, 2)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@unique([symbol, provider])
+  @@map("funds")
+}
