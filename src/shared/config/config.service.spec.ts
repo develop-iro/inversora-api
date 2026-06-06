@@ -44,5 +44,8 @@ describe('AppConfigService', () => {
       'postgresql://inversora:inversora@localhost:5432/inversora',
     );
     expect(service.isProduction).toBe(false);
+    expect(service.httpClientTimeoutMs).toBe(10_000);
+    expect(service.httpClientMaxRetries).toBe(3);
+    expect(service.httpClientRetryDelayMs).toBe(500);
   });
 });

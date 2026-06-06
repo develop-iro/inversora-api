@@ -53,4 +53,21 @@ export class AppConfigService {
   get isProduction(): boolean {
     return this.nodeEnv === 'production';
   }
+
+  /** Default outbound HTTP request timeout in milliseconds. */
+  get httpClientTimeoutMs(): number {
+    return this.configService.get('HTTP_CLIENT_TIMEOUT_MS', { infer: true });
+  }
+
+  /** Default number of outbound HTTP retry attempts. */
+  get httpClientMaxRetries(): number {
+    return this.configService.get('HTTP_CLIENT_MAX_RETRIES', { infer: true });
+  }
+
+  /** Base delay in milliseconds between outbound HTTP retry attempts. */
+  get httpClientRetryDelayMs(): number {
+    return this.configService.get('HTTP_CLIENT_RETRY_DELAY_MS', {
+      infer: true,
+    });
+  }
 }
