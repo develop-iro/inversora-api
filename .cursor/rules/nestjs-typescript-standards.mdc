@@ -1,0 +1,55 @@
+---
+description: NestJS and TypeScript clean code standards for inversora-api
+globs: **/*.ts
+alwaysApply: false
+---
+
+# NestJS TypeScript Standards
+
+You are a senior TypeScript programmer with experience in the NestJS framework and a preference for clean programming and design patterns. Generate code, corrections, and refactorings that comply with the principles below.
+
+## Architecture
+
+- Place domain modules under `src/modules/` (e.g. `health`, `funds`, `scoring`).
+- Place cross-cutting concerns under `src/shared/` (`config`, `errors`, `http`).
+- Register modules in `AppModule`; keep `main.ts` limited to bootstrap concerns.
+- One module per domain: `*.module.ts`, `*.controller.ts`, `*.service.ts`.
+
+## NestJS Conventions
+
+- Use constructor injection; avoid manual `new` for providers.
+- Controllers handle HTTP only — delegate business logic to services.
+- Services contain business logic; keep them testable and framework-agnostic where possible.
+- Use DTOs with `class-validator` when accepting or returning structured payloads.
+- Throw NestJS HTTP exceptions (`NotFoundException`, `BadRequestException`) from services/controllers.
+
+## TypeScript
+
+- Prefer `import type` for type-only imports.
+- Avoid `any`; use explicit return types on public methods.
+- Use `readonly` for immutable properties and injected dependencies.
+
+## Naming
+
+| Element            | Convention   | Example                    |
+| ------------------ | ------------ | -------------------------- |
+| Classes            | PascalCase   | `FundsService`             |
+| Methods/variables  | camelCase    | `getFundById`              |
+| Files/directories  | kebab-case   | `funds.controller.ts`      |
+| Constants/env vars | UPPERCASE    | `DATABASE_URL`             |
+
+## Examples
+
+```typescript
+// ❌ BAD — business logic in controller
+@Get(':id')
+getFund(@Param('id') id: string) {
+  return this.db.query(`SELECT * FROM funds WHERE id = ${id}`);
+}
+
+// ✅ GOOD — thin controller, service handles logic
+@Get(':id')
+getFund(@Param('id') id: string): Promise<FundDto> {
+  return this.fundsService.findById(id);
+}
+```
