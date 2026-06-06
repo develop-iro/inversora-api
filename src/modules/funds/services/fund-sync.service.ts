@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { FinancialModelingPrepProvider } from '../../providers/financial-modeling-prep/financial-modeling-prep.provider';
 import { mapIndexFundProfileToUpsertFundInput } from '../entities/fund.mapper';
 import { FundsRepository } from '../repositories/funds.repository';
-import { FundPricesService } from './fund-prices.service';
+import { FundPriceSyncService } from './fund-price-sync.service';
 import type { FundSyncOptions, FundSyncResult } from './fund-sync.types';
 
 /**
@@ -13,7 +13,7 @@ export class FundSyncService {
   constructor(
     private readonly fmpProvider: FinancialModelingPrepProvider,
     private readonly fundsRepository: FundsRepository,
-    private readonly fundPricesService: FundPricesService,
+    private readonly fundPriceSyncService: FundPriceSyncService,
   ) {}
 
   /**
@@ -30,28 +30,31 @@ export class FundSyncService {
     options: FundSyncOptions = {},
   ): Promise<FundSyncResult> {
     const normalizedSymbol = symbol.trim().toUpperCase();
-    const includePrices = options.includePrices ?? false;
     const detail = await this.fmpProvider.getIndexFundDetail(normalizedSymbol, {
       from: options.historyFrom,
       to: options.historyTo,
-      includeHistory: includePrices,
+      includeHistory: false,
     });
     const upsertInput = mapIndexFundProfileToUpsertFundInput(detail);
     const { fund, created } = await this.fundsRepository.upsert(upsertInput);
 
-    if (!includePrices || detail.history === undefined) {
+    if (!options.includePrices) {
       return { fund, created };
     }
 
-    const pricesSynced = await this.fundPricesService.saveProviderPrices(
-      fund.id,
-      detail.history,
+    const priceSyncResult = await this.fundPriceSyncService.syncFromFmp(
+      normalizedSymbol,
+      {
+        from: options.historyFrom,
+        to: options.historyTo,
+        incremental: options.incrementalPrices ?? false,
+      },
     );
 
     return {
       fund,
       created,
-      pricesSynced,
+      pricesSynced: priceSyncResult.pricesSynced,
     };
   }
 }

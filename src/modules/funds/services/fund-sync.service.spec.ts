@@ -1,14 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { FinancialModelingPrepProvider } from '../../providers/financial-modeling-prep/financial-modeling-prep.provider';
 import { FundsRepository } from '../repositories/funds.repository';
-import { FundPricesService } from './fund-prices.service';
+import { FundPriceSyncService } from './fund-price-sync.service';
 import { FundSyncService } from './fund-sync.service';
 
 describe('FundSyncService', () => {
   let service: FundSyncService;
   let fmpProvider: { getIndexFundDetail: jest.Mock };
   let fundsRepository: { upsert: jest.Mock };
-  let fundPricesService: { saveProviderPrices: jest.Mock };
+  let fundPriceSyncService: { syncFromFmp: jest.Mock };
 
   const persistedFund = {
     id: '550e8400-e29b-41d4-a716-446655440000',
@@ -61,8 +61,15 @@ describe('FundSyncService', () => {
         created: true,
       }),
     };
-    fundPricesService = {
-      saveProviderPrices: jest.fn().mockResolvedValue(2),
+    fundPriceSyncService = {
+      syncFromFmp: jest.fn().mockResolvedValue({
+        fundId: persistedFund.id,
+        symbol: 'SPY',
+        pricesSynced: 2,
+        from: '2024-01-01',
+        to: '2024-01-31',
+        upToDate: false,
+      }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -77,8 +84,8 @@ describe('FundSyncService', () => {
           useValue: fundsRepository,
         },
         {
-          provide: FundPricesService,
-          useValue: fundPricesService,
+          provide: FundPriceSyncService,
+          useValue: fundPriceSyncService,
         },
       ],
     }).compile();
@@ -110,41 +117,10 @@ describe('FundSyncService', () => {
         }),
       }),
     );
-    expect(fundPricesService.saveProviderPrices).not.toHaveBeenCalled();
+    expect(fundPriceSyncService.syncFromFmp).not.toHaveBeenCalled();
   });
 
-  it('should persist provider prices when includePrices is enabled', async () => {
-    fmpProvider.getIndexFundDetail.mockResolvedValueOnce({
-      symbol: 'SPY',
-      name: 'State Street SPDR S&P 500 ETF Trust',
-      currency: 'USD',
-      priceSummary: {
-        latestDate: '2024-01-31',
-        latestClose: 482.88,
-        periodStartDate: '2024-01-02',
-        periodStartClose: 472.65,
-        periodReturnPercent: 2.16,
-        periodHigh: 489.08,
-        periodLow: 470.49,
-      },
-      history: [
-        {
-          date: '2024-01-31',
-          open: 488.62,
-          high: 489.08,
-          low: 482.86,
-          close: 482.88,
-        },
-        {
-          date: '2024-01-30',
-          open: 490.56,
-          high: 491.62,
-          low: 490.11,
-          close: 490.89,
-        },
-      ],
-    });
-
+  it('should delegate price history sync when includePrices is enabled', async () => {
     await expect(
       service.syncFromFmp('SPY', {
         includePrices: true,
@@ -157,17 +133,10 @@ describe('FundSyncService', () => {
       pricesSynced: 2,
     });
 
-    expect(fmpProvider.getIndexFundDetail).toHaveBeenCalledWith('SPY', {
+    expect(fundPriceSyncService.syncFromFmp).toHaveBeenCalledWith('SPY', {
       from: '2024-01-01',
       to: '2024-01-31',
-      includeHistory: true,
+      incremental: false,
     });
-    expect(fundPricesService.saveProviderPrices).toHaveBeenCalledWith(
-      persistedFund.id,
-      expect.arrayContaining([
-        expect.objectContaining({ date: '2024-01-31' }),
-        expect.objectContaining({ date: '2024-01-30' }),
-      ]),
-    );
   });
 });

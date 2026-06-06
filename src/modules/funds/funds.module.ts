@@ -5,6 +5,7 @@ import { FundCompositionRepository } from './repositories/fund-composition.repos
 import { FundPricesRepository } from './repositories/fund-prices.repository';
 import { FundsRepository } from './repositories/funds.repository';
 import { FundCompositionService } from './services/fund-composition.service';
+import { FundPriceSyncService } from './services/fund-price-sync.service';
 import { FundPricesService } from './services/fund-prices.service';
 import { FundSyncService } from './services/fund-sync.service';
 
@@ -19,8 +20,14 @@ import { FundSyncService } from './services/fund-sync.service';
     FundPricesService,
     FundCompositionRepository,
     FundCompositionService,
+    FundPriceSyncService,
     FundSyncService,
   ],
-  exports: [FundPricesService, FundCompositionService, FundSyncService],
+  exports: [
+    FundPricesService,
+    FundCompositionService,
+    FundPriceSyncService,
+    FundSyncService,
+  ],
 })
 export class FundsModule {}

@@ -25,6 +25,31 @@ export function formatFundPriceDate(date: Date): string {
 }
 
 /**
+ * Adds calendar days to an ISO date-only string.
+ *
+ * @param date - ISO date string (`YYYY-MM-DD`).
+ * @param days - Number of days to add.
+ * @returns Resulting ISO date string.
+ */
+export function addDaysToIsoDate(date: string, days: number): string {
+  const parsedDate = parseFundPriceDate(date);
+  parsedDate.setUTCDate(parsedDate.getUTCDate() + days);
+
+  return formatFundPriceDate(parsedDate);
+}
+
+/**
+ * Compares two ISO date-only strings.
+ *
+ * @param left - Left ISO date string.
+ * @param right - Right ISO date string.
+ * @returns `-1`, `0`, or `1`.
+ */
+export function compareIsoDates(left: string, right: string): number {
+  return left.localeCompare(right);
+}
+
+/**
  * Maps a nullable Prisma decimal to a domain number.
  *
  * @param value - Nullable Prisma decimal column.
