@@ -52,6 +52,14 @@ export const fundSchema = z.object({
 /** Inferred type for the main Invesora fund entity. */
 export type Fund = z.infer<typeof fundSchema>;
 
+/** Route parameter schema for fund detail endpoints. */
+export const fundIdParamSchema = z.object({
+  id: z.uuid(),
+});
+
+/** Route parameter type for fund detail endpoints. */
+export type FundIdParam = z.infer<typeof fundIdParamSchema>;
+
 /** Input schema for creating a fund before persistence assigns timestamps and id. */
 export const createFundInputSchema = fundSchema
   .omit({

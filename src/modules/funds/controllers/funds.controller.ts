@@ -1,13 +1,16 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { FundListResponseDto } from '../dto/fund-list-response.dto';
+import { FundListItemResponseDto, FundListResponseDto } from '../dto/fund-list-response.dto';
 import type { FundListResponse } from '../entities/fund-list.schema';
+import type { Fund } from '../entities/fund.schema';
 import { FundsService } from '../services/funds.service';
 
 @ApiTags('funds')
@@ -67,5 +70,22 @@ export class FundsController {
   @ApiQuery({ name: 'maxTer', required: false, type: Number, example: 0.5 })
   listFunds(@Query() query: Record<string, unknown>): Promise<FundListResponse> {
     return this.fundsService.listFunds(query);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get fund detail by id' })
+  @ApiParam({
+    name: 'id',
+    description: 'Fund UUID',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @ApiOkResponse({
+    description: 'Fund detail.',
+    type: FundListItemResponseDto,
+  })
+  @ApiBadRequestResponse({ description: 'Invalid fund id.' })
+  @ApiNotFoundResponse({ description: 'Fund not found.' })
+  getFundById(@Param('id') id: string): Promise<Fund> {
+    return this.fundsService.getFundById(id);
   }
 }

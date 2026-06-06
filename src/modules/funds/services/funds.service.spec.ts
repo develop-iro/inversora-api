@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FundsRepository } from '../repositories/funds.repository';
 import { FundsService } from './funds.service';
@@ -29,7 +29,7 @@ const fund = {
 
 describe('FundsService', () => {
   let service: FundsService;
-  let repository: { findMany: jest.Mock };
+  let repository: { findMany: jest.Mock; findById: jest.Mock };
 
   beforeEach(async () => {
     repository = {
@@ -37,6 +37,7 @@ describe('FundsService', () => {
         items: [fund],
         total: 1,
       }),
+      findById: jest.fn().mockResolvedValue(fund),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -85,5 +86,29 @@ describe('FundsService', () => {
         page: '0',
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('should return a fund by id', async () => {
+    await expect(
+      service.getFundById('550e8400-e29b-41d4-a716-446655440000'),
+    ).resolves.toEqual(fund);
+
+    expect(repository.findById).toHaveBeenCalledWith(
+      '550e8400-e29b-41d4-a716-446655440000',
+    );
+  });
+
+  it('should reject invalid fund ids', async () => {
+    await expect(service.getFundById('not-a-uuid')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+  });
+
+  it('should return not found when the fund does not exist', async () => {
+    repository.findById.mockResolvedValueOnce(null);
+
+    await expect(
+      service.getFundById('550e8400-e29b-41d4-a716-446655440000'),
+    ).rejects.toBeInstanceOf(NotFoundException);
   });
 });
