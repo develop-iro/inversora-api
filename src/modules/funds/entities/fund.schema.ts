@@ -80,3 +80,9 @@ export const updateFundInputSchema = createFundInputSchema
 
 /** Input type for updating a fund. */
 export type UpdateFundInput = z.infer<typeof updateFundInputSchema>;
+
+/** Input schema for upserting a fund from an external provider sync. */
+export const upsertFundInputSchema = createFundInputSchema;
+
+/** Input type for upserting a fund from an external provider sync. */
+export type UpsertFundInput = z.infer<typeof upsertFundInputSchema>;

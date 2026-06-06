@@ -16,6 +16,7 @@ export type IndexFundSearchResult = z.infer<typeof indexFundSearchResultSchema>;
 export const indexFundProfileSchema = z.object({
   symbol: z.string(),
   name: z.string(),
+  isin: z.string().optional(),
   description: z.string().optional(),
   expenseRatio: z.number().optional(),
   assetsUnderManagement: z.number().optional(),

@@ -2,10 +2,24 @@ import {
   FundCategory as PrismaFundCategory,
   FundProvider as PrismaFundProvider,
   type Fund as PrismaFund,
+  type Prisma,
 } from '@prisma/client';
 import type { Decimal } from '@prisma/client/runtime/library';
-import { fundSchema } from './fund.schema';
-import type { Fund, FundCategory, FundMetrics, FundProvider } from './fund.schema';
+import type { IndexFundProfile } from '../../providers/financial-modeling-prep/financial-modeling-prep.domain.schemas';
+import {
+  fundSchema,
+  upsertFundInputSchema,
+} from './fund.schema';
+import type {
+  Fund,
+  FundCategory,
+  FundMetrics,
+  FundProvider,
+  UpsertFundInput,
+} from './fund.schema';
+
+const ISO_4217_CURRENCY_PATTERN = /^[A-Z]{3}$/;
+const ISO_6166_ISIN_PATTERN = /^[A-Z]{2}[A-Z0-9]{9}[0-9]$/;
 
 /**
  * Maps a Prisma fund provider enum to the domain provider value.
@@ -95,4 +109,183 @@ export function mapPrismaFundToFund(record: PrismaFund): Fund {
     createdAt: record.createdAt,
     updatedAt: record.updatedAt,
   });
+}
+
+/**
+ * Maps a domain fund provider to the Prisma enum value.
+ *
+ * @param provider - Domain provider value.
+ * @returns Prisma fund provider enum.
+ */
+export function mapDomainFundProviderToPrisma(
+  provider: FundProvider,
+): PrismaFundProvider {
+  switch (provider) {
+    case 'financial-modeling-prep':
+      return PrismaFundProvider.FINANCIAL_MODELING_PREP;
+    default: {
+      const exhaustiveCheck: never = provider;
+      return exhaustiveCheck;
+    }
+  }
+}
+
+/**
+ * Maps a domain fund category to the Prisma enum value.
+ *
+ * @param category - Domain category value.
+ * @returns Prisma fund category enum.
+ */
+export function mapDomainFundCategoryToPrisma(
+  category: FundCategory,
+): PrismaFundCategory {
+  switch (category) {
+    case 'index':
+      return PrismaFundCategory.INDEX;
+    default: {
+      const exhaustiveCheck: never = category;
+      return exhaustiveCheck;
+    }
+  }
+}
+
+/**
+ * Resolves the ISO 4217 currency code for a normalized index fund profile.
+ *
+ * @param profile - Normalized index fund profile.
+ * @returns Uppercase 3-letter currency code.
+ */
+export function resolveFundCurrencyFromProfile(profile: IndexFundProfile): string {
+  const rawCurrency = profile.currency ?? profile.navCurrency ?? 'USD';
+  const normalizedCurrency = rawCurrency.trim().toUpperCase();
+
+  if (ISO_4217_CURRENCY_PATTERN.test(normalizedCurrency)) {
+    return normalizedCurrency;
+  }
+
+  return 'USD';
+}
+
+/**
+ * Normalizes an optional ISIN value for persistence.
+ *
+ * @param isin - Optional provider ISIN value.
+ * @returns Valid uppercase ISIN, `null` when absent/invalid, or `undefined` when omitted.
+ */
+export function normalizeOptionalFundIsin(
+  isin?: string,
+): string | null | undefined {
+  if (isin === undefined) {
+    return undefined;
+  }
+
+  const normalizedIsin = isin.trim().toUpperCase();
+
+  if (normalizedIsin === '') {
+    return null;
+  }
+
+  return ISO_6166_ISIN_PATTERN.test(normalizedIsin) ? normalizedIsin : null;
+}
+
+/**
+ * Maps a normalized provider profile to a fund upsert input.
+ *
+ * @param profile - Normalized index fund profile from FMP.
+ * @returns Validated upsert input for PostgreSQL persistence.
+ */
+export function mapIndexFundProfileToUpsertFundInput(
+  profile: IndexFundProfile,
+): UpsertFundInput {
+  return upsertFundInputSchema.parse({
+    symbol: profile.symbol.trim().toUpperCase(),
+    isin: normalizeOptionalFundIsin(profile.isin),
+    name: profile.name,
+    provider: 'financial-modeling-prep',
+    category: 'index',
+    currency: resolveFundCurrencyFromProfile(profile),
+    benchmark: profile.benchmark ?? null,
+    metrics: {
+      ter: profile.expenseRatio ?? null,
+      aum: profile.assetsUnderManagement ?? null,
+      volatility: null,
+      drawdown: null,
+      per: null,
+      dividendYield: null,
+      trackingError: null,
+    },
+  });
+}
+
+/**
+ * Maps partial domain metrics to Prisma fund metric columns.
+ *
+ * @param metrics - Partial domain metrics object.
+ * @returns Prisma metric column values.
+ */
+export function mapFundMetricsToPrismaFields(
+  metrics: Partial<FundMetrics> = {},
+): Pick<
+  Prisma.FundUncheckedCreateInput,
+  | 'volatility'
+  | 'drawdown'
+  | 'ter'
+  | 'aum'
+  | 'per'
+  | 'dividendYield'
+  | 'trackingError'
+> {
+  return {
+    volatility: metrics.volatility ?? null,
+    drawdown: metrics.drawdown ?? null,
+    ter: metrics.ter ?? null,
+    aum: metrics.aum ?? null,
+    per: metrics.per ?? null,
+    dividendYield: metrics.dividendYield ?? null,
+    trackingError: metrics.trackingError ?? null,
+  };
+}
+
+/**
+ * Maps a fund upsert input to Prisma create payload fields.
+ *
+ * @param input - Validated upsert input.
+ * @returns Prisma create payload.
+ */
+export function mapUpsertFundInputToPrismaCreateData(
+  input: UpsertFundInput,
+): Prisma.FundUncheckedCreateInput {
+  return {
+    symbol: input.symbol.trim().toUpperCase(),
+    isin: input.isin ?? null,
+    name: input.name,
+    provider: mapDomainFundProviderToPrisma(input.provider),
+    category: mapDomainFundCategoryToPrisma(input.category),
+    currency: input.currency,
+    benchmark: input.benchmark ?? null,
+    ...mapFundMetricsToPrismaFields(input.metrics ?? {}),
+    riskLevel: input.riskLevel ?? null,
+    score: input.score ?? null,
+  };
+}
+
+/**
+ * Maps a fund upsert input to Prisma update payload fields.
+ *
+ * @param input - Validated upsert input.
+ * @returns Prisma update payload.
+ */
+export function mapUpsertFundInputToPrismaUpdateData(
+  input: UpsertFundInput,
+): Prisma.FundUncheckedUpdateInput {
+  return {
+    isin: input.isin ?? null,
+    name: input.name,
+    category: mapDomainFundCategoryToPrisma(input.category),
+    currency: input.currency,
+    benchmark: input.benchmark ?? null,
+    ...mapFundMetricsToPrismaFields(input.metrics ?? {}),
+    riskLevel: input.riskLevel ?? null,
+    score: input.score ?? null,
+  };
 }
