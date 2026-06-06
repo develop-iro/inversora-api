@@ -1,6 +1,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FundsRepository } from '../repositories/funds.repository';
+import { FundPricesService } from './fund-prices.service';
 import { FundsService } from './funds.service';
 
 const fund = {
@@ -30,6 +31,10 @@ const fund = {
 describe('FundsService', () => {
   let service: FundsService;
   let repository: { findMany: jest.Mock; findById: jest.Mock };
+  let fundPricesService: {
+    getLatestDate: jest.Mock;
+    getHistory: jest.Mock;
+  };
 
   beforeEach(async () => {
     repository = {
@@ -39,6 +44,26 @@ describe('FundsService', () => {
       }),
       findById: jest.fn().mockResolvedValue(fund),
     };
+    fundPricesService = {
+      getLatestDate: jest.fn().mockResolvedValue('2024-01-31'),
+      getHistory: jest.fn().mockResolvedValue([
+        {
+          id: '550e8400-e29b-41d4-a716-446655440001',
+          fundId: fund.id,
+          date: '2024-01-31',
+          open: 488.62,
+          high: 489.08,
+          low: 482.86,
+          close: 482.88,
+          volume: null,
+          change: null,
+          changePercent: null,
+          vwap: null,
+          createdAt: new Date('2024-02-01T00:00:00.000Z'),
+          updatedAt: new Date('2024-02-01T00:00:00.000Z'),
+        },
+      ]),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -46,6 +71,10 @@ describe('FundsService', () => {
         {
           provide: FundsRepository,
           useValue: repository,
+        },
+        {
+          provide: FundPricesService,
+          useValue: fundPricesService,
         },
       ],
     }).compile();
@@ -110,5 +139,33 @@ describe('FundsService', () => {
     await expect(
       service.getFundById('550e8400-e29b-41d4-a716-446655440000'),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('should return indexed chart data for a requested period', async () => {
+    await expect(
+      service.getFundChart('550e8400-e29b-41d4-a716-446655440000', {
+        period: '1Y',
+      }),
+    ).resolves.toEqual({
+      fundId: '550e8400-e29b-41d4-a716-446655440000',
+      period: '1Y',
+      from: '2023-01-31',
+      to: '2024-01-31',
+      asOf: '2024-01-31',
+      points: [{ date: '2024-01-31', close: 482.88, value: 100 }],
+    });
+
+    expect(fundPricesService.getHistory).toHaveBeenCalledWith(fund.id, {
+      from: '2023-01-31',
+      to: '2024-01-31',
+    });
+  });
+
+  it('should reject invalid chart periods', async () => {
+    await expect(
+      service.getFundChart('550e8400-e29b-41d4-a716-446655440000', {
+        period: '10Y',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 });
