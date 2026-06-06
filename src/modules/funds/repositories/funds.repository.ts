@@ -17,6 +17,19 @@ export class FundsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
+   * Returns all persisted funds ordered by symbol ascending.
+   *
+   * @returns Persisted fund entities.
+   */
+  async findAll(): Promise<Fund[]> {
+    const records = await this.prisma.fund.findMany({
+      orderBy: { symbol: 'asc' },
+    });
+
+    return records.map((record) => mapPrismaFundToFund(record));
+  }
+
+  /**
    * Finds a persisted fund by symbol and provider.
    *
    * @param symbol - Fund ticker symbol.

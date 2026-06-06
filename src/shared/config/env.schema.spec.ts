@@ -30,6 +30,9 @@ describe('validateEnv', () => {
       FMP_BASE_URL: 'https://financialmodelingprep.com',
       FMP_DATA_SOURCE: 'mock',
       FMP_SAVE_FIXTURES: false,
+      SYNC_SCHEDULER_ENABLED: false,
+      SYNC_CRON_EXPRESSION: '0 6 * * *',
+      SYNC_FUND_SYMBOLS: [],
     });
   });
 
@@ -59,6 +62,9 @@ describe('validateEnv', () => {
       FMP_BASE_URL: 'https://financialmodelingprep.com',
       FMP_DATA_SOURCE: 'mock',
       FMP_SAVE_FIXTURES: false,
+      SYNC_SCHEDULER_ENABLED: false,
+      SYNC_CRON_EXPRESSION: '0 6 * * *',
+      SYNC_FUND_SYMBOLS: [],
     });
   });
 
@@ -73,5 +79,20 @@ describe('validateEnv', () => {
         DATABASE_URL: 'mysql://localhost:3306/inversora',
       }),
     ).toThrow('Environment validation failed');
+  });
+
+  it('should parse scheduled sync configuration', () => {
+    expect(
+      validateEnv({
+        ...validEnv,
+        SYNC_SCHEDULER_ENABLED: 'true',
+        SYNC_CRON_EXPRESSION: '30 7 * * *',
+        SYNC_FUND_SYMBOLS: 'spy, qqq',
+      }),
+    ).toMatchObject({
+      SYNC_SCHEDULER_ENABLED: true,
+      SYNC_CRON_EXPRESSION: '30 7 * * *',
+      SYNC_FUND_SYMBOLS: ['SPY', 'QQQ'],
+    });
   });
 });

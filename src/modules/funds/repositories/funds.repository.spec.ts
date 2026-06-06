@@ -30,6 +30,7 @@ describe('FundsRepository', () => {
   let repository: FundsRepository;
   let prisma: {
     fund: {
+      findMany: jest.Mock;
       findUnique: jest.Mock;
       upsert: jest.Mock;
     };
@@ -38,6 +39,7 @@ describe('FundsRepository', () => {
   beforeEach(async () => {
     prisma = {
       fund: {
+        findMany: jest.fn().mockResolvedValue([]),
         findUnique: jest.fn().mockResolvedValue(null),
         upsert: jest.fn().mockResolvedValue(prismaFundRow),
       },
@@ -73,6 +75,21 @@ describe('FundsRepository', () => {
           provider: FundProvider.FINANCIAL_MODELING_PREP,
         },
       },
+    });
+  });
+
+  it('should return all persisted funds ordered by symbol', async () => {
+    prisma.fund.findMany.mockResolvedValueOnce([prismaFundRow]);
+
+    await expect(repository.findAll()).resolves.toEqual([
+      expect.objectContaining({
+        symbol: 'SPY',
+        provider: 'financial-modeling-prep',
+      }),
+    ]);
+
+    expect(prisma.fund.findMany).toHaveBeenCalledWith({
+      orderBy: { symbol: 'asc' },
     });
   });
 
