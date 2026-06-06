@@ -3,6 +3,7 @@ import type { IndexFundHolding } from '../../providers/financial-modeling-prep/f
 import { mapIndexFundHoldingsToUpsertInputs } from '../entities/fund-composition.mapper';
 import type {
   FundComposition,
+  FundHolding,
   ReplaceFundCompositionInput,
   UpsertFundAllocationInput,
 } from '../entities/fund-composition.schema';
@@ -65,6 +66,20 @@ export class FundCompositionService {
         upsertFundAllocationInputSchema.parse(allocation),
       ),
     });
+  }
+
+  /**
+   * Returns holdings for a fund portfolio snapshot.
+   *
+   * @param fundId - Persisted fund identifier.
+   * @param asOf - Optional snapshot date; latest holdings snapshot is used when omitted.
+   * @returns Snapshot date and holdings, or `null` when no data exists.
+   */
+  async getHoldings(
+    fundId: string,
+    asOf?: string,
+  ): Promise<{ asOf: string; holdings: FundHolding[] } | null> {
+    return this.fundCompositionRepository.findHoldings(fundId, asOf);
   }
 
   /**

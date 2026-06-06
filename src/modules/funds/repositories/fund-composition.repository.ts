@@ -12,6 +12,7 @@ import {
 } from '../entities/fund-composition.mapper';
 import type {
   FundComposition,
+  FundHolding,
   ReplaceFundCompositionInput,
 } from '../entities/fund-composition.schema';
 
@@ -124,6 +125,58 @@ export class FundCompositionRepository {
         mapPrismaFundAllocationToFundAllocation(record),
       ),
     };
+  }
+
+  /**
+   * Reads holdings for a fund snapshot.
+   *
+   * @param fundId - Persisted fund identifier.
+   * @param asOf - Optional snapshot date; latest holdings snapshot is used when omitted.
+   * @returns Snapshot date and holdings, or `null` when no data exists.
+   */
+  async findHoldings(
+    fundId: string,
+    asOf?: string,
+  ): Promise<{ asOf: string; holdings: FundHolding[] } | null> {
+    const resolvedAsOf = asOf ?? (await this.findLatestHoldingsAsOf(fundId));
+
+    if (resolvedAsOf === null) {
+      return null;
+    }
+
+    const asOfDate = parseFundPriceDate(resolvedAsOf);
+    const holdings = await this.prisma.fundHolding.findMany({
+      where: {
+        fundId,
+        asOf: asOfDate,
+      },
+      orderBy: { rank: 'asc' },
+    });
+
+    return {
+      asOf: resolvedAsOf,
+      holdings: holdings.map((record) =>
+        mapPrismaFundHoldingToFundHolding(record),
+      ),
+    };
+  }
+
+  /**
+   * Returns the latest persisted holdings snapshot date for a fund, if any.
+   *
+   * @param fundId - Persisted fund identifier.
+   * @returns Latest ISO date string or `null`.
+   */
+  async findLatestHoldingsAsOf(fundId: string): Promise<string | null> {
+    const latestHolding = await this.prisma.fundHolding.findFirst({
+      where: { fundId },
+      orderBy: { asOf: 'desc' },
+      select: { asOf: true },
+    });
+
+    return latestHolding === null
+      ? null
+      : formatFundPriceDate(latestHolding.asOf);
   }
 
   /**
