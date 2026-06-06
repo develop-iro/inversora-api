@@ -93,6 +93,7 @@ export function normalizeIndexFundProfile(
   return indexFundProfileSchema.parse({
     symbol: profile.symbol,
     name,
+    isin: profile.isin?.trim().toUpperCase(),
     description: profile.description,
     expenseRatio: profile.expenseRatio,
     assetsUnderManagement: profile.assetsUnderManagement,
