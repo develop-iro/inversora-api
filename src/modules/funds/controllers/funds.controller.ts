@@ -9,7 +9,9 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { FundListItemResponseDto, FundListResponseDto } from '../dto/fund-list-response.dto';
+import { FundChartResponseDto } from '../dto/fund-chart-response.dto';
 import type { FundListResponse } from '../entities/fund-list.schema';
+import type { FundChartResponse } from '../entities/fund-chart.schema';
 import type { Fund } from '../entities/fund.schema';
 import { FundsService } from '../services/funds.service';
 
@@ -70,6 +72,32 @@ export class FundsController {
   @ApiQuery({ name: 'maxTer', required: false, type: Number, example: 0.5 })
   listFunds(@Query() query: Record<string, unknown>): Promise<FundListResponse> {
     return this.fundsService.listFunds(query);
+  }
+
+  @Get(':id/chart')
+  @ApiOperation({ summary: 'Get fund historical chart data' })
+  @ApiParam({
+    name: 'id',
+    description: 'Fund UUID',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @ApiQuery({
+    name: 'period',
+    required: false,
+    enum: ['1M', '3M', '1Y', '3Y', '5Y'],
+    example: '1Y',
+  })
+  @ApiOkResponse({
+    description: 'Indexed historical chart series.',
+    type: FundChartResponseDto,
+  })
+  @ApiBadRequestResponse({ description: 'Invalid fund id or query parameters.' })
+  @ApiNotFoundResponse({ description: 'Fund not found.' })
+  getFundChart(
+    @Param('id') id: string,
+    @Query() query: Record<string, unknown>,
+  ): Promise<FundChartResponse> {
+    return this.fundsService.getFundChart(id, query);
   }
 
   @Get(':id')
