@@ -5,12 +5,15 @@ import {
   parseFundPriceDate,
 } from '../entities/fund-price.mapper';
 import {
+  mapFundAllocationCategoryToPrisma,
   mapPrismaFundAllocationToFundAllocation,
   mapPrismaFundHoldingToFundHolding,
   mapUpsertFundAllocationInputToPrismaData,
   mapUpsertFundHoldingInputToPrismaData,
 } from '../entities/fund-composition.mapper';
 import type {
+  FundAllocation,
+  FundAllocationCategory,
   FundComposition,
   FundHolding,
   ReplaceFundCompositionInput,
@@ -125,6 +128,69 @@ export class FundCompositionRepository {
         mapPrismaFundAllocationToFundAllocation(record),
       ),
     };
+  }
+
+  /**
+   * Reads allocation slices for a fund snapshot and exposure category.
+   *
+   * @param fundId - Persisted fund identifier.
+   * @param category - Exposure allocation category.
+   * @param asOf - Optional snapshot date; latest snapshot is used when omitted.
+   * @returns Snapshot date and allocations, or `null` when no data exists.
+   */
+  async findAllocationsByCategory(
+    fundId: string,
+    category: FundAllocationCategory,
+    asOf?: string,
+  ): Promise<{ asOf: string; allocations: FundAllocation[] } | null> {
+    const resolvedAsOf =
+      asOf ?? (await this.findLatestAllocationsAsOf(fundId, category));
+
+    if (resolvedAsOf === null) {
+      return null;
+    }
+
+    const asOfDate = parseFundPriceDate(resolvedAsOf);
+    const allocations = await this.prisma.fundAllocation.findMany({
+      where: {
+        fundId,
+        asOf: asOfDate,
+        category: mapFundAllocationCategoryToPrisma(category),
+      },
+      orderBy: { sortOrder: 'asc' },
+    });
+
+    return {
+      asOf: resolvedAsOf,
+      allocations: allocations.map((record) =>
+        mapPrismaFundAllocationToFundAllocation(record),
+      ),
+    };
+  }
+
+  /**
+   * Returns the latest persisted allocation snapshot date for a category.
+   *
+   * @param fundId - Persisted fund identifier.
+   * @param category - Exposure allocation category.
+   * @returns Latest ISO date string or `null`.
+   */
+  async findLatestAllocationsAsOf(
+    fundId: string,
+    category: FundAllocationCategory,
+  ): Promise<string | null> {
+    const latestAllocation = await this.prisma.fundAllocation.findFirst({
+      where: {
+        fundId,
+        category: mapFundAllocationCategoryToPrisma(category),
+      },
+      orderBy: { asOf: 'desc' },
+      select: { asOf: true },
+    });
+
+    return latestAllocation === null
+      ? null
+      : formatFundPriceDate(latestAllocation.asOf);
   }
 
   /**

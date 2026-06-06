@@ -10,9 +10,11 @@ import {
 } from '@nestjs/swagger';
 import { FundListItemResponseDto, FundListResponseDto } from '../dto/fund-list-response.dto';
 import { FundChartResponseDto } from '../dto/fund-chart-response.dto';
+import { FundCountryExposureResponseDto } from '../dto/fund-country-exposure-response.dto';
 import { FundHoldingsResponseDto } from '../dto/fund-holdings-response.dto';
 import type { FundListResponse } from '../entities/fund-list.schema';
 import type { FundChartResponse } from '../entities/fund-chart.schema';
+import type { FundCountryExposureResponse } from '../entities/fund-country-exposure.schema';
 import type { FundHoldingsResponse } from '../entities/fund-holdings.schema';
 import type { Fund } from '../entities/fund.schema';
 import { FundsService } from '../services/funds.service';
@@ -74,6 +76,33 @@ export class FundsController {
   @ApiQuery({ name: 'maxTer', required: false, type: Number, example: 0.5 })
   listFunds(@Query() query: Record<string, unknown>): Promise<FundListResponse> {
     return this.fundsService.listFunds(query);
+  }
+
+  @Get(':id/exposure/countries')
+  @ApiOperation({ summary: 'Get fund geographic exposure by country' })
+  @ApiParam({
+    name: 'id',
+    description: 'Fund UUID',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @ApiQuery({
+    name: 'asOf',
+    required: false,
+    type: String,
+    description: 'Snapshot date (YYYY-MM-DD). Latest snapshot is used when omitted.',
+    example: '2024-01-31',
+  })
+  @ApiOkResponse({
+    description: 'Country-level geographic exposure for the requested snapshot.',
+    type: FundCountryExposureResponseDto,
+  })
+  @ApiBadRequestResponse({ description: 'Invalid fund id or query parameters.' })
+  @ApiNotFoundResponse({ description: 'Fund not found.' })
+  getFundCountryExposure(
+    @Param('id') id: string,
+    @Query() query: Record<string, unknown>,
+  ): Promise<FundCountryExposureResponse> {
+    return this.fundsService.getFundCountryExposure(id, query);
   }
 
   @Get(':id/holdings')

@@ -38,6 +38,7 @@ describe('FundsService', () => {
   };
   let fundCompositionService: {
     getHoldings: jest.Mock;
+    getAllocationsByCategory: jest.Mock;
   };
 
   beforeEach(async () => {
@@ -84,6 +85,22 @@ describe('FundsService', () => {
             weightPercentage: 7.12,
             marketValue: 36_500_000_000,
             sharesNumber: 190_000_000,
+            createdAt: new Date('2024-02-01T00:00:00.000Z'),
+            updatedAt: new Date('2024-02-01T00:00:00.000Z'),
+          },
+        ],
+      }),
+      getAllocationsByCategory: jest.fn().mockResolvedValue({
+        asOf: '2024-01-31',
+        allocations: [
+          {
+            id: '550e8400-e29b-41d4-a716-446655440020',
+            fundId: fund.id,
+            asOf: '2024-01-31',
+            category: 'countries',
+            label: 'Estados Unidos',
+            weight: 62.4,
+            sortOrder: 0,
             createdAt: new Date('2024-02-01T00:00:00.000Z'),
             updatedAt: new Date('2024-02-01T00:00:00.000Z'),
           },
@@ -240,6 +257,49 @@ describe('FundsService', () => {
   it('should reject invalid holdings snapshot dates', async () => {
     await expect(
       service.getFundHoldings('550e8400-e29b-41d4-a716-446655440000', {
+        asOf: '31-01-2024',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('should return country exposure for the latest snapshot', async () => {
+    await expect(
+      service.getFundCountryExposure('550e8400-e29b-41d4-a716-446655440000', {}),
+    ).resolves.toEqual({
+      fundId: '550e8400-e29b-41d4-a716-446655440000',
+      asOf: '2024-01-31',
+      countries: [
+        {
+          id: '550e8400-e29b-41d4-a716-446655440020',
+          label: 'Estados Unidos',
+          weight: 62.4,
+          sortOrder: 0,
+        },
+      ],
+    });
+
+    expect(fundCompositionService.getAllocationsByCategory).toHaveBeenCalledWith(
+      fund.id,
+      'countries',
+      undefined,
+    );
+  });
+
+  it('should return an empty country exposure payload when no snapshot exists', async () => {
+    fundCompositionService.getAllocationsByCategory.mockResolvedValueOnce(null);
+
+    await expect(
+      service.getFundCountryExposure('550e8400-e29b-41d4-a716-446655440000', {}),
+    ).resolves.toEqual({
+      fundId: '550e8400-e29b-41d4-a716-446655440000',
+      asOf: null,
+      countries: [],
+    });
+  });
+
+  it('should reject invalid country exposure snapshot dates', async () => {
+    await expect(
+      service.getFundCountryExposure('550e8400-e29b-41d4-a716-446655440000', {
         asOf: '31-01-2024',
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
