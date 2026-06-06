@@ -26,10 +26,16 @@ model Fund {
   provider     FundProvider
   category     FundCategory
   currency     String       @db.Char(3)
-  benchmark    String?
-  expenseRatio Decimal?     @db.Decimal(8, 4)
-  riskLevel    Int?
-  score        Decimal?     @db.Decimal(5, 2)
+  benchmark     String?
+  volatility    Decimal?     @db.Decimal(8, 4)
+  drawdown      Decimal?     @db.Decimal(8, 4)
+  ter           Decimal?     @db.Decimal(8, 4)
+  aum           Decimal?     @db.Decimal(20, 2)
+  per           Decimal?     @db.Decimal(10, 4)
+  dividendYield Decimal?     @db.Decimal(8, 4)
+  trackingError Decimal?     @db.Decimal(8, 4)
+  riskLevel     Int?
+  score         Decimal?     @db.Decimal(5, 2)
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 

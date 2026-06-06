@@ -12,6 +12,20 @@ export const fundCategorySchema = z.enum(['index']);
 /** Inferred type for fund categories. */
 export type FundCategory = z.infer<typeof fundCategorySchema>;
 
+/** Zod schema for persisted calculated fund metrics. */
+export const fundMetricsSchema = z.object({
+  volatility: z.number().nullable(),
+  drawdown: z.number().nullable(),
+  ter: z.number().nonnegative().nullable(),
+  aum: z.number().nonnegative().nullable(),
+  per: z.number().nonnegative().nullable(),
+  dividendYield: z.number().nonnegative().nullable(),
+  trackingError: z.number().nonnegative().nullable(),
+});
+
+/** Inferred type for persisted calculated fund metrics. */
+export type FundMetrics = z.infer<typeof fundMetricsSchema>;
+
 /** Zod schema for the main Invesora fund entity. */
 export const fundSchema = z.object({
   id: z.uuid(),
@@ -28,7 +42,7 @@ export const fundSchema = z.object({
     .length(3)
     .regex(/^[A-Z]{3}$/, 'Currency must be a 3-letter ISO 4217 code'),
   benchmark: z.string().min(1).nullable(),
-  expenseRatio: z.number().nonnegative().nullable(),
+  metrics: fundMetricsSchema,
   riskLevel: z.number().int().min(1).max(7).nullable(),
   score: z.number().min(0).max(100).nullable(),
   createdAt: z.coerce.date(),
@@ -48,7 +62,7 @@ export const createFundInputSchema = fundSchema
   .extend({
     isin: fundSchema.shape.isin.optional(),
     benchmark: fundSchema.shape.benchmark.optional(),
-    expenseRatio: fundSchema.shape.expenseRatio.optional(),
+    metrics: fundMetricsSchema.partial().optional(),
     riskLevel: fundSchema.shape.riskLevel.optional(),
     score: fundSchema.shape.score.optional(),
   });

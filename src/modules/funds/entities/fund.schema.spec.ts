@@ -5,6 +5,16 @@ import {
 } from './fund.schema';
 
 describe('fundSchema', () => {
+  const validMetrics = {
+    volatility: 14.25,
+    drawdown: -8.5,
+    ter: 0.0945,
+    aum: 500_000_000_000,
+    per: 24.5,
+    dividendYield: 1.32,
+    trackingError: 0.05,
+  };
+
   const validFund = {
     id: '550e8400-e29b-41d4-a716-446655440000',
     symbol: 'SPY',
@@ -14,7 +24,7 @@ describe('fundSchema', () => {
     category: 'index',
     currency: 'USD',
     benchmark: 'S&P 500',
-    expenseRatio: 0.0945,
+    metrics: validMetrics,
     riskLevel: 4,
     score: 82.5,
     createdAt: '2024-01-01T00:00:00.000Z',
@@ -35,14 +45,30 @@ describe('fundSchema', () => {
         ...validFund,
         isin: null,
         benchmark: null,
-        expenseRatio: null,
+        metrics: {
+          volatility: null,
+          drawdown: null,
+          ter: null,
+          aum: null,
+          per: null,
+          dividendYield: null,
+          trackingError: null,
+        },
         riskLevel: null,
         score: null,
       }),
     ).toMatchObject({
       isin: null,
       benchmark: null,
-      expenseRatio: null,
+      metrics: {
+        volatility: null,
+        drawdown: null,
+        ter: null,
+        aum: null,
+        per: null,
+        dividendYield: null,
+        trackingError: null,
+      },
       riskLevel: null,
       score: null,
     });
@@ -92,10 +118,16 @@ describe('fundSchema', () => {
       updateFundInputSchema.parse({
         score: 90,
         riskLevel: 3,
+        metrics: {
+          trackingError: 0.04,
+        },
       }),
     ).toEqual({
       score: 90,
       riskLevel: 3,
+      metrics: {
+        trackingError: 0.04,
+      },
     });
   });
 });
