@@ -15,7 +15,6 @@ describe('HealthController', () => {
   it('should return health status', () => {
     expect(controller.getHealth()).toEqual({
       status: 'ok',
-      service: 'invesora-api',
     });
   });
 });
