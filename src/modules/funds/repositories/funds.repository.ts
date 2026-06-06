@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../shared/database/prisma.service';
 import {
   mapDomainFundProviderToPrisma,
@@ -9,12 +10,45 @@ import {
 import { upsertFundInputSchema } from '../entities/fund.schema';
 import type { Fund, FundProvider, UpsertFundInput } from '../entities/fund.schema';
 
+/** Options for paginated fund list queries. */
+export interface FindManyFundsOptions {
+  where: Prisma.FundWhereInput;
+  orderBy: Prisma.FundOrderByWithRelationInput;
+  skip: number;
+  take: number;
+}
+
 /**
  * Persistence layer for fund domain records.
  */
 @Injectable()
 export class FundsRepository {
   constructor(private readonly prisma: PrismaService) {}
+
+  /**
+   * Returns a paginated fund list matching the provided query options.
+   *
+   * @param options - Filter, sort, and pagination options.
+   * @returns Matching funds and total row count.
+   */
+  async findMany(
+    options: FindManyFundsOptions,
+  ): Promise<{ items: Fund[]; total: number }> {
+    const [records, total] = await this.prisma.$transaction([
+      this.prisma.fund.findMany({
+        where: options.where,
+        orderBy: options.orderBy,
+        skip: options.skip,
+        take: options.take,
+      }),
+      this.prisma.fund.count({ where: options.where }),
+    ]);
+
+    return {
+      items: records.map((record) => mapPrismaFundToFund(record)),
+      total,
+    };
+  }
 
   /**
    * Returns all persisted funds ordered by symbol ascending.

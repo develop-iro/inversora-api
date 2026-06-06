@@ -1,0 +1,138 @@
+import type { Prisma } from '@prisma/client';
+import {
+  mapDomainFundCategoryToPrisma,
+  mapDomainFundProviderToPrisma,
+} from './fund.mapper';
+import type {
+  FundListQuery,
+  FundListSortField,
+  FundListSortOrder,
+} from './fund-list.schema';
+
+const SORT_FIELD_TO_PRISMA_COLUMN: Record<
+  FundListSortField,
+  keyof Prisma.FundOrderByWithRelationInput
+> = {
+  symbol: 'symbol',
+  name: 'name',
+  score: 'score',
+  ter: 'ter',
+  aum: 'aum',
+  riskLevel: 'riskLevel',
+  currency: 'currency',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+};
+
+/**
+ * Builds a Prisma filter from validated fund list query parameters.
+ *
+ * @param query - Validated list query.
+ * @returns Prisma where input.
+ */
+export function buildFundListWhereInput(
+  query: FundListQuery,
+): Prisma.FundWhereInput {
+  const conditions: Prisma.FundWhereInput[] = [];
+
+  if (query.q !== undefined) {
+    conditions.push({
+      OR: [
+        { symbol: { contains: query.q, mode: 'insensitive' } },
+        { name: { contains: query.q, mode: 'insensitive' } },
+        { isin: { contains: query.q.toUpperCase(), mode: 'insensitive' } },
+        { benchmark: { contains: query.q, mode: 'insensitive' } },
+      ],
+    });
+  }
+
+  if (query.category !== undefined) {
+    conditions.push({
+      category: mapDomainFundCategoryToPrisma(query.category),
+    });
+  }
+
+  if (query.currency !== undefined) {
+    conditions.push({ currency: query.currency });
+  }
+
+  if (query.provider !== undefined) {
+    conditions.push({
+      provider: mapDomainFundProviderToPrisma(query.provider),
+    });
+  }
+
+  if (query.benchmark !== undefined) {
+    conditions.push({
+      benchmark: { contains: query.benchmark, mode: 'insensitive' },
+    });
+  }
+
+  if (query.riskLevel !== undefined) {
+    conditions.push({ riskLevel: query.riskLevel });
+  }
+
+  if (query.minScore !== undefined || query.maxScore !== undefined) {
+    conditions.push({
+      score: {
+        ...(query.minScore !== undefined ? { gte: query.minScore } : {}),
+        ...(query.maxScore !== undefined ? { lte: query.maxScore } : {}),
+      },
+    });
+  }
+
+  if (query.minTer !== undefined || query.maxTer !== undefined) {
+    conditions.push({
+      ter: {
+        ...(query.minTer !== undefined ? { gte: query.minTer } : {}),
+        ...(query.maxTer !== undefined ? { lte: query.maxTer } : {}),
+      },
+    });
+  }
+
+  return conditions.length > 0 ? { AND: conditions } : {};
+}
+
+/**
+ * Builds a Prisma order clause from validated sort options.
+ *
+ * @param sortBy - Sort field.
+ * @param sortOrder - Sort direction.
+ * @returns Prisma order-by input.
+ */
+export function buildFundListOrderByInput(
+  sortBy: FundListSortField,
+  sortOrder: FundListSortOrder,
+): Prisma.FundOrderByWithRelationInput {
+  const field = SORT_FIELD_TO_PRISMA_COLUMN[sortBy];
+
+  return {
+    [field]: sortOrder,
+  };
+}
+
+/**
+ * Calculates pagination metadata for a list response.
+ *
+ * @param page - Current page number.
+ * @param limit - Page size.
+ * @param total - Total matching rows.
+ * @returns Pagination metadata.
+ */
+export function buildFundListMeta(
+  page: number,
+  limit: number,
+  total: number,
+): {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+} {
+  return {
+    page,
+    limit,
+    total,
+    totalPages: total === 0 ? 0 : Math.ceil(total / limit),
+  };
+}

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '../../shared/database/prisma.module';
 import { ProvidersModule } from '../providers/providers.module';
+import { FundsController } from './controllers/funds.controller';
 import { FundSyncScheduler } from './schedulers/fund-sync.scheduler';
 import { FundCompositionRepository } from './repositories/fund-composition.repository';
 import { FundPricesRepository } from './repositories/fund-prices.repository';
@@ -10,14 +11,17 @@ import { FundDailySyncService } from './services/fund-daily-sync.service';
 import { FundPriceSyncService } from './services/fund-price-sync.service';
 import { FundPricesService } from './services/fund-prices.service';
 import { FundSyncService } from './services/fund-sync.service';
+import { FundsService } from './services/funds.service';
 
 /**
  * Domain module for persisted fund entities and fund-related use cases.
  */
 @Module({
   imports: [PrismaModule, ProvidersModule],
+  controllers: [FundsController],
   providers: [
     FundsRepository,
+    FundsService,
     FundPricesRepository,
     FundPricesService,
     FundCompositionRepository,
@@ -28,6 +32,7 @@ import { FundSyncService } from './services/fund-sync.service';
     FundSyncScheduler,
   ],
   exports: [
+    FundsService,
     FundPricesService,
     FundCompositionService,
     FundPriceSyncService,
