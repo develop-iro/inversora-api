@@ -3,8 +3,9 @@ import {
   FundProvider as PrismaFundProvider,
   type Fund as PrismaFund,
 } from '@prisma/client';
+import type { Decimal } from '@prisma/client/runtime/library';
 import { fundSchema } from './fund.schema';
-import type { Fund, FundCategory, FundProvider } from './fund.schema';
+import type { Fund, FundCategory, FundMetrics, FundProvider } from './fund.schema';
 
 /**
  * Maps a Prisma fund provider enum to the domain provider value.
@@ -45,6 +46,34 @@ export function mapPrismaFundCategory(
 }
 
 /**
+ * Maps a nullable Prisma decimal to a domain number.
+ *
+ * @param value - Nullable Prisma decimal column.
+ * @returns Domain number or `null`.
+ */
+function mapNullableDecimal(value: Decimal | null): number | null {
+  return value === null ? null : value.toNumber();
+}
+
+/**
+ * Maps persisted metric columns to the domain metrics object.
+ *
+ * @param record - Persisted Prisma fund row.
+ * @returns Validated calculated fund metrics.
+ */
+export function mapPrismaFundMetrics(record: PrismaFund): FundMetrics {
+  return {
+    volatility: mapNullableDecimal(record.volatility),
+    drawdown: mapNullableDecimal(record.drawdown),
+    ter: mapNullableDecimal(record.ter),
+    aum: mapNullableDecimal(record.aum),
+    per: mapNullableDecimal(record.per),
+    dividendYield: mapNullableDecimal(record.dividendYield),
+    trackingError: mapNullableDecimal(record.trackingError),
+  };
+}
+
+/**
  * Maps a Prisma fund record to the Invesora domain entity.
  *
  * @param record - Persisted Prisma fund row.
@@ -60,10 +89,9 @@ export function mapPrismaFundToFund(record: PrismaFund): Fund {
     category: mapPrismaFundCategory(record.category),
     currency: record.currency,
     benchmark: record.benchmark,
-    expenseRatio:
-      record.expenseRatio === null ? null : record.expenseRatio.toNumber(),
+    metrics: mapPrismaFundMetrics(record),
     riskLevel: record.riskLevel,
-    score: record.score === null ? null : record.score.toNumber(),
+    score: mapNullableDecimal(record.score),
     createdAt: record.createdAt,
     updatedAt: record.updatedAt,
   });
