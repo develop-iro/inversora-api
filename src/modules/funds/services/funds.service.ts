@@ -29,6 +29,9 @@ import {
   fundExposureQuerySchema,
 } from '../entities/fund-country-exposure.schema';
 import type { FundCountryExposureResponse } from '../entities/fund-country-exposure.schema';
+import { buildFundSectorExposureResponse } from '../entities/fund-sector-exposure.mapper';
+import { FUND_SECTOR_EXPOSURE_CATEGORY } from '../entities/fund-sector-exposure.schema';
+import type { FundSectorExposureResponse } from '../entities/fund-sector-exposure.schema';
 import { FundsRepository } from '../repositories/funds.repository';
 import { FundCompositionService } from './fund-composition.service';
 import { FundPricesService } from './fund-prices.service';
@@ -111,6 +114,38 @@ export class FundsService {
     );
 
     return buildFundCountryExposureResponse(
+      fundId,
+      snapshot?.asOf ?? null,
+      snapshot?.allocations ?? [],
+    );
+  }
+
+  /**
+   * Returns sector-level exposure for a fund snapshot.
+   *
+   * @param id - Fund UUID from the route parameter.
+   * @param rawQuery - Raw HTTP query parameters.
+   * @returns Sector exposure snapshot for the requested or latest date.
+   */
+  async getFundSectorExposure(
+    id: string,
+    rawQuery: Record<string, unknown>,
+  ): Promise<FundSectorExposureResponse> {
+    const fundId = this.parseFundId(id);
+    const fund = await this.fundsRepository.findById(fundId);
+
+    if (fund === null) {
+      throw new NotFoundException(`Fund ${fundId} was not found`);
+    }
+
+    const query = this.parseExposureQuery(rawQuery);
+    const snapshot = await this.fundCompositionService.getAllocationsByCategory(
+      fundId,
+      FUND_SECTOR_EXPOSURE_CATEGORY,
+      query.asOf,
+    );
+
+    return buildFundSectorExposureResponse(
       fundId,
       snapshot?.asOf ?? null,
       snapshot?.allocations ?? [],

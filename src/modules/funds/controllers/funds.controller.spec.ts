@@ -10,6 +10,7 @@ describe('FundsController', () => {
     getFundChart: jest.Mock;
     getFundHoldings: jest.Mock;
     getFundCountryExposure: jest.Mock;
+    getFundSectorExposure: jest.Mock;
   };
 
   beforeEach(async () => {
@@ -44,6 +45,11 @@ describe('FundsController', () => {
         fundId: '550e8400-e29b-41d4-a716-446655440000',
         asOf: '2024-01-31',
         countries: [],
+      }),
+      getFundSectorExposure: jest.fn().mockResolvedValue({
+        fundId: '550e8400-e29b-41d4-a716-446655440000',
+        asOf: '2024-01-31',
+        sectors: [],
       }),
     };
 
@@ -101,5 +107,14 @@ describe('FundsController', () => {
     await controller.getFundCountryExposure(fundId, query);
 
     expect(service.getFundCountryExposure).toHaveBeenCalledWith(fundId, query);
+  });
+
+  it('should delegate sector exposure reads to the service', async () => {
+    const fundId = '550e8400-e29b-41d4-a716-446655440000';
+    const query = { asOf: '2024-01-31' };
+
+    await controller.getFundSectorExposure(fundId, query);
+
+    expect(service.getFundSectorExposure).toHaveBeenCalledWith(fundId, query);
   });
 });

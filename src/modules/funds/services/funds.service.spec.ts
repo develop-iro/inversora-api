@@ -90,22 +90,45 @@ describe('FundsService', () => {
           },
         ],
       }),
-      getAllocationsByCategory: jest.fn().mockResolvedValue({
-        asOf: '2024-01-31',
-        allocations: [
-          {
-            id: '550e8400-e29b-41d4-a716-446655440020',
-            fundId: fund.id,
+      getAllocationsByCategory: jest.fn().mockImplementation(
+        (_fundId: string, category: string) => {
+          if (category === 'countries') {
+            return Promise.resolve({
+              asOf: '2024-01-31',
+              allocations: [
+                {
+                  id: '550e8400-e29b-41d4-a716-446655440020',
+                  fundId: fund.id,
+                  asOf: '2024-01-31',
+                  category: 'countries',
+                  label: 'Estados Unidos',
+                  weight: 62.4,
+                  sortOrder: 0,
+                  createdAt: new Date('2024-02-01T00:00:00.000Z'),
+                  updatedAt: new Date('2024-02-01T00:00:00.000Z'),
+                },
+              ],
+            });
+          }
+
+          return Promise.resolve({
             asOf: '2024-01-31',
-            category: 'countries',
-            label: 'Estados Unidos',
-            weight: 62.4,
-            sortOrder: 0,
-            createdAt: new Date('2024-02-01T00:00:00.000Z'),
-            updatedAt: new Date('2024-02-01T00:00:00.000Z'),
-          },
-        ],
-      }),
+            allocations: [
+              {
+                id: '550e8400-e29b-41d4-a716-446655440030',
+                fundId: fund.id,
+                asOf: '2024-01-31',
+                category: 'sectorial',
+                label: 'Tecnología',
+                weight: 31.5,
+                sortOrder: 0,
+                createdAt: new Date('2024-02-01T00:00:00.000Z'),
+                updatedAt: new Date('2024-02-01T00:00:00.000Z'),
+              },
+            ],
+          });
+        },
+      ),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -300,6 +323,49 @@ describe('FundsService', () => {
   it('should reject invalid country exposure snapshot dates', async () => {
     await expect(
       service.getFundCountryExposure('550e8400-e29b-41d4-a716-446655440000', {
+        asOf: '31-01-2024',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('should return sector exposure for the latest snapshot', async () => {
+    await expect(
+      service.getFundSectorExposure('550e8400-e29b-41d4-a716-446655440000', {}),
+    ).resolves.toEqual({
+      fundId: '550e8400-e29b-41d4-a716-446655440000',
+      asOf: '2024-01-31',
+      sectors: [
+        {
+          id: '550e8400-e29b-41d4-a716-446655440030',
+          label: 'Tecnología',
+          weight: 31.5,
+          sortOrder: 0,
+        },
+      ],
+    });
+
+    expect(fundCompositionService.getAllocationsByCategory).toHaveBeenCalledWith(
+      fund.id,
+      'sectorial',
+      undefined,
+    );
+  });
+
+  it('should return an empty sector exposure payload when no snapshot exists', async () => {
+    fundCompositionService.getAllocationsByCategory.mockResolvedValueOnce(null);
+
+    await expect(
+      service.getFundSectorExposure('550e8400-e29b-41d4-a716-446655440000', {}),
+    ).resolves.toEqual({
+      fundId: '550e8400-e29b-41d4-a716-446655440000',
+      asOf: null,
+      sectors: [],
+    });
+  });
+
+  it('should reject invalid sector exposure snapshot dates', async () => {
+    await expect(
+      service.getFundSectorExposure('550e8400-e29b-41d4-a716-446655440000', {
         asOf: '31-01-2024',
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
