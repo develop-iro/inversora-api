@@ -9,7 +9,8 @@ Backend API para [Invesora](https://github.com/), una aplicación móvil para de
 - [Prisma](https://www.prisma.io/) ORM
 - ESLint + Prettier
 
-Próximamente: Financial Modeling Prep.
+Integraciones actuales: Financial Modeling Prep para búsqueda, metadatos y
+precios históricos de fondos indexados.
 
 ## Requisitos
 
@@ -89,6 +90,8 @@ Respuesta:
 | `npm run lint`       | Ejecuta ESLint                       |
 | `npm run format`     | Formatea el código con Prettier      |
 | `npm run test`       | Ejecuta tests unitarios              |
+| `npm run test:cov`   | Ejecuta tests unitarios con cobertura|
+| `npm run test:ci`    | Ejecuta cobertura en modo CI         |
 | `npm run test:e2e`   | Ejecuta tests end-to-end             |
 | `npm run db:up`      | Arranca PostgreSQL con Docker        |
 | `npm run db:down`    | Detiene PostgreSQL                   |
@@ -99,6 +102,7 @@ Respuesta:
 | `npm run prisma:migrate:deploy` | Aplica migraciones (prod/CI) |
 | `npm run prisma:validate` | Valida schema y conexión Prisma  |
 | `npm run prisma:studio` | Abre Prisma Studio               |
+| `npm run fmp:capture-fixtures` | Refresca fixtures FMP desde la API live |
 
 ## Estructura del proyecto
 
@@ -106,6 +110,9 @@ Respuesta:
 src/
   modules/          # Módulos de dominio (health, funds, scoring, ...)
     health/
+    funds/
+    providers/
+    scoring/
   shared/           # Utilidades compartidas
     database/       # Prisma module y service
     config/
@@ -116,7 +123,12 @@ prisma/             # Schema y migraciones
   main.ts
 ```
 
-Los futuros módulos (`funds`, `scoring`, `providers`, `charts`) se añadirán bajo `src/modules/`.
+## Documentación técnica
+
+- [Fondos — guía de ingeniería](docs/funds-module.md): endpoints, sincronización
+  FMP, persistencia, fixtures, tests y problemas comunes del módulo `funds`.
+- [Score Invesora — Algoritmo MVP](docs/scoring-algorithm.md): fórmula,
+  factores, pesos y flujo de cálculo del score.
 
 ## Licencia
 
