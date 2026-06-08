@@ -131,4 +131,20 @@ export class FundsRepository {
       created: existing === null,
     };
   }
+
+  /**
+   * Persists the computed Invesora Score for a fund.
+   *
+   * @param id - Fund identifier.
+   * @param score - Score between 0 and 100.
+   * @returns Updated fund entity.
+   */
+  async updateScore(id: string, score: number): Promise<Fund> {
+    const record = await this.prisma.fund.update({
+      where: { id },
+      data: { score },
+    });
+
+    return mapPrismaFundToFund(record);
+  }
 }

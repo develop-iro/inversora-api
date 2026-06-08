@@ -28,6 +28,10 @@ import {
 } from '../entities/score-summary.builder';
 import { SCORE_MAX_POINTS, SCORING_ALGORITHM_VERSION } from '../entities/score-weights';
 import { clampScore } from '../entities/score-utils';
+import type {
+  ScoringSyncItemResult,
+  ScoringSyncResult,
+} from './scoring-sync.types';
 
 const FACTOR_LABELS = {
   riskAdjustedReturn: 'Rentabilidad ajustada al riesgo',
@@ -190,6 +194,58 @@ export class ScoringService {
       .map((entry) => entry.metrics);
 
     return this.calculateFundScore(fund, metrics, { peers });
+  }
+
+  /**
+   * Recalculates scores for all persisted funds and stores them in PostgreSQL.
+   *
+   * Scores are computed with peer comparison within each benchmark or category
+   * group so rankings stay comparable.
+   */
+  async recalculateAllScores(): Promise<ScoringSyncResult> {
+    const funds = await this.fundsRepository.findAll();
+
+    if (funds.length === 0) {
+      return {
+        total: 0,
+        updated: 0,
+        results: [],
+      };
+    }
+
+    const entries = await Promise.all(
+      funds.map(async (fund) => ({
+        fund,
+        metrics: await this.buildMetricsForFund(fund),
+      })),
+    );
+    const scores = this.calculateCategoryScores(entries);
+    const results: ScoringSyncItemResult[] = [];
+
+    for (const entry of entries) {
+      const computedScore = scores.get(entry.fund.id);
+
+      if (computedScore === undefined) {
+        continue;
+      }
+
+      await this.fundsRepository.updateScore(
+        entry.fund.id,
+        computedScore.score,
+      );
+
+      results.push({
+        fundId: entry.fund.id,
+        symbol: entry.fund.symbol,
+        score: computedScore.score,
+      });
+    }
+
+    return {
+      total: funds.length,
+      updated: results.length,
+      results,
+    };
   }
 
   private async buildMetricsForFund(fund: Fund): Promise<FundScoringMetrics> {

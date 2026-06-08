@@ -41,17 +41,29 @@ const scoringMetrics: FundScoringMetrics = {
 
 describe('ScoringService', () => {
   let service: ScoringService;
+  let fundsRepository: {
+    findById: jest.Mock;
+    findAll: jest.Mock;
+    updateScore: jest.Mock;
+  };
 
   beforeEach(async () => {
+    fundsRepository = {
+      findById: jest.fn().mockResolvedValue(fund),
+      findAll: jest.fn().mockResolvedValue([fund]),
+      updateScore: jest.fn().mockImplementation(async (id: string, score: number) => ({
+        ...fund,
+        id,
+        score,
+      })),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ScoringService,
         {
           provide: FundsRepository,
-          useValue: {
-            findById: jest.fn().mockResolvedValue(fund),
-            findAll: jest.fn().mockResolvedValue([fund]),
-          },
+          useValue: fundsRepository,
         },
         {
           provide: FundPricesService,
@@ -118,5 +130,22 @@ describe('ScoringService', () => {
 
     expect(result).not.toBeNull();
     expect(result?.score).toBeGreaterThanOrEqual(0);
+  });
+
+  it('should recalculate and persist scores for all funds', async () => {
+    const result = await service.recalculateAllScores();
+
+    expect(result.total).toBe(1);
+    expect(result.updated).toBe(1);
+    expect(result.results).toEqual([
+      expect.objectContaining({
+        fundId: fund.id,
+        symbol: 'SPY',
+      }),
+    ]);
+    expect(fundsRepository.updateScore).toHaveBeenCalledWith(
+      fund.id,
+      expect.any(Number),
+    );
   });
 });

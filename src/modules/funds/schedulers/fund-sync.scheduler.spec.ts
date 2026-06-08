@@ -29,6 +29,11 @@ describe('FundSyncScheduler', () => {
         succeeded: 1,
         failed: 0,
         results: [],
+        scoring: {
+          status: 'success',
+          total: 1,
+          updated: 1,
+        },
       }),
     };
 

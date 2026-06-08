@@ -106,5 +106,19 @@ Si falta un dato relevante, el factor recibe una puntuación conservadora (40% d
 ## Implementación
 
 - Servicio principal: `ScoringService.calculateFundScore(fund, metrics, context?)`
+- Persistencia automática: `ScoringService.recalculateAllScores()` tras el sync diario
 - Endpoint: `GET /funds/:id/score`
 - Tests: `src/modules/scoring/**/*.spec.ts`
+
+## Cálculo automático
+
+Tras sincronizar metadatos y precios en `FundDailySyncService`, se ejecuta
+`recalculateAllScores()`:
+
+1. Carga todos los fondos persistidos.
+2. Deriva métricas de precios, holdings y sectores.
+3. Calcula el score con comparación por benchmark/categoría.
+4. Guarda el resultado en `funds.score`.
+
+Si el scoring falla, el sync diario sigue reportando éxito en metadatos/precios y
+devuelve `scoring.status = failed` sin interrumpir el job.

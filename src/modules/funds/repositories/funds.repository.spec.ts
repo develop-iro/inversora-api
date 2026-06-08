@@ -29,10 +29,11 @@ const prismaFundRow = {
 describe('FundsRepository', () => {
   let repository: FundsRepository;
   let prisma: {
-    fund: {
+      fund: {
       findMany: jest.Mock;
       findUnique: jest.Mock;
       upsert: jest.Mock;
+      update: jest.Mock;
       count: jest.Mock;
     };
     $transaction: jest.Mock;
@@ -44,6 +45,10 @@ describe('FundsRepository', () => {
         findMany: jest.fn().mockResolvedValue([]),
         findUnique: jest.fn().mockResolvedValue(null),
         upsert: jest.fn().mockResolvedValue(prismaFundRow),
+        update: jest.fn().mockResolvedValue({
+          ...prismaFundRow,
+          score: new Decimal('87.00'),
+        }),
         count: jest.fn().mockResolvedValue(0),
       },
       $transaction: jest.fn(),
@@ -183,6 +188,20 @@ describe('FundsRepository', () => {
         },
       }),
     );
+  });
+
+  it('should persist a computed score for a fund', async () => {
+    await expect(
+      repository.updateScore('550e8400-e29b-41d4-a716-446655440000', 87),
+    ).resolves.toMatchObject({
+      id: '550e8400-e29b-41d4-a716-446655440000',
+      score: 87,
+    });
+
+    expect(prisma.fund.update).toHaveBeenCalledWith({
+      where: { id: '550e8400-e29b-41d4-a716-446655440000' },
+      data: { score: 87 },
+    });
   });
 
   it('should report created=false when the fund already exists', async () => {

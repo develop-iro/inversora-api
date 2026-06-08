@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AppConfigService } from '../../../shared/config/config.service';
 import { validateEnv } from '../../../shared/config/env.schema';
 import { FundsRepository } from '../repositories/funds.repository';
+import { ScoringService } from '../../scoring/services/scoring.service';
 import { FundDailySyncService } from './fund-daily-sync.service';
 import { FundPriceSyncService } from './fund-price-sync.service';
 import { FundSyncService } from './fund-sync.service';
@@ -25,6 +26,7 @@ describe('FundDailySyncService', () => {
   let fundSyncService: { syncFromFmp: jest.Mock };
   let fundPriceSyncService: { syncFromFmp: jest.Mock };
   let fundsRepository: { findAll: jest.Mock };
+  let scoringService: { recalculateAllScores: jest.Mock };
 
   beforeEach(async () => {
     fundSyncService = {
@@ -40,6 +42,13 @@ describe('FundDailySyncService', () => {
     };
     fundsRepository = {
       findAll: jest.fn(),
+    };
+    scoringService = {
+      recalculateAllScores: jest.fn().mockResolvedValue({
+        total: 2,
+        updated: 2,
+        results: [],
+      }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -64,6 +73,10 @@ describe('FundDailySyncService', () => {
         {
           provide: FundPriceSyncService,
           useValue: fundPriceSyncService,
+        },
+        {
+          provide: ScoringService,
+          useValue: scoringService,
         },
       ],
     }).compile();
@@ -92,6 +105,11 @@ describe('FundDailySyncService', () => {
           upToDate: false,
         },
       ],
+      scoring: {
+        status: 'success',
+        total: 2,
+        updated: 2,
+      },
     });
 
     expect(fundSyncService.syncFromFmp).toHaveBeenNthCalledWith(1, 'SPY');
@@ -100,6 +118,7 @@ describe('FundDailySyncService', () => {
       incremental: true,
     });
     expect(fundsRepository.findAll).not.toHaveBeenCalled();
+    expect(scoringService.recalculateAllScores).toHaveBeenCalledTimes(1);
   });
 
   it('should fall back to persisted funds when no symbols are configured', async () => {
@@ -132,6 +151,10 @@ describe('FundDailySyncService', () => {
           provide: FundPriceSyncService,
           useValue: fundPriceSyncService,
         },
+        {
+          provide: ScoringService,
+          useValue: scoringService,
+        },
       ],
     }).compile();
 
@@ -145,6 +168,11 @@ describe('FundDailySyncService', () => {
       total: 2,
       succeeded: 2,
       failed: 0,
+      scoring: {
+        status: 'success',
+        total: 2,
+        updated: 2,
+      },
     });
 
     expect(fundsRepository.findAll).toHaveBeenCalled();
@@ -174,6 +202,25 @@ describe('FundDailySyncService', () => {
           upToDate: false,
         },
       ],
+      scoring: {
+        status: 'success',
+        total: 2,
+        updated: 2,
+      },
+    });
+  });
+
+  it('should report scoring failure without failing the daily sync run', async () => {
+    scoringService.recalculateAllScores.mockRejectedValueOnce(
+      new Error('Scoring unavailable'),
+    );
+
+    await expect(service.runDailySync()).resolves.toMatchObject({
+      succeeded: 2,
+      scoring: {
+        status: 'failed',
+        error: 'Scoring unavailable',
+      },
     });
   });
 });
