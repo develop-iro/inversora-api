@@ -49,14 +49,13 @@ export const integrationTestEnv = {
   POSTGRES_DB: process.env.POSTGRES_DB ?? DEFAULT_INTEGRATION_POSTGRES_DB,
   POSTGRES_HOST: process.env.POSTGRES_HOST ?? 'localhost',
   POSTGRES_PORT: process.env.POSTGRES_PORT ?? '5432',
-  DATABASE_URL: process.env.DATABASE_URL ?? buildDefaultIntegrationDatabaseUrl(),
+  DATABASE_URL:
+    process.env.DATABASE_URL ?? buildDefaultIntegrationDatabaseUrl(),
   HTTP_CLIENT_TIMEOUT_MS: process.env.HTTP_CLIENT_TIMEOUT_MS ?? '10000',
   HTTP_CLIENT_MAX_RETRIES: process.env.HTTP_CLIENT_MAX_RETRIES ?? '3',
-  HTTP_CLIENT_RETRY_DELAY_MS:
-    process.env.HTTP_CLIENT_RETRY_DELAY_MS ?? '500',
+  HTTP_CLIENT_RETRY_DELAY_MS: process.env.HTTP_CLIENT_RETRY_DELAY_MS ?? '500',
   FMP_API_KEY: process.env.FMP_API_KEY ?? 'integration-test-fmp-key',
-  FMP_BASE_URL:
-    process.env.FMP_BASE_URL ?? 'https://financialmodelingprep.com',
+  FMP_BASE_URL: process.env.FMP_BASE_URL ?? 'https://financialmodelingprep.com',
   FMP_DATA_SOURCE: 'mock',
   FMP_SAVE_FIXTURES: 'false',
   SYNC_SCHEDULER_ENABLED: 'false',
