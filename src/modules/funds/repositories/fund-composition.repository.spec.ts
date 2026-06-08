@@ -36,7 +36,7 @@ describe('FundCompositionRepository', () => {
         findMany: jest.fn().mockResolvedValue([]),
         findFirst: jest.fn().mockResolvedValue(null),
       },
-      $transaction: jest.fn(async (callback: (tx: typeof prisma) => unknown) =>
+      $transaction: jest.fn((callback: (tx: typeof prisma) => unknown) =>
         callback(prisma),
       ),
     };

@@ -62,7 +62,7 @@ describe('FundSyncScheduler', () => {
   });
 
   afterEach(() => {
-    registeredJob?.stop();
+    void registeredJob?.stop();
     registeredJob = undefined;
     jest.restoreAllMocks();
   });

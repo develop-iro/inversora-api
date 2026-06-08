@@ -179,31 +179,37 @@ describe('HttpClientService', () => {
 
     httpService.request.mockReturnValue(throwError(() => timeoutError));
 
-    await expect(
-      service.get('https://api.example.com/data', { retries: 0 }),
-    ).rejects.toMatchObject({
+    const error = await service
+      .get('https://api.example.com/data', { retries: 0 })
+      .catch((caught: unknown) => caught);
+
+    expect(error).toMatchObject({
       name: 'ExternalHttpError',
       isRetryable: true,
-      message: expect.stringContaining('timed out after 1000ms'),
     });
+    expect((error as ExternalHttpError).message).toContain(
+      'timed out after 1000ms',
+    );
   });
 
   it('should map ETIMEDOUT axios errors to ExternalHttpError', async () => {
-    const timeoutError = new AxiosError(
-      'connect ETIMEDOUT',
-      'ETIMEDOUT',
-      { headers: {} } as AxiosError['config'],
-    );
+    const timeoutError = new AxiosError('connect ETIMEDOUT', 'ETIMEDOUT', {
+      headers: {},
+    } as AxiosError['config']);
 
     httpService.request.mockReturnValue(throwError(() => timeoutError));
 
-    await expect(
-      service.get('https://api.example.com/data', { retries: 0 }),
-    ).rejects.toMatchObject({
+    const error = await service
+      .get('https://api.example.com/data', { retries: 0 })
+      .catch((caught: unknown) => caught);
+
+    expect(error).toMatchObject({
       name: 'ExternalHttpError',
       isRetryable: true,
-      message: expect.stringContaining('timed out after 1000ms'),
     });
+    expect((error as ExternalHttpError).message).toContain(
+      'timed out after 1000ms',
+    );
   });
 
   it('should include provider name in status error messages', async () => {
@@ -217,14 +223,16 @@ describe('HttpClientService', () => {
       }),
     );
 
-    await expect(
-      service.get('https://api.example.com/data', {
+    const error = await service
+      .get('https://api.example.com/data', {
         provider: 'financial-modeling-prep',
         retries: 0,
-      }),
-    ).rejects.toMatchObject({
-      message: expect.stringContaining('[financial-modeling-prep]'),
-    });
+      })
+      .catch((caught: unknown) => caught);
+
+    expect((error as ExternalHttpError).message).toContain(
+      '[financial-modeling-prep]',
+    );
   });
 
   it('should map axios response errors with status codes', async () => {
@@ -254,34 +262,38 @@ describe('HttpClientService', () => {
   });
 
   it('should map network errors without a response status', async () => {
-    const networkError = new AxiosError(
-      'Network Error',
-      'ERR_NETWORK',
-      { headers: {} } as AxiosError['config'],
-    );
+    const networkError = new AxiosError('Network Error', 'ERR_NETWORK', {
+      headers: {},
+    } as AxiosError['config']);
 
     httpService.request.mockReturnValue(throwError(() => networkError));
 
-    await expect(
-      service.get('https://api.example.com/data', { retries: 0 }),
-    ).rejects.toMatchObject({
+    const error = await service
+      .get('https://api.example.com/data', { retries: 0 })
+      .catch((caught: unknown) => caught);
+
+    expect(error).toMatchObject({
       name: 'ExternalHttpError',
       isRetryable: true,
-      message: expect.stringContaining('Network Error'),
     });
+    expect((error as ExternalHttpError).message).toContain('Network Error');
   });
 
   it('should map unknown thrown values to ExternalHttpError', async () => {
     httpService.request.mockReturnValue(throwError(() => 'unexpected failure'));
 
-    await expect(
-      service.request('GET', 'https://api.example.com/data', undefined, {
+    const error = await service
+      .request('GET', 'https://api.example.com/data', undefined, {
         retries: 0,
-      }),
-    ).rejects.toMatchObject({
+      })
+      .catch((caught: unknown) => caught);
+
+    expect(error).toMatchObject({
       name: 'ExternalHttpError',
-      message: expect.stringContaining('unexpected failure'),
     });
+    expect((error as ExternalHttpError).message).toContain(
+      'unexpected failure',
+    );
   });
 
   it('should retry rate-limited responses', async () => {

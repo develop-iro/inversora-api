@@ -73,25 +73,35 @@ describe('FinancialModelingPrepClient', () => {
 
   it('should search by name using the configured base URL', async () => {
     config.fmpBaseUrl = 'https://custom.example.com/';
-    const payload = [{ symbol: 'VTI', name: 'Vanguard Total Stock Market ETF' }];
+    const payload = [
+      { symbol: 'VTI', name: 'Vanguard Total Stock Market ETF' },
+    ];
     httpClient.get.mockResolvedValue({ data: payload });
 
     await expect(client.searchByName('Vanguard')).resolves.toEqual(payload);
+    expect(httpClient.get).toHaveBeenCalledTimes(1);
     expect(httpClient.get).toHaveBeenCalledWith(
       'https://custom.example.com/stable/search-name',
-      expect.objectContaining({
-        params: expect.objectContaining({
-          query: 'Vanguard',
-          apikey: 'test-api-key',
-        }),
-      }),
+      expect.any(Object),
     );
+
+    const requestCalls = httpClient.get.mock.calls as Array<
+      [string, { params: { query: string; apikey: string } }]
+    >;
+    const requestOptions = requestCalls[0]?.[1];
+
+    expect(requestOptions.params).toEqual({
+      query: 'Vanguard',
+      apikey: 'test-api-key',
+    });
   });
 
   it('should fetch fund profiles', async () => {
     httpClient.get.mockResolvedValue({ data: etfInfoPayload });
 
-    await expect(client.fetchFundProfile('SPY')).resolves.toEqual(etfInfoPayload);
+    await expect(client.fetchFundProfile('SPY')).resolves.toEqual(
+      etfInfoPayload,
+    );
   });
 
   it('should fetch historical data with optional date filters', async () => {

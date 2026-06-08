@@ -42,10 +42,7 @@ export class FinancialModelingPrepFixtureService {
    * @param fileName - Fixture file name under the fixtures directory.
    * @param data - Raw FMP response payload.
    */
-  async saveFixtureIfEnabled(
-    fileName: string,
-    data: unknown,
-  ): Promise<void> {
+  async saveFixtureIfEnabled(fileName: string, data: unknown): Promise<void> {
     if (!this.config.fmpSaveFixtures) {
       return;
     }
@@ -81,12 +78,10 @@ export class FinancialModelingPrepFixtureService {
       }
 
       const record = item as Record<string, unknown>;
-      const symbol = String(record.symbol ?? '').toLowerCase();
-      const name = String(record.name ?? '').toLowerCase();
+      const symbol = this.toScalarString(record.symbol).toLowerCase();
+      const name = this.toScalarString(record.name).toLowerCase();
 
-      return (
-        symbol.includes(normalizedQuery) || name.includes(normalizedQuery)
-      );
+      return symbol.includes(normalizedQuery) || name.includes(normalizedQuery);
     });
   }
 
@@ -113,7 +108,7 @@ export class FinancialModelingPrepFixtureService {
       }
 
       const record = item as Record<string, unknown>;
-      const date = String(record.date ?? '');
+      const date = this.toScalarString(record.date);
 
       if (from !== undefined && date < from) {
         return false;
@@ -125,5 +120,24 @@ export class FinancialModelingPrepFixtureService {
 
       return true;
     });
+  }
+
+  /**
+   * Converts fixture scalar values to strings without relying on object coercion.
+   *
+   * @param value - Raw fixture field value.
+   * @param fallback - Value used when the input is not a scalar.
+   * @returns String representation safe for comparisons.
+   */
+  private toScalarString(value: unknown, fallback = ''): string {
+    if (typeof value === 'string') {
+      return value;
+    }
+
+    if (typeof value === 'number' || typeof value === 'boolean') {
+      return String(value);
+    }
+
+    return fallback;
   }
 }
