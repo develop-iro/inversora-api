@@ -2,6 +2,18 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Documentation
+
+Full documentation index: [docs/README.md](docs/README.md)
+
+| Topic | File |
+|-------|------|
+| Purpose and MVP scope | [docs/purpose-and-scope.md](docs/purpose-and-scope.md) |
+| Roles, modules, layers | [docs/roles-and-responsibilities.md](docs/roles-and-responsibilities.md) |
+| Infrastructure phases | [docs/infrastructure-phases.md](docs/infrastructure-phases.md) |
+| Development guide | [docs/development-guide.md](docs/development-guide.md) |
+| Scoring algorithm | [docs/scoring-algorithm.md](docs/scoring-algorithm.md) |
+
 ## Commands
 
 ```bash
@@ -12,6 +24,7 @@ npm run format        # Prettier format
 npm run test          # Unit tests (jest, rootDir: src, pattern: *.spec.ts)
 npm run test:watch    # Unit tests in watch mode
 npm run test:cov      # Unit tests with coverage
+npm run test:integration  # PostgreSQL + Prisma + FMP integration tests
 npm run test:e2e      # E2E tests (config: test/jest-e2e.json)
 ```
 
@@ -20,6 +33,8 @@ Run a single test file:
 npx jest src/modules/health/health.controller.spec.ts
 ```
 
+Swagger UI: `http://localhost:3000/api/docs`
+
 ## Architecture
 
 Feature-based, semi-hexagonal structure:
@@ -27,18 +42,21 @@ Feature-based, semi-hexagonal structure:
 ```
 src/
   modules/        # One folder per business domain
-    health/       # *.module.ts, *.controller.ts, *.service.ts
-    funds/        # (planned)
-    scoring/      # (planned)
+    health/       # Liveness check
+    providers/    # FMP integration
+    funds/        # Catalog, sync, prices, composition
+    scoring/      # Inversora Score
   shared/         # Cross-cutting concerns
     config/
-    errors/
+    database/
     http/
   app.module.ts   # Imports domain modules only
   main.ts         # Bootstrap only (port from PORT env, default 3000)
 ```
 
 Each module owns its controller, service, optional repository, and DTOs. `AppModule` only wires modules together. `main.ts` stays thin — bootstrap concerns only.
+
+See [docs/roles-and-responsibilities.md](docs/roles-and-responsibilities.md) for layer responsibilities and sync flow.
 
 ## Coding Standards
 
