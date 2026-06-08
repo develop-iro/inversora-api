@@ -2,7 +2,10 @@ import { Global, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { Test, type TestingModule } from '@nestjs/testing';
-import { PrismaClient } from '@prisma/client';
+import {
+  FundProvider as PrismaFundProvider,
+  PrismaClient,
+} from '@prisma/client';
 import { AppConfigService } from '../../src/shared/config/config.service';
 import { validateEnv } from '../../src/shared/config/env.schema';
 import { PrismaModule } from '../../src/shared/database/prisma.module';
@@ -11,8 +14,31 @@ import { HttpClientModule } from '../../src/shared/http/http-client.module';
 import { FundsModule } from '../../src/modules/funds/funds.module';
 import { ProvidersModule } from '../../src/modules/providers/providers.module';
 
+const DEFAULT_INTEGRATION_POSTGRES_DB = 'inversora_integration_test';
+const SAFE_INTEGRATION_DATABASE_NAME_PATTERN =
+  /(^|[_-])(test|testing|integration)([_-]|$)/i;
+
 /** Symbol used by committed FMP fixtures and sync integration scenarios. */
 export const INTEGRATION_FUND_SYMBOL = 'SPY';
+
+/** Provider used by committed FMP fixtures and sync integration scenarios. */
+export const INTEGRATION_FUND_PROVIDER =
+  PrismaFundProvider.FINANCIAL_MODELING_PREP;
+
+/**
+ * Builds the default PostgreSQL connection string for integration tests.
+ *
+ * @returns Disposable integration test database URL.
+ */
+function buildDefaultIntegrationDatabaseUrl(): string {
+  const user = process.env.POSTGRES_USER ?? 'inversora';
+  const password = process.env.POSTGRES_PASSWORD ?? 'inversora';
+  const host = process.env.POSTGRES_HOST ?? 'localhost';
+  const port = process.env.POSTGRES_PORT ?? '5432';
+  const database = process.env.POSTGRES_DB ?? DEFAULT_INTEGRATION_POSTGRES_DB;
+
+  return `postgresql://${user}:${password}@${host}:${port}/${database}`;
+}
 
 /** Environment values for integration tests. Uses mock FMP fixtures by default. */
 export const integrationTestEnv = {
@@ -20,12 +46,10 @@ export const integrationTestEnv = {
   NODE_ENV: 'test',
   POSTGRES_USER: process.env.POSTGRES_USER ?? 'inversora',
   POSTGRES_PASSWORD: process.env.POSTGRES_PASSWORD ?? 'inversora',
-  POSTGRES_DB: process.env.POSTGRES_DB ?? 'inversora',
+  POSTGRES_DB: process.env.POSTGRES_DB ?? DEFAULT_INTEGRATION_POSTGRES_DB,
   POSTGRES_HOST: process.env.POSTGRES_HOST ?? 'localhost',
   POSTGRES_PORT: process.env.POSTGRES_PORT ?? '5432',
-  DATABASE_URL:
-    process.env.DATABASE_URL ??
-    'postgresql://inversora:inversora@localhost:5432/inversora',
+  DATABASE_URL: process.env.DATABASE_URL ?? buildDefaultIntegrationDatabaseUrl(),
   HTTP_CLIENT_TIMEOUT_MS: process.env.HTTP_CLIENT_TIMEOUT_MS ?? '10000',
   HTTP_CLIENT_MAX_RETRIES: process.env.HTTP_CLIENT_MAX_RETRIES ?? '3',
   HTTP_CLIENT_RETRY_DELAY_MS:
@@ -39,6 +63,41 @@ export const integrationTestEnv = {
   SYNC_CRON_EXPRESSION: '0 6 * * *',
   SYNC_FUND_SYMBOLS: '',
 } as const;
+
+process.env.DATABASE_URL = integrationTestEnv.DATABASE_URL;
+
+/**
+ * Asserts that the integration test database URL points to a disposable database.
+ *
+ * @param databaseUrl - PostgreSQL connection string to validate.
+ * @throws {Error} When the database name is not clearly reserved for tests.
+ */
+export function assertSafeIntegrationDatabase(
+  databaseUrl = integrationTestEnv.DATABASE_URL,
+): void {
+  let databaseName: string;
+
+  try {
+    const parsedDatabaseUrl = new URL(databaseUrl);
+    databaseName = decodeURIComponent(
+      parsedDatabaseUrl.pathname.replace(/^\//, ''),
+    );
+  } catch {
+    throw new Error(
+      'Integration tests require DATABASE_URL to be a valid PostgreSQL URL.',
+    );
+  }
+
+  if (!SAFE_INTEGRATION_DATABASE_NAME_PATTERN.test(databaseName)) {
+    throw new Error(
+      [
+        'Refusing to run destructive integration tests against a non-test database.',
+        `DATABASE_URL database name "${databaseName}" must include "test",`,
+        '"testing", or "integration".',
+      ].join(' '),
+    );
+  }
+}
 
 /**
  * Global configuration module used by integration tests.
@@ -63,6 +122,8 @@ class IntegrationTestConfigModule {}
  * @returns `true` when the database accepts connections.
  */
 export async function isDatabaseAvailable(): Promise<boolean> {
+  assertSafeIntegrationDatabase();
+
   const prisma = new PrismaClient({
     datasources: {
       db: {
@@ -99,6 +160,8 @@ export async function createProvidersIntegrationModule(): Promise<TestingModule>
  * @returns Compiled testing module with Prisma, providers, and funds domain services.
  */
 export async function createFundsIntegrationModule(): Promise<TestingModule> {
+  assertSafeIntegrationDatabase();
+
   return Test.createTestingModule({
     imports: [
       IntegrationTestConfigModule,
@@ -121,9 +184,12 @@ export async function deleteFundBySymbol(
   prisma: PrismaService,
   symbol: string,
 ): Promise<void> {
+  assertSafeIntegrationDatabase();
+
   await prisma.fund.deleteMany({
     where: {
       symbol: symbol.trim().toUpperCase(),
+      provider: INTEGRATION_FUND_PROVIDER,
     },
   });
 }

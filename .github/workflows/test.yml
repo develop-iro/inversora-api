@@ -35,20 +35,20 @@ jobs:
         env:
           POSTGRES_USER: inversora
           POSTGRES_PASSWORD: inversora
-          POSTGRES_DB: inversora
+          POSTGRES_DB: inversora_integration_test
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U inversora -d inversora"
+          --health-cmd "pg_isready -U inversora -d inversora_integration_test"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
 
     env:
-      DATABASE_URL: postgresql://inversora:inversora@localhost:5432/inversora
+      DATABASE_URL: postgresql://inversora:inversora@localhost:5432/inversora_integration_test
       POSTGRES_USER: inversora
       POSTGRES_PASSWORD: inversora
-      POSTGRES_DB: inversora
+      POSTGRES_DB: inversora_integration_test
       POSTGRES_HOST: localhost
       POSTGRES_PORT: 5432
       FMP_API_KEY: integration-test-fmp-key
