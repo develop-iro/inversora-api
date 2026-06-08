@@ -13,6 +13,9 @@ describe('FinancialModelingPrepProvider', () => {
     searchByName: jest.Mock;
     fetchFundProfile: jest.Mock;
     fetchHistoricalData: jest.Mock;
+    fetchEtfHoldings: jest.Mock;
+    fetchEtfSectorWeightings: jest.Mock;
+    fetchEtfCountryWeightings: jest.Mock;
   };
   let fixtures: {
     readFixture: jest.Mock;
@@ -30,6 +33,9 @@ describe('FinancialModelingPrepProvider', () => {
       searchByName: jest.fn(),
       fetchFundProfile: jest.fn(),
       fetchHistoricalData: jest.fn(),
+      fetchEtfHoldings: jest.fn(),
+      fetchEtfSectorWeightings: jest.fn(),
+      fetchEtfCountryWeightings: jest.fn(),
     };
 
     fixtures = {
@@ -211,6 +217,104 @@ describe('FinancialModelingPrepProvider', () => {
         periodStartClose: 472.65,
       },
     });
+  });
+
+  it('should return normalized index fund composition from fixtures', async () => {
+    fixtures.readFixture.mockImplementation((fileName: string) => {
+      if (fileName.includes('etf-holdings')) {
+        return Promise.resolve([
+          {
+            asset: 'AAPL',
+            name: 'Apple Inc.',
+            weightPercentage: 7.12,
+            updated: '2024-01-31',
+          },
+        ]);
+      }
+
+      if (fileName.includes('etf-sector-weightings')) {
+        return Promise.resolve([
+          {
+            sector: 'Technology',
+            weightPercentage: 31.5,
+          },
+        ]);
+      }
+
+      if (fileName.includes('etf-country-weightings')) {
+        return Promise.resolve([
+          {
+            country: 'United States',
+            weightPercentage: 97.5,
+          },
+        ]);
+      }
+
+      return Promise.resolve([]);
+    });
+
+    await expect(provider.getIndexFundComposition('spy')).resolves.toEqual({
+      asOf: '2024-01-31',
+      holdings: [
+        {
+          asset: 'AAPL',
+          name: 'Apple Inc.',
+          weightPercentage: 7.12,
+        },
+      ],
+      sectorWeightings: [
+        {
+          sector: 'Technology',
+          weightPercentage: 31.5,
+        },
+      ],
+      countryWeightings: [
+        {
+          country: 'United States',
+          weightPercentage: 97.5,
+        },
+      ],
+    });
+  });
+
+  it('should load index fund composition from the live client when mocks are disabled', async () => {
+    configMock.fmpUsesMocks = false;
+    client.fetchEtfHoldings.mockResolvedValue([
+      {
+        asset: 'AAPL',
+        name: 'Apple Inc.',
+        weightPercentage: 7.12,
+        updated: '2024-01-31',
+      },
+    ]);
+    client.fetchEtfSectorWeightings.mockResolvedValue([
+      {
+        sector: 'Technology',
+        weightPercentage: 31.5,
+      },
+    ]);
+    client.fetchEtfCountryWeightings.mockResolvedValue([
+      {
+        country: 'United States',
+        weightPercentage: 97.5,
+      },
+    ]);
+
+    await expect(
+      provider.getIndexFundComposition('spy'),
+    ).resolves.toMatchObject({
+      asOf: '2024-01-31',
+      holdings: [
+        expect.objectContaining({
+          asset: 'AAPL',
+        }),
+      ],
+    });
+
+    expect(client.fetchEtfHoldings).toHaveBeenCalledWith('SPY');
+    expect(client.fetchEtfSectorWeightings).toHaveBeenCalledWith('SPY');
+    expect(client.fetchEtfCountryWeightings).toHaveBeenCalledWith('SPY');
+    configMock.fmpUsesMocks = true;
   });
 
   it('should throw ExternalHttpError when historical data is missing', async () => {

@@ -276,12 +276,18 @@ sobre los archivos staged:
 - `prettier --write`
 
 Esto evita fallos de formato o lint en CI por cambios locales no formateados.
-Los tests completos siguen siendo responsabilidad de CI y del checklist pre-PR.
 
-Para saltar el hook puntualmente (solo si es imprescindible):
+### Git hooks (pre-push)
+
+El hook `pre-push` ejecuta `npm run test:ci` (unit tests con coverage y umbral
+global del 90%). Se dispara antes de `git push`, no en cada commit, para no
+ralentizar el flujo local.
+
+Para saltar un hook puntualmente (solo si es imprescindible):
 
 ```bash
-git commit --no-verify
+git commit --no-verify   # omite pre-commit
+git push --no-verify     # omite pre-push (coverage)
 ```
 
 ### Checklist pre-PR

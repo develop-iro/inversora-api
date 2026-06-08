@@ -3,6 +3,7 @@ import {
   buildIndexFundPriceSummary,
   buildIndexFundComposition,
   normalizeIndexFundCountryWeightings,
+  resolveIndexFundCompositionAsOf,
   normalizeIndexFundHistoricalPrices,
   normalizeIndexFundHoldings,
   normalizeIndexFundProfile,
@@ -196,6 +197,60 @@ describe('FinancialModelingPrep normalizers', () => {
         weightPercentage: 1.2,
       },
     ]);
+  });
+
+  it('should ignore invalid sector and country weightings', () => {
+    expect(
+      normalizeIndexFundSectorWeightings([
+        {
+          sector: 'Cash',
+          weightPercentage: 0,
+        },
+        {
+          sector: 'Unknown',
+        },
+        {
+          sector: 'Technology',
+          weightPercentage: Number.NaN,
+        },
+        {
+          sector: 'Healthcare',
+          weightPercentage: 12.8,
+        },
+      ]),
+    ).toEqual([
+      {
+        sector: 'Healthcare',
+        weightPercentage: 12.8,
+      },
+    ]);
+
+    expect(
+      normalizeIndexFundCountryWeightings([
+        {
+          country: 'Ireland',
+          weightPercentage: -1,
+        },
+        {
+          country: 'United States',
+          weightPercentage: 97.5,
+        },
+      ]),
+    ).toEqual([
+      {
+        country: 'United States',
+        weightPercentage: 97.5,
+      },
+    ]);
+  });
+
+  it('should fall back to today when holdings have no update date', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2024-06-08T12:00:00.000Z'));
+
+    expect(resolveIndexFundCompositionAsOf([])).toBe('2024-06-08');
+
+    jest.useRealTimers();
   });
 
   it('should build a normalized composition snapshot', () => {

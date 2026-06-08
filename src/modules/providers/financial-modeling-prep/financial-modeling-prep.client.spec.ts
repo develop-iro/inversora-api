@@ -96,6 +96,45 @@ describe('FinancialModelingPrepClient', () => {
     });
   });
 
+  it('should fetch ETF holdings', async () => {
+    const payload = [
+      {
+        asset: 'AAPL',
+        name: 'Apple Inc.',
+        weightPercentage: 7.12,
+      },
+    ];
+    httpClient.get.mockResolvedValue({ data: payload });
+
+    await expect(client.fetchEtfHoldings('SPY')).resolves.toEqual(payload);
+    expect(httpClient.get).toHaveBeenCalledWith(
+      `${FMP_DEFAULT_BASE_URL}/stable/etf/holdings`,
+      expect.objectContaining({
+        params: {
+          symbol: 'SPY',
+          apikey: 'test-api-key',
+        },
+      }),
+    );
+  });
+
+  it('should fetch ETF sector and country weightings', async () => {
+    httpClient.get
+      .mockResolvedValueOnce({
+        data: [{ sector: 'Technology', weightPercentage: 31.5 }],
+      })
+      .mockResolvedValueOnce({
+        data: [{ country: 'United States', weightPercentage: 97.5 }],
+      });
+
+    await expect(client.fetchEtfSectorWeightings('SPY')).resolves.toEqual([
+      { sector: 'Technology', weightPercentage: 31.5 },
+    ]);
+    await expect(client.fetchEtfCountryWeightings('SPY')).resolves.toEqual([
+      { country: 'United States', weightPercentage: 97.5 },
+    ]);
+  });
+
   it('should fetch fund profiles', async () => {
     httpClient.get.mockResolvedValue({ data: etfInfoPayload });
 

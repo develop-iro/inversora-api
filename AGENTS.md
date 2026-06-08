@@ -26,6 +26,7 @@ NestJS + PostgreSQL is the canonical backend for Inversora. The mobile app (`inv
 - `npm run test:integration` : run PostgreSQL, Prisma, and FMP integration tests
 - `npm run lint` : run ESLint (use `--fix` where appropriate)
 - Pre-commit hook (Husky + lint-staged) runs ESLint and Prettier on staged files after `npm install`
+- Pre-push hook runs `npm run test:ci` to enforce unit test coverage thresholds before push
 - `npm run db:up` : start local PostgreSQL via Docker Compose
 - `npm run db:validate` : validate PostgreSQL connection
 - `npm run db:down` : stop PostgreSQL container
