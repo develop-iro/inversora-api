@@ -14,6 +14,18 @@ export interface FundDailySyncItemResult {
   error?: string;
 }
 
+/** Outcome of the automatic scoring step executed after daily fund sync. */
+export interface FundDailySyncScoringResult {
+  /** Whether scores were recalculated and persisted. */
+  status: 'success' | 'failed' | 'skipped';
+  /** Number of funds evaluated during scoring. */
+  total?: number;
+  /** Number of fund scores persisted successfully. */
+  updated?: number;
+  /** Error message when status is `failed`. */
+  error?: string;
+}
+
 /** Aggregate result for a daily synchronization run. */
 export interface FundDailySyncResult {
   /** Total symbols processed. */
@@ -24,4 +36,6 @@ export interface FundDailySyncResult {
   failed: number;
   /** Per-symbol sync outcomes. */
   results: FundDailySyncItemResult[];
+  /** Automatic scoring outcome after metadata and price sync. */
+  scoring: FundDailySyncScoringResult;
 }
