@@ -6,10 +6,7 @@ import {
 } from '@prisma/client';
 import type { Decimal } from '@prisma/client/runtime/library';
 import type { IndexFundHolding } from '../../providers/financial-modeling-prep/financial-modeling-prep.domain.schemas';
-import {
-  formatFundPriceDate,
-  parseFundPriceDate,
-} from './fund-price.mapper';
+import { formatFundPriceDate, parseFundPriceDate } from './fund-price.mapper';
 import {
   fundAllocationSchema,
   fundHoldingSchema,
@@ -149,14 +146,14 @@ export function mapIndexFundHoldingsToUpsertInputs(
   return [...holdings]
     .sort((left, right) => right.weightPercentage - left.weightPercentage)
     .map((holding, index) => ({
-    rank: index + 1,
-    asset: holding.asset ?? null,
-    name: holding.name,
-    isin: holding.isin ?? null,
-    weightPercentage: holding.weightPercentage,
-    marketValue: holding.marketValue ?? null,
-    sharesNumber: holding.sharesNumber ?? null,
-  }));
+      rank: index + 1,
+      asset: holding.asset ?? null,
+      name: holding.name,
+      isin: holding.isin ?? null,
+      weightPercentage: holding.weightPercentage,
+      marketValue: holding.marketValue ?? null,
+      sharesNumber: holding.sharesNumber ?? null,
+    }));
 }
 
 /**

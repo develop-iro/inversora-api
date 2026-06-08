@@ -75,7 +75,9 @@ function mapNullableVolume(value: bigint | null): number | null {
  * @param record - Persisted Prisma fund price row.
  * @returns Validated fund price entity.
  */
-export function mapPrismaFundPriceToFundPrice(record: PrismaFundPrice): FundPrice {
+export function mapPrismaFundPriceToFundPrice(
+  record: PrismaFundPrice,
+): FundPrice {
   return fundPriceSchema.parse({
     id: record.id,
     fundId: record.fundId,

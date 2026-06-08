@@ -81,7 +81,9 @@ describe('FinancialModelingPrepProvider', () => {
     ]);
     fixtures.filterSearchFixture.mockImplementation((data: unknown[]) => data);
 
-    await expect(provider.searchIndexFunds('spy', { limit: 1 })).resolves.toEqual([
+    await expect(
+      provider.searchIndexFunds('spy', { limit: 1 }),
+    ).resolves.toEqual([
       {
         symbol: 'SPY',
         name: 'State Street SPDR S&P 500 ETF Trust',
@@ -150,19 +152,19 @@ describe('FinancialModelingPrepProvider', () => {
   });
 
   it('should return an index fund detail aggregate from fixtures', async () => {
-    fixtures.readFixture.mockImplementation(async (fileName: string) => {
+    fixtures.readFixture.mockImplementation((fileName: string) => {
       if (fileName.includes('etf-info')) {
-        return [
+        return Promise.resolve([
           {
             symbol: 'SPY',
             name: 'State Street SPDR S&P 500 ETF Trust',
             expenseRatio: 0.0945,
             etfCompany: 'State Street',
           },
-        ];
+        ]);
       }
 
-      return [
+      return Promise.resolve([
         {
           symbol: 'SPY',
           date: '2024-01-31',
@@ -181,7 +183,7 @@ describe('FinancialModelingPrepProvider', () => {
           close: 472.65,
           volume: 82488700,
         },
-      ];
+      ]);
     });
     fixtures.filterHistoricalFixture.mockImplementation(
       (data: unknown[]) => data,
@@ -212,17 +214,17 @@ describe('FinancialModelingPrepProvider', () => {
   });
 
   it('should throw ExternalHttpError when historical data is missing', async () => {
-    fixtures.readFixture.mockImplementation(async (fileName: string) => {
+    fixtures.readFixture.mockImplementation((fileName: string) => {
       if (fileName.includes('etf-info')) {
-        return [
+        return Promise.resolve([
           {
             symbol: 'SPY',
             name: 'State Street SPDR S&P 500 ETF Trust',
           },
-        ];
+        ]);
       }
 
-      return [];
+      return Promise.resolve([]);
     });
     fixtures.filterHistoricalFixture.mockReturnValue([]);
     fixtures.filterSearchFixture.mockReturnValue([

@@ -1,7 +1,4 @@
-import {
-  addDaysToIsoDate,
-  formatFundPriceDate,
-} from './fund-price.mapper';
+import { addDaysToIsoDate, formatFundPriceDate } from './fund-price.mapper';
 import type { FundPrice } from './fund-price.schema';
 import {
   fundChartResponseSchema,

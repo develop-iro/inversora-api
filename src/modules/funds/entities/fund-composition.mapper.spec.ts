@@ -1,6 +1,4 @@
-import {
-  FundAllocationCategory as PrismaFundAllocationCategory,
-} from '@prisma/client';
+import { FundAllocationCategory as PrismaFundAllocationCategory } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { parseFundPriceDate } from './fund-price.mapper';
 import {

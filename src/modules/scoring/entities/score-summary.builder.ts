@@ -1,4 +1,7 @@
-import type { InvesoraScore, ScoreFactorBreakdown } from './invesora-score.schema';
+import type {
+  InvesoraScore,
+  ScoreFactorBreakdown,
+} from './invesora-score.schema';
 
 const PAST_PERFORMANCE_WARNING =
   'La rentabilidad pasada no garantiza resultados futuros.';

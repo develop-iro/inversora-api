@@ -104,19 +104,37 @@ describe('FundSyncService', () => {
       to: undefined,
       includeHistory: false,
     });
-    expect(fundsRepository.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        symbol: 'SPY',
-        provider: 'financial-modeling-prep',
-        category: 'index',
-        currency: 'USD',
-        benchmark: 'S&P 500',
-        metrics: expect.objectContaining({
-          ter: 0.0945,
-          aum: 520_000_000_000,
-        }),
-      }),
-    );
+    expect(fundsRepository.upsert).toHaveBeenCalledTimes(1);
+    expect(fundsRepository.upsert).toHaveBeenCalledWith(expect.any(Object));
+
+    type UpsertPayload = {
+      symbol: string;
+      provider: string;
+      category: string;
+      currency: string;
+      benchmark: string;
+      metrics: {
+        ter: number;
+        aum: number;
+      };
+    };
+
+    const upsertCalls = fundsRepository.upsert.mock.calls as Array<
+      [UpsertPayload]
+    >;
+    const upsertPayload = upsertCalls[0]?.[0];
+
+    expect(upsertPayload).toMatchObject({
+      symbol: 'SPY',
+      provider: 'financial-modeling-prep',
+      category: 'index',
+      currency: 'USD',
+      benchmark: 'S&P 500',
+      metrics: {
+        ter: 0.0945,
+        aum: 520_000_000_000,
+      },
+    });
     expect(fundPriceSyncService.syncFromFmp).not.toHaveBeenCalled();
   });
 

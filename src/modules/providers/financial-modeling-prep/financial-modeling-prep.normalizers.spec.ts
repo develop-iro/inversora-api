@@ -115,16 +115,19 @@ describe('FinancialModelingPrep normalizers', () => {
       },
     ]);
 
-    expect(buildIndexFundPriceSummary(history)).toEqual({
+    const summary = buildIndexFundPriceSummary(history);
+
+    expect(summary).toEqual({
       latestDate: '2024-01-31',
       latestClose: 482.88,
       periodStartDate: '2024-01-02',
       periodStartClose: 472.65,
-      periodReturnPercent: expect.closeTo(2.1644, 3),
+      periodReturnPercent: summary.periodReturnPercent,
       periodHigh: 489.08,
       periodLow: 470.49,
       averageVolume: 104249900,
     });
+    expect(summary.periodReturnPercent).toBeCloseTo(2.1644, 3);
 
     expect(
       buildIndexFundDetail(

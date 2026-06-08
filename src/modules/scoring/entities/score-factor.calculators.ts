@@ -121,7 +121,9 @@ export function scoreRisk(
     if (peers.length > 0) {
       const peerVolatilities = peers
         .map((peer) => peer.volatility)
-        .filter((peerVolatility): peerVolatility is number => peerVolatility !== null);
+        .filter(
+          (peerVolatility): peerVolatility is number => peerVolatility !== null,
+        );
 
       if (peerVolatilities.length > 0) {
         volatilityPoints = pointsFromPercentile(
@@ -152,7 +154,9 @@ export function scoreRisk(
     if (peers.length > 0) {
       const peerDrawdowns = peers
         .map((peer) => peer.drawdown)
-        .filter((peerDrawdown): peerDrawdown is number => peerDrawdown !== null);
+        .filter(
+          (peerDrawdown): peerDrawdown is number => peerDrawdown !== null,
+        );
 
       if (peerDrawdowns.length > 0) {
         drawdownPoints = pointsFromPercentile(

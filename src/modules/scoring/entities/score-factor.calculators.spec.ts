@@ -89,9 +89,9 @@ describe('score-factor.calculators', () => {
   it('should use peer comparison when peers are available', () => {
     const metrics = buildMetrics();
 
-    expect(
-      scoreRiskAdjustedReturn(metrics, peerMetrics).incomplete,
-    ).toBe(false);
+    expect(scoreRiskAdjustedReturn(metrics, peerMetrics).incomplete).toBe(
+      false,
+    );
     expect(scoreRisk(metrics, peerMetrics).incomplete).toBe(false);
     expect(scoreCost(metrics, peerMetrics).incomplete).toBe(false);
     expect(scoreFundSize(metrics, peerMetrics).incomplete).toBe(false);
@@ -108,10 +108,16 @@ describe('score-factor.calculators', () => {
   });
 
   it('should mark incomplete factors when required inputs are missing', () => {
-    expect(scoreRiskAdjustedReturn(buildMetrics({ return1Y: null, return3Y: null, volatility: null })).incomplete).toBe(true);
+    expect(
+      scoreRiskAdjustedReturn(
+        buildMetrics({ return1Y: null, return3Y: null, volatility: null }),
+      ).incomplete,
+    ).toBe(true);
     expect(scoreCost(buildMetrics({ ter: null })).incomplete).toBe(true);
     expect(scoreFundSize(buildMetrics({ aum: null })).incomplete).toBe(true);
-    expect(scoreAge(buildMetrics({ fundAgeYears: null })).incomplete).toBe(true);
+    expect(scoreAge(buildMetrics({ fundAgeYears: null })).incomplete).toBe(
+      true,
+    );
     expect(
       scoreDiversification(
         buildMetrics({

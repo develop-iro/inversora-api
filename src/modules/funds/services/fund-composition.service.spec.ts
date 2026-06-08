@@ -70,23 +70,44 @@ describe('FundCompositionService', () => {
       allocations: 1,
     });
 
+    expect(repository.replaceSnapshot).toHaveBeenCalledTimes(1);
     expect(repository.replaceSnapshot).toHaveBeenCalledWith(
       fundId,
-      expect.objectContaining({
-        asOf: '2024-01-31',
-        holdings: expect.arrayContaining([
-          expect.objectContaining({ rank: 1, asset: 'AAPL' }),
-          expect.objectContaining({ rank: 2, asset: 'MSFT' }),
-        ]),
-        allocations: [
-          {
-            category: 'sectorial',
-            label: 'Tecnología',
-            weight: 31.5,
-            sortOrder: 0,
-          },
-        ],
-      }),
+      expect.any(Object),
+    );
+
+    type SnapshotPayload = {
+      asOf: string;
+      holdings: Array<{ rank: number; asset: string }>;
+      allocations: Array<{
+        category: string;
+        label: string;
+        weight: number;
+        sortOrder: number;
+      }>;
+    };
+
+    const replaceSnapshotCalls = repository.replaceSnapshot.mock.calls as Array<
+      [string, SnapshotPayload]
+    >;
+    const snapshot = replaceSnapshotCalls[0]?.[1];
+
+    expect(snapshot).toMatchObject({
+      asOf: '2024-01-31',
+      allocations: [
+        {
+          category: 'sectorial',
+          label: 'Tecnología',
+          weight: 31.5,
+          sortOrder: 0,
+        },
+      ],
+    });
+    expect(snapshot.holdings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ rank: 1, asset: 'AAPL' }),
+        expect.objectContaining({ rank: 2, asset: 'MSFT' }),
+      ]),
     );
   });
 
@@ -132,10 +153,7 @@ describe('FundCompositionService', () => {
     await service.getHoldings(fundId, '2024-01-31');
     await service.getAllocationsByCategory(fundId, 'sectorial');
 
-    expect(repository.findHoldings).toHaveBeenCalledWith(
-      fundId,
-      '2024-01-31',
-    );
+    expect(repository.findHoldings).toHaveBeenCalledWith(fundId, '2024-01-31');
     expect(repository.findAllocationsByCategory).toHaveBeenCalledWith(
       fundId,
       'sectorial',

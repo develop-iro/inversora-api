@@ -28,11 +28,9 @@ export const integrationTestEnv = {
     'postgresql://inversora:inversora@localhost:5432/inversora',
   HTTP_CLIENT_TIMEOUT_MS: process.env.HTTP_CLIENT_TIMEOUT_MS ?? '10000',
   HTTP_CLIENT_MAX_RETRIES: process.env.HTTP_CLIENT_MAX_RETRIES ?? '3',
-  HTTP_CLIENT_RETRY_DELAY_MS:
-    process.env.HTTP_CLIENT_RETRY_DELAY_MS ?? '500',
+  HTTP_CLIENT_RETRY_DELAY_MS: process.env.HTTP_CLIENT_RETRY_DELAY_MS ?? '500',
   FMP_API_KEY: process.env.FMP_API_KEY ?? 'integration-test-fmp-key',
-  FMP_BASE_URL:
-    process.env.FMP_BASE_URL ?? 'https://financialmodelingprep.com',
+  FMP_BASE_URL: process.env.FMP_BASE_URL ?? 'https://financialmodelingprep.com',
   FMP_DATA_SOURCE: 'mock',
   FMP_SAVE_FIXTURES: 'false',
   SYNC_SCHEDULER_ENABLED: 'false',

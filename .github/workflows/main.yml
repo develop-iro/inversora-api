@@ -1,0 +1,284 @@
+name: Main
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: main-${{ github.workflow }}-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  # ── Phase 1: Quality ──────────────────────────────────────────────────────
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint:ci
+
+  prisma-validate:
+    name: Prisma schema
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: postgresql://inversora:inversora@localhost:5432/inversora
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate Prisma schema
+        run: npx prisma validate
+
+  build:
+    name: Build
+    needs: [lint, prisma-validate]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Compile application
+        run: npm run build
+
+  # ── Phase 2: Tests ──────────────────────────────────────────────────────────
+
+  unit-tests:
+    name: Unit tests
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests with coverage
+        run: npm run test:ci
+
+      - name: Upload unit test coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-unit
+          path: coverage/
+          retention-days: 30
+          if-no-files-found: error
+
+  integration-tests:
+    name: Integration tests
+    needs: build
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: inversora
+          POSTGRES_PASSWORD: inversora
+          POSTGRES_DB: inversora
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U inversora -d inversora"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://inversora:inversora@localhost:5432/inversora
+      POSTGRES_USER: inversora
+      POSTGRES_PASSWORD: inversora
+      POSTGRES_DB: inversora
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      FMP_API_KEY: integration-test-fmp-key
+      FMP_DATA_SOURCE: mock
+      FMP_SAVE_FIXTURES: false
+      SYNC_SCHEDULER_ENABLED: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply database migrations
+        run: npm run prisma:migrate:deploy
+
+      - name: Run integration tests
+        run: npm run test:integration:ci
+
+  e2e-tests:
+    name: E2E tests
+    needs: [unit-tests, integration-tests]
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: inversora
+          POSTGRES_PASSWORD: inversora
+          POSTGRES_DB: inversora
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U inversora -d inversora"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      NODE_ENV: test
+      PORT: 3000
+      DATABASE_URL: postgresql://inversora:inversora@localhost:5432/inversora
+      POSTGRES_USER: inversora
+      POSTGRES_PASSWORD: inversora
+      POSTGRES_DB: inversora
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      FMP_API_KEY: integration-test-fmp-key
+      FMP_DATA_SOURCE: mock
+      FMP_SAVE_FIXTURES: false
+      SYNC_SCHEDULER_ENABLED: false
+      SYNC_CRON_EXPRESSION: '0 6 * * *'
+      SYNC_FUND_SYMBOLS: ''
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply database migrations
+        run: npm run prisma:migrate:deploy
+
+      - name: Run E2E tests
+        run: npm run test:e2e:ci
+
+  # ── Phase 3: Report ─────────────────────────────────────────────────────────
+
+  report:
+    name: Test report
+    needs: [unit-tests, integration-tests, e2e-tests]
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download unit test coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-unit
+          path: coverage
+        continue-on-error: true
+
+      - name: Publish job summary
+        env:
+          UNIT_RESULT: ${{ needs.unit-tests.result }}
+          INTEGRATION_RESULT: ${{ needs.integration-tests.result }}
+          E2E_RESULT: ${{ needs.e2e-tests.result }}
+        run: |
+          {
+            echo "## Main branch test report"
+            echo ""
+            echo "| Job | Result |"
+            echo "| --- | --- |"
+            echo "| Unit tests | ${UNIT_RESULT} |"
+            echo "| Integration tests | ${INTEGRATION_RESULT} |"
+            echo "| E2E tests | ${E2E_RESULT} |"
+            echo ""
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          if [ -f coverage/coverage-summary.json ]; then
+          node <<'EOF' >> "${GITHUB_STEP_SUMMARY}"
+          const fs = require('node:fs');
+          const summary = JSON.parse(
+            fs.readFileSync('coverage/coverage-summary.json', 'utf8'),
+          ).total;
+
+          console.log('### Unit test coverage');
+          console.log('');
+          console.log('| Metric | Covered % |');
+          console.log('| --- | --- |');
+          for (const [metric, value] of Object.entries(summary)) {
+            console.log(`| ${metric} | ${value.pct}% |`);
+          }
+          console.log('');
+          console.log(
+            'Download the HTML coverage report from the workflow artifacts.',
+          );
+          EOF
+          fi
+
+      - name: Upload coverage report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Enforce test job results
+        if: >-
+          needs.unit-tests.result != 'success' ||
+          needs.integration-tests.result != 'success' ||
+          needs.e2e-tests.result != 'success'
+        run: exit 1

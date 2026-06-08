@@ -100,11 +100,9 @@ describe('FinancialModelingPrepFixtureService', () => {
       data[1],
       data[2],
     ]);
-    expect(service.filterHistoricalFixture(data, undefined, '2024-01-20')).toEqual([
-      data[0],
-      data[1],
-      data[3],
-    ]);
+    expect(
+      service.filterHistoricalFixture(data, undefined, '2024-01-20'),
+    ).toEqual([data[0], data[1], data[3]]);
     expect(service.filterHistoricalFixture('not-an-array')).toEqual([]);
   });
 });

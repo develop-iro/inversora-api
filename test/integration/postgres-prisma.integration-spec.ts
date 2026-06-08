@@ -52,7 +52,9 @@ describe('PostgreSQL and Prisma (integration)', () => {
       return;
     }
 
-    const result = await prisma.$queryRaw<Array<{ result: number }>>`SELECT 1 AS result`;
+    const result = await prisma.$queryRaw<
+      Array<{ result: number }>
+    >`SELECT 1 AS result`;
 
     expect(result[0]?.result).toBe(1);
   });

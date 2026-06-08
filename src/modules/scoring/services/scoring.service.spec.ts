@@ -51,11 +51,13 @@ describe('ScoringService', () => {
     fundsRepository = {
       findById: jest.fn().mockResolvedValue(fund),
       findAll: jest.fn().mockResolvedValue([fund]),
-      updateScore: jest.fn().mockImplementation(async (id: string, score: number) => ({
-        ...fund,
-        id,
-        score,
-      })),
+      updateScore: jest
+        .fn()
+        .mockImplementation((id: string, score: number) => ({
+          ...fund,
+          id,
+          score,
+        })),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -146,9 +148,10 @@ describe('ScoringService', () => {
     };
     fundsRepository.findAll.mockResolvedValue([fund, peerFund]);
 
-    await expect(service.calculateScoreForFundId(fund.id)).resolves.toMatchObject({
-      score: expect.any(Number),
-    });
+    const result = await service.calculateScoreForFundId(fund.id);
+
+    expect(result).not.toBeNull();
+    expect(typeof result?.score).toBe('number');
   });
 
   it('should skip recalculation when there are no funds', async () => {

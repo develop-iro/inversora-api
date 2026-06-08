@@ -1,12 +1,18 @@
 import type { INestApplication } from '@nestjs/common';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { DocumentBuilder } from '@nestjs/swagger';
 import { setupSwagger } from './swagger.config';
+
+const createDocumentMock = jest.fn();
+const setupMock = jest.fn();
 
 jest.mock('@nestjs/swagger', () => ({
   DocumentBuilder: jest.fn(),
   SwaggerModule: {
-    createDocument: jest.fn(),
-    setup: jest.fn(),
+    createDocument: (app: unknown, config: unknown): unknown =>
+      createDocumentMock(app, config),
+    setup: (path: string, app: unknown, document: unknown): void => {
+      setupMock(path, app, document);
+    },
   },
 }));
 
@@ -22,18 +28,14 @@ describe('setupSwagger', () => {
 
     const app = {} as INestApplication;
     const document = { paths: {} };
-    (SwaggerModule.createDocument as jest.Mock).mockReturnValue(document);
+    createDocumentMock.mockReturnValue(document);
 
     setupSwagger(app);
 
     expect(builder.setTitle).toHaveBeenCalledWith('Inversora API');
-    expect(SwaggerModule.createDocument).toHaveBeenCalledWith(app, {
+    expect(createDocumentMock).toHaveBeenCalledWith(app, {
       openapi: '3.0.0',
     });
-    expect(SwaggerModule.setup).toHaveBeenCalledWith(
-      'api/docs',
-      app,
-      document,
-    );
+    expect(setupMock).toHaveBeenCalledWith('api/docs', app, document);
   });
 });

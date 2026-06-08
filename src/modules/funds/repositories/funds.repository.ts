@@ -8,7 +8,11 @@ import {
   mapUpsertFundInputToPrismaUpdateData,
 } from '../entities/fund.mapper';
 import { upsertFundInputSchema } from '../entities/fund.schema';
-import type { Fund, FundProvider, UpsertFundInput } from '../entities/fund.schema';
+import type {
+  Fund,
+  FundProvider,
+  UpsertFundInput,
+} from '../entities/fund.schema';
 
 /** Options for paginated fund list queries. */
 export interface FindManyFundsOptions {

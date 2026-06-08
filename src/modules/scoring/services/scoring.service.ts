@@ -26,7 +26,10 @@ import {
   buildScoreSummary,
   buildScoreWarnings,
 } from '../entities/score-summary.builder';
-import { SCORE_MAX_POINTS, SCORING_ALGORITHM_VERSION } from '../entities/score-weights';
+import {
+  SCORE_MAX_POINTS,
+  SCORING_ALGORITHM_VERSION,
+} from '../entities/score-weights';
 import { clampScore } from '../entities/score-utils';
 import type {
   ScoringSyncItemResult,

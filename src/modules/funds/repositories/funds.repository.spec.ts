@@ -29,7 +29,7 @@ const prismaFundRow = {
 describe('FundsRepository', () => {
   let repository: FundsRepository;
   let prisma: {
-      fund: {
+    fund: {
       findMany: jest.Mock;
       findUnique: jest.Mock;
       upsert: jest.Mock;
@@ -156,26 +156,24 @@ describe('FundsRepository', () => {
   });
 
   it('should upsert a fund and report when a new row is created', async () => {
-    await expect(
-      repository.upsert({
-        symbol: 'SPY',
-        isin: 'US78462F1030',
-        name: 'State Street SPDR S&P 500 ETF Trust',
-        provider: 'financial-modeling-prep',
-        category: 'index',
-        currency: 'USD',
-        benchmark: 'S&P 500',
-        metrics: {
-          ter: 0.0945,
-          aum: 520_000_000_000,
-        },
-      }),
-    ).resolves.toEqual({
-      created: true,
-      fund: expect.objectContaining({
-        symbol: 'SPY',
-        name: 'State Street SPDR S&P 500 ETF Trust',
-      }),
+    const result = await repository.upsert({
+      symbol: 'SPY',
+      isin: 'US78462F1030',
+      name: 'State Street SPDR S&P 500 ETF Trust',
+      provider: 'financial-modeling-prep',
+      category: 'index',
+      currency: 'USD',
+      benchmark: 'S&P 500',
+      metrics: {
+        ter: 0.0945,
+        aum: 520_000_000_000,
+      },
+    });
+
+    expect(result.created).toBe(true);
+    expect(result.fund).toMatchObject({
+      symbol: 'SPY',
+      name: 'State Street SPDR S&P 500 ETF Trust',
     });
 
     expect(prisma.fund.upsert).toHaveBeenCalledWith(

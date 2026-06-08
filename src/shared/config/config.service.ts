@@ -83,7 +83,9 @@ export class AppConfigService {
 
   /** Whether FMP responses are served from committed fixtures. */
   get fmpUsesMocks(): boolean {
-    return this.configService.get('FMP_DATA_SOURCE', { infer: true }) === 'mock';
+    return (
+      this.configService.get('FMP_DATA_SOURCE', { infer: true }) === 'mock'
+    );
   }
 
   /** Whether successful live FMP responses are persisted as fixtures. */
