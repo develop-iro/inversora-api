@@ -32,6 +32,7 @@ import { FundsService } from './services/funds.service';
     FundSyncScheduler,
   ],
   exports: [
+    FundsRepository,
     FundsService,
     FundPricesService,
     FundCompositionService,
