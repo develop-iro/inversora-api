@@ -199,7 +199,7 @@ GitHub Actions ejecuta dos workflows:
 lint → prisma-validate → build → unit-tests + integration-tests → report
 ```
 
-- Se dispara en `pull_request` y `push` a ramas distintas de `main`.
+- Se dispara en cada `push` a ramas distintas de `main` (los checks aparecen en el PR asociado).
 - Integration tests levantan PostgreSQL 16 como service container.
 - FMP siempre en modo `mock`; scheduler desactivado.
 
