@@ -9,6 +9,7 @@ Purpose: help AI coding agents become productive quickly in this NestJS TypeScri
 - `npm run build` : compile TypeScript
 - `npm run test` : run unit tests
 - `npm run test:e2e` : run end-to-end tests
+- `npm run test:integration` : run PostgreSQL, Prisma, and FMP integration tests
 - `npm run lint` : run ESLint (use `--fix` where appropriate)
 - `npm run db:up` : start local PostgreSQL via Docker Compose
 - `npm run db:validate` : validate PostgreSQL connection
