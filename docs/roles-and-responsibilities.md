@@ -97,6 +97,7 @@ sequenceDiagram
     participant DailySync as FundDailySyncService
     participant FundSync as FundSyncService
     participant PriceSync as FundPriceSyncService
+    participant CompositionSync as FundCompositionSyncService
     participant Scoring as ScoringService
     participant FMP as FMP Provider
     participant DB as PostgreSQL
@@ -108,6 +109,9 @@ sequenceDiagram
     DailySync->>PriceSync: syncFromFmp incremental
     PriceSync->>FMP: fetch EOD prices
     PriceSync->>DB: upsert prices
+    DailySync->>CompositionSync: syncFromFmp symbol
+    CompositionSync->>FMP: fetch holdings and weightings
+    CompositionSync->>DB: replace composition snapshot
     DailySync->>Scoring: recalculateAllScores
     Scoring->>DB: persist scores
 ```
@@ -117,7 +121,7 @@ sequenceDiagram
 | 1. Metadata del fondo | `FundSyncService` | Fila en tabla `funds` |
 | 2. Precios históricos | `FundPriceSyncService` | Filas en `fund_prices` |
 | 3. Recálculo de scores | `ScoringService` | Campo `score` actualizado en `funds` |
-| 4. Composición (planificado) | `FundCompositionService` | Filas en `fund_holdings` y `fund_allocations` |
+| 4. Composición | `FundCompositionSyncService` → `FundCompositionService` | Filas en `fund_holdings` y `fund_allocations` |
 
 El scheduler (`FundSyncScheduler`) está desactivado por defecto (`SYNC_SCHEDULER_ENABLED=false`). En desarrollo local, el sync se dispara manualmente o se activa el cron en `.env`.
 

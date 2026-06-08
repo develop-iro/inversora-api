@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { AppConfigService } from '../../../shared/config/config.service';
 import { ExternalHttpError } from '../../../shared/http/external-http.error';
 import type {
+  IndexFundComposition,
   IndexFundDetail,
   IndexFundHistoricalPrice,
   IndexFundProfile,
@@ -15,6 +16,7 @@ import {
   FinancialModelingPrepFixtureService,
 } from './financial-modeling-prep.fixture.service';
 import {
+  buildIndexFundComposition,
   buildIndexFundDetail,
   normalizeIndexFundHistoricalPrices,
   normalizeIndexFundProfile,
@@ -22,9 +24,12 @@ import {
   normalizeIndexFundSearchResults,
 } from './financial-modeling-prep.normalizers';
 import {
+  fmpCountryWeightingSchema,
+  fmpFundHoldingSchema,
   fmpFundProfileSchema,
   fmpHistoricalPriceSchema,
   fmpSearchResultSchema,
+  fmpSectorWeightingSchema,
 } from './financial-modeling-prep.raw.schemas';
 import type {
   FmpHistoricalPrice,
@@ -91,6 +96,56 @@ export class FinancialModelingPrepProvider {
     const rawPrices = await this.loadHistoricalPrices(symbol, options);
 
     return normalizeIndexFundHistoricalPrices(rawPrices);
+  }
+
+  /**
+   * Retrieves normalized holdings and exposure weightings for an index fund.
+   *
+   * @param symbol - Fund ticker symbol.
+   * @returns Normalized composition snapshot with holdings and weightings.
+   */
+  async getIndexFundComposition(symbol: string): Promise<IndexFundComposition> {
+    const normalizedSymbol = symbol.trim().toUpperCase();
+
+    if (this.config.fmpUsesMocks) {
+      const [rawHoldings, rawSectorWeightings, rawCountryWeightings] =
+        await Promise.all([
+          this.getFixtureArray(
+            FMP_FIXTURE_FILES.etfHoldings,
+            fmpFundHoldingSchema,
+            'etf/holdings',
+          ),
+          this.getFixtureArray(
+            FMP_FIXTURE_FILES.etfSectorWeightings,
+            fmpSectorWeightingSchema,
+            'etf/sector-weightings',
+          ),
+          this.getFixtureArray(
+            FMP_FIXTURE_FILES.etfCountryWeightings,
+            fmpCountryWeightingSchema,
+            'etf/country-weightings',
+          ),
+        ]);
+
+      return buildIndexFundComposition(
+        rawHoldings,
+        rawSectorWeightings,
+        rawCountryWeightings,
+      );
+    }
+
+    const [rawHoldings, rawSectorWeightings, rawCountryWeightings] =
+      await Promise.all([
+        this.client.fetchEtfHoldings(normalizedSymbol),
+        this.client.fetchEtfSectorWeightings(normalizedSymbol),
+        this.client.fetchEtfCountryWeightings(normalizedSymbol),
+      ]);
+
+    return buildIndexFundComposition(
+      rawHoldings,
+      rawSectorWeightings,
+      rawCountryWeightings,
+    );
   }
 
   /**

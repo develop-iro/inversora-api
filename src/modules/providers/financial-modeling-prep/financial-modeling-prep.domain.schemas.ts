@@ -90,3 +90,36 @@ export const indexFundHoldingSchema = z.object({
 
 /** Inferred type for a normalized index fund holding. */
 export type IndexFundHolding = z.infer<typeof indexFundHoldingSchema>;
+
+/** Zod schema for a normalized ETF sector weighting. */
+export const indexFundSectorWeightingSchema = z.object({
+  sector: z.string().min(1),
+  weightPercentage: z.number().nonnegative(),
+});
+
+/** Inferred type for a normalized ETF sector weighting. */
+export type IndexFundSectorWeighting = z.infer<
+  typeof indexFundSectorWeightingSchema
+>;
+
+/** Zod schema for a normalized ETF country weighting. */
+export const indexFundCountryWeightingSchema = z.object({
+  country: z.string().min(1),
+  weightPercentage: z.number().nonnegative(),
+});
+
+/** Inferred type for a normalized ETF country weighting. */
+export type IndexFundCountryWeighting = z.infer<
+  typeof indexFundCountryWeightingSchema
+>;
+
+/** Zod schema for a normalized index fund composition snapshot. */
+export const indexFundCompositionSchema = z.object({
+  asOf: z.string(),
+  holdings: z.array(indexFundHoldingSchema),
+  sectorWeightings: z.array(indexFundSectorWeightingSchema),
+  countryWeightings: z.array(indexFundCountryWeightingSchema),
+});
+
+/** Inferred type for a normalized index fund composition snapshot. */
+export type IndexFundComposition = z.infer<typeof indexFundCompositionSchema>;

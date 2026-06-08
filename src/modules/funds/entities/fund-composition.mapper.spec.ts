@@ -2,8 +2,10 @@ import { FundAllocationCategory as PrismaFundAllocationCategory } from '@prisma/
 import { Decimal } from '@prisma/client/runtime/library';
 import { parseFundPriceDate } from './fund-price.mapper';
 import {
+  mapCountryWeightingsToUpsertInputs,
   mapFundAllocationCategoryToPrisma,
   mapIndexFundHoldingsToUpsertInputs,
+  mapSectorWeightingsToUpsertInputs,
   mapPrismaFundAllocationCategory,
   mapPrismaFundAllocationToFundAllocation,
   mapPrismaFundHoldingToFundHolding,
@@ -12,6 +14,40 @@ import {
 } from './fund-composition.mapper';
 
 describe('fund-composition.mapper', () => {
+  it('should map sector and country weightings to allocation upsert inputs', () => {
+    expect(
+      mapSectorWeightingsToUpsertInputs([
+        {
+          sector: 'Technology',
+          weightPercentage: 31.5,
+        },
+      ]),
+    ).toEqual([
+      {
+        category: 'sectorial',
+        label: 'Technology',
+        weight: 31.5,
+        sortOrder: 0,
+      },
+    ]);
+
+    expect(
+      mapCountryWeightingsToUpsertInputs([
+        {
+          country: 'United States',
+          weightPercentage: 97.5,
+        },
+      ]),
+    ).toEqual([
+      {
+        category: 'countries',
+        label: 'United States',
+        weight: 97.5,
+        sortOrder: 0,
+      },
+    ]);
+  });
+
   it('should map provider holdings to ranked upsert inputs', () => {
     expect(
       mapIndexFundHoldingsToUpsertInputs([

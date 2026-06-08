@@ -266,6 +266,30 @@ and sector/country allocations are persisted after price sync.
 
 ```
 
+### Git hooks (pre-commit)
+
+Tras `npm install`, [Husky](https://typicode.github.io/husky/) registra un hook
+`pre-commit` que ejecuta [lint-staged](https://github.com/lint-staged/lint-staged)
+sobre los archivos staged:
+
+- `eslint --fix`
+- `prettier --write`
+
+Esto evita fallos de formato o lint en CI por cambios locales no formateados.
+
+### Git hooks (pre-push)
+
+El hook `pre-push` ejecuta `npm run test:ci` (unit tests con coverage y umbral
+global del 90%). Se dispara antes de `git push`, no en cada commit, para no
+ralentizar el flujo local.
+
+Para saltar un hook puntualmente (solo si es imprescindible):
+
+```bash
+git commit --no-verify   # omite pre-commit
+git push --no-verify     # omite pre-push (coverage)
+```
+
 ### Checklist pre-PR
 
 ```bash

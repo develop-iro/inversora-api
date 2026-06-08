@@ -8,6 +8,7 @@ import { FundCompositionRepository } from './repositories/fund-composition.repos
 import { FundPricesRepository } from './repositories/fund-prices.repository';
 import { FundsRepository } from './repositories/funds.repository';
 import { FundCompositionService } from './services/fund-composition.service';
+import { FundCompositionSyncService } from './services/fund-composition-sync.service';
 import { FundDailySyncService } from './services/fund-daily-sync.service';
 import { FundPriceSyncService } from './services/fund-price-sync.service';
 import { FundPricesService } from './services/fund-prices.service';
@@ -27,6 +28,7 @@ import { FundsService } from './services/funds.service';
     FundPricesService,
     FundCompositionRepository,
     FundCompositionService,
+    FundCompositionSyncService,
     FundPriceSyncService,
     FundSyncService,
     FundDailySyncService,
@@ -37,6 +39,7 @@ import { FundsService } from './services/funds.service';
     FundsService,
     FundPricesService,
     FundCompositionService,
+    FundCompositionSyncService,
     FundPriceSyncService,
     FundSyncService,
     FundDailySyncService,

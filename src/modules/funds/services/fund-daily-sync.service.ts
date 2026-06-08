@@ -7,11 +7,12 @@ import type {
   FundDailySyncResult,
   FundDailySyncScoringResult,
 } from './fund-daily-sync.types';
+import { FundCompositionSyncService } from './fund-composition-sync.service';
 import { FundPriceSyncService } from './fund-price-sync.service';
 import { FundSyncService } from './fund-sync.service';
 
 /**
- * Orchestrates daily fund metadata and incremental price synchronization.
+ * Orchestrates daily fund metadata, price, and composition synchronization.
  */
 @Injectable()
 export class FundDailySyncService {
@@ -20,6 +21,7 @@ export class FundDailySyncService {
     private readonly fundsRepository: FundsRepository,
     private readonly fundSyncService: FundSyncService,
     private readonly fundPriceSyncService: FundPriceSyncService,
+    private readonly fundCompositionSyncService: FundCompositionSyncService,
     @Inject(forwardRef(() => ScoringService))
     private readonly scoringService: ScoringService,
   ) {}
@@ -89,6 +91,8 @@ export class FundDailySyncService {
       const priceResult = await this.fundPriceSyncService.syncFromFmp(symbol, {
         incremental: true,
       });
+      const compositionResult =
+        await this.fundCompositionSyncService.syncFromFmp(symbol);
 
       return {
         symbol,
@@ -96,6 +100,9 @@ export class FundDailySyncService {
         fundCreated: fundResult.created,
         pricesSynced: priceResult.pricesSynced,
         upToDate: priceResult.upToDate,
+        holdingsSynced: compositionResult.holdingsSynced,
+        allocationsSynced: compositionResult.allocationsSynced,
+        compositionAsOf: compositionResult.asOf,
       };
     } catch (error: unknown) {
       return {

@@ -10,6 +10,9 @@ export const FMP_FIXTURE_FILES = {
   etfInfo: 'etf-info.symbol-spy.json',
   historicalPriceEod:
     'historical-price-eod.symbol-spy.from-2024-01-01.to-2024-01-31.json',
+  etfHoldings: 'etf-holdings.symbol-spy.json',
+  etfSectorWeightings: 'etf-sector-weightings.symbol-spy.json',
+  etfCountryWeightings: 'etf-country-weightings.symbol-spy.json',
 } as const;
 
 /**
