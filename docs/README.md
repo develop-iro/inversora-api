@@ -10,6 +10,7 @@
 | Roles del ecosistema, capas internas y módulos NestJS | [roles-and-responsibilities.md](./roles-and-responsibilities.md) |
 | Infraestructura recomendada por fases (local → producción) | [infrastructure-phases.md](./infrastructure-phases.md) |
 | Buenas prácticas, ejemplos y anti-patrones de desarrollo | [development-guide.md](./development-guide.md) |
+| Integración FMP: endpoints, composición y fixtures | [fmp-provider.md](./fmp-provider.md) |
 | Algoritmo del Score Inversora (implementación actual) | [scoring-algorithm.md](./scoring-algorithm.md) |
 | Arranque rápido local (instalación, scripts, health check) | [README.md](../README.md) |
 | Contrato HTTP vivo (endpoints, DTOs) | Swagger en `http://localhost:3000/api/docs` |

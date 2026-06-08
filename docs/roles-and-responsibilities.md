@@ -9,7 +9,7 @@ Este documento describe los **roles** implicados en Inversora API en tres nivele
 | **App Inversora** | Presentación, navegación, favoritos locales, calculadora, avisos legales | Repositorio `invesora` |
 | **inversora-api** | Datos de fondos, sincronización, scoring, contrato HTTP | Este repositorio |
 | **PostgreSQL** | Persistencia de fondos, precios, holdings y allocations | Docker Compose local / DB gestionada en cloud |
-| **FMP Provider** | Fuente externa de datos de mercado (ETF info, precios EOD) | `src/modules/providers/financial-modeling-prep/` |
+| **FMP Provider** | Fuente externa de datos de mercado (metadata, precios EOD, holdings, exposición sectorial/geográfica) | `src/modules/providers/financial-modeling-prep/` |
 | **GitHub Actions** | CI/CD: lint, build, tests unitarios, integración y E2E | `.github/workflows/` |
 
 ### Reglas de interacción
