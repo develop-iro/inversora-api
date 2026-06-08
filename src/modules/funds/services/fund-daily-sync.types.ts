@@ -10,6 +10,12 @@ export interface FundDailySyncItemResult {
   pricesSynced?: number;
   /** Whether price sync found no new rows to import. */
   upToDate?: boolean;
+  /** Number of holding rows persisted during composition sync. */
+  holdingsSynced?: number;
+  /** Number of allocation rows persisted during composition sync. */
+  allocationsSynced?: number;
+  /** Snapshot ISO date persisted for composition data. */
+  compositionAsOf?: string;
   /** Error message when status is `failed`. */
   error?: string;
 }

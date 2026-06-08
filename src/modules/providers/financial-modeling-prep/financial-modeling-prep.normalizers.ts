@@ -1,25 +1,33 @@
 import {
+  indexFundCompositionSchema,
+  indexFundCountryWeightingSchema,
   indexFundDetailSchema,
   indexFundHistoricalPriceSchema,
   indexFundHoldingSchema,
   indexFundPriceSummarySchema,
   indexFundProfileSchema,
   indexFundSearchResultSchema,
+  indexFundSectorWeightingSchema,
 } from './financial-modeling-prep.domain.schemas';
 import type {
+  IndexFundComposition,
+  IndexFundCountryWeighting,
   IndexFundDetail,
   IndexFundHistoricalPrice,
   IndexFundHolding,
   IndexFundPriceSummary,
   IndexFundProfile,
   IndexFundSearchResult,
+  IndexFundSectorWeighting,
 } from './financial-modeling-prep.domain.schemas';
 import { isIndexFundSearchResult } from './index-fund.filters';
 import type {
+  FmpCountryWeighting,
   FmpFundHolding,
   FmpFundProfile,
   FmpHistoricalPrice,
   FmpSearchResult,
+  FmpSectorWeighting,
 } from './financial-modeling-prep.raw.schemas';
 
 /**
@@ -158,6 +166,136 @@ export function normalizeIndexFundHistoricalPrices(
       }),
     )
     .sort((left, right) => right.date.localeCompare(left.date));
+}
+
+/**
+ * Maps raw FMP fund holdings to normalized holding rows.
+ *
+ * @param holdings - Raw FMP fund holdings.
+ * @returns Normalized holdings sorted by weight descending.
+ */
+/**
+ * Resolves the snapshot date for a composition payload.
+ *
+ * @param rawHoldings - Raw provider holdings used to detect provider update dates.
+ * @returns ISO date string for the composition snapshot.
+ */
+export function resolveIndexFundCompositionAsOf(
+  rawHoldings: readonly FmpFundHolding[],
+): string {
+  const updatedDates = rawHoldings
+    .map((holding) => holding.updated)
+    .filter(
+      (value): value is string =>
+        typeof value === 'string' && value.trim().length > 0,
+    )
+    .sort();
+
+  if (updatedDates.length > 0) {
+    return updatedDates[updatedDates.length - 1]!;
+  }
+
+  return new Date().toISOString().slice(0, 10);
+}
+
+/**
+ * Maps a raw FMP weight field to a percentage in the 0-100 range.
+ *
+ * @param weighting - Raw sector or country weighting row.
+ * @returns Normalized percentage or `null` when no weight is available.
+ */
+function normalizeWeightPercentage(weighting: {
+  readonly weightPercentage?: number;
+  readonly weight?: number;
+}): number | null {
+  const rawWeight = weighting.weightPercentage ?? weighting.weight;
+
+  if (rawWeight === undefined || Number.isNaN(rawWeight)) {
+    return null;
+  }
+
+  if (rawWeight > 0 && rawWeight <= 1) {
+    return rawWeight * 100;
+  }
+
+  return rawWeight;
+}
+
+/**
+ * Maps raw FMP sector weightings to normalized sector rows.
+ *
+ * @param weightings - Raw FMP sector weightings.
+ * @returns Normalized sector weightings sorted by weight descending.
+ */
+export function normalizeIndexFundSectorWeightings(
+  weightings: readonly FmpSectorWeighting[],
+): IndexFundSectorWeighting[] {
+  return weightings
+    .map((weighting) => {
+      const weightPercentage = normalizeWeightPercentage(weighting);
+
+      if (weightPercentage === null || weightPercentage <= 0) {
+        return null;
+      }
+
+      return indexFundSectorWeightingSchema.parse({
+        sector: weighting.sector.trim(),
+        weightPercentage,
+      });
+    })
+    .filter(
+      (weighting): weighting is IndexFundSectorWeighting => weighting !== null,
+    )
+    .sort((left, right) => right.weightPercentage - left.weightPercentage);
+}
+
+/**
+ * Maps raw FMP country weightings to normalized country rows.
+ *
+ * @param weightings - Raw FMP country weightings.
+ * @returns Normalized country weightings sorted by weight descending.
+ */
+export function normalizeIndexFundCountryWeightings(
+  weightings: readonly FmpCountryWeighting[],
+): IndexFundCountryWeighting[] {
+  return weightings
+    .map((weighting) => {
+      const weightPercentage = normalizeWeightPercentage(weighting);
+
+      if (weightPercentage === null || weightPercentage <= 0) {
+        return null;
+      }
+
+      return indexFundCountryWeightingSchema.parse({
+        country: weighting.country.trim(),
+        weightPercentage,
+      });
+    })
+    .filter(
+      (weighting): weighting is IndexFundCountryWeighting => weighting !== null,
+    )
+    .sort((left, right) => right.weightPercentage - left.weightPercentage);
+}
+
+/**
+ * Builds a normalized composition snapshot from provider holdings and weightings.
+ *
+ * @param rawHoldings - Raw FMP fund holdings.
+ * @param sectorWeightings - Raw FMP sector weightings.
+ * @param countryWeightings - Raw FMP country weightings.
+ * @returns Normalized composition snapshot.
+ */
+export function buildIndexFundComposition(
+  rawHoldings: readonly FmpFundHolding[],
+  sectorWeightings: readonly FmpSectorWeighting[],
+  countryWeightings: readonly FmpCountryWeighting[],
+): IndexFundComposition {
+  return indexFundCompositionSchema.parse({
+    asOf: resolveIndexFundCompositionAsOf(rawHoldings),
+    holdings: normalizeIndexFundHoldings(rawHoldings),
+    sectorWeightings: normalizeIndexFundSectorWeightings(sectorWeightings),
+    countryWeightings: normalizeIndexFundCountryWeightings(countryWeightings),
+  });
 }
 
 /**

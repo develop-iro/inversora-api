@@ -12,6 +12,10 @@ import {
   fundHoldingSchema,
 } from './fund-composition.schema';
 import type {
+  IndexFundCountryWeighting,
+  IndexFundSectorWeighting,
+} from '../../providers/financial-modeling-prep/financial-modeling-prep.domain.schemas';
+import type {
   FundAllocation,
   FundAllocationCategory,
   FundHolding,
@@ -132,6 +136,40 @@ export function mapPrismaFundAllocationToFundAllocation(
     createdAt: record.createdAt,
     updatedAt: record.updatedAt,
   });
+}
+
+/**
+ * Maps normalized sector weightings to allocation upsert inputs.
+ *
+ * @param weightings - Normalized sector weightings sorted by weight descending.
+ * @returns Allocation upsert inputs for sector exposure.
+ */
+export function mapSectorWeightingsToUpsertInputs(
+  weightings: readonly IndexFundSectorWeighting[],
+): UpsertFundAllocationInput[] {
+  return [...weightings].map((weighting, index) => ({
+    category: 'sectorial',
+    label: weighting.sector,
+    weight: weighting.weightPercentage,
+    sortOrder: index,
+  }));
+}
+
+/**
+ * Maps normalized country weightings to allocation upsert inputs.
+ *
+ * @param weightings - Normalized country weightings sorted by weight descending.
+ * @returns Allocation upsert inputs for country exposure.
+ */
+export function mapCountryWeightingsToUpsertInputs(
+  weightings: readonly IndexFundCountryWeighting[],
+): UpsertFundAllocationInput[] {
+  return [...weightings].map((weighting, index) => ({
+    category: 'countries',
+    label: weighting.country,
+    weight: weighting.weightPercentage,
+    sortOrder: index,
+  }));
 }
 
 /**

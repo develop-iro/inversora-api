@@ -1,6 +1,9 @@
 import type { TestingModule } from '@nestjs/testing';
+import { FundCompositionSyncService } from '../../src/modules/funds/services/fund-composition-sync.service';
+import { FundDailySyncService } from '../../src/modules/funds/services/fund-daily-sync.service';
 import { FundPriceSyncService } from '../../src/modules/funds/services/fund-price-sync.service';
 import { FundSyncService } from '../../src/modules/funds/services/fund-sync.service';
+import { FundsService } from '../../src/modules/funds/services/funds.service';
 import { FundsRepository } from '../../src/modules/funds/repositories/funds.repository';
 import { PrismaService } from '../../src/shared/database/prisma.service';
 import {
@@ -15,6 +18,9 @@ describe('Fund sync pipeline (integration)', () => {
   let prisma: PrismaService;
   let fundSyncService: FundSyncService;
   let fundPriceSyncService: FundPriceSyncService;
+  let fundCompositionSyncService: FundCompositionSyncService;
+  let fundDailySyncService: FundDailySyncService;
+  let fundsService: FundsService;
   let fundsRepository: FundsRepository;
   let skipSuite = false;
 
@@ -32,6 +38,9 @@ describe('Fund sync pipeline (integration)', () => {
     prisma = moduleRef.get(PrismaService);
     fundSyncService = moduleRef.get(FundSyncService);
     fundPriceSyncService = moduleRef.get(FundPriceSyncService);
+    fundCompositionSyncService = moduleRef.get(FundCompositionSyncService);
+    fundDailySyncService = moduleRef.get(FundDailySyncService);
+    fundsService = moduleRef.get(FundsService);
     fundsRepository = moduleRef.get(FundsRepository);
     await prisma.onModuleInit();
   });
@@ -119,5 +128,73 @@ describe('Fund sync pipeline (integration)', () => {
 
     expect(secondSync.upToDate).toBe(true);
     expect(secondSync.pricesSynced).toBe(0);
+  });
+
+  it('should sync fund composition and expose holdings and exposure endpoints', async () => {
+    if (skipSuite) {
+      return;
+    }
+
+    const metadata = await fundSyncService.syncFromFmp(INTEGRATION_FUND_SYMBOL);
+    const composition = await fundCompositionSyncService.syncFromFmp(
+      INTEGRATION_FUND_SYMBOL,
+    );
+
+    expect(composition.holdingsSynced).toBeGreaterThan(0);
+    expect(composition.allocationsSynced).toBeGreaterThan(0);
+    expect(composition.asOf).toBe('2024-01-31');
+
+    const holdings = await fundsService.getFundHoldings(metadata.fund.id, {});
+    const sectorExposure = await fundsService.getFundSectorExposure(
+      metadata.fund.id,
+      {},
+    );
+    const countryExposure = await fundsService.getFundCountryExposure(
+      metadata.fund.id,
+      {},
+    );
+
+    expect(holdings.asOf).toBe('2024-01-31');
+    expect(holdings.holdings.length).toBe(composition.holdingsSynced);
+    expect(sectorExposure.asOf).toBe('2024-01-31');
+    expect(sectorExposure.sectors.length).toBeGreaterThan(0);
+    expect(countryExposure.asOf).toBe('2024-01-31');
+    expect(countryExposure.countries.length).toBeGreaterThan(0);
+  });
+
+  it('should persist composition during the daily sync pipeline', async () => {
+    if (skipSuite) {
+      return;
+    }
+
+    await fundSyncService.syncFromFmp(INTEGRATION_FUND_SYMBOL, {
+      includePrices: true,
+      historyFrom: '2024-01-01',
+      historyTo: '2024-01-31',
+      incrementalPrices: false,
+    });
+
+    const result = await fundDailySyncService.runDailySync();
+    const fund = await fundsRepository.findBySymbolAndProvider(
+      INTEGRATION_FUND_SYMBOL,
+      'financial-modeling-prep',
+    );
+
+    expect(result.succeeded).toBeGreaterThan(0);
+    expect(
+      result.results.find((item) => item.symbol === INTEGRATION_FUND_SYMBOL),
+    ).toMatchObject({
+      symbol: INTEGRATION_FUND_SYMBOL,
+      status: 'success',
+      holdingsSynced: 3,
+      allocationsSynced: 6,
+      compositionAsOf: '2024-01-31',
+    });
+
+    expect(fund).not.toBeNull();
+
+    const holdings = await fundsService.getFundHoldings(fund!.id, {});
+
+    expect(holdings.holdings.length).toBe(3);
   });
 });

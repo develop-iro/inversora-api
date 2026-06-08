@@ -74,3 +74,28 @@ export const fmpFundHoldingSchema = z
 
 /** Inferred type for a raw fund holding. */
 export type FmpFundHolding = z.infer<typeof fmpFundHoldingSchema>;
+
+/** Zod schema for a raw ETF sector weighting returned by FMP. */
+export const fmpSectorWeightingSchema = z
+  .object({
+    symbol: z.string().optional(),
+    sector: z.string(),
+    weightPercentage: z.coerce.number().optional(),
+    weight: z.coerce.number().optional(),
+  })
+  .passthrough();
+
+/** Inferred type for a raw ETF sector weighting. */
+export type FmpSectorWeighting = z.infer<typeof fmpSectorWeightingSchema>;
+
+/** Zod schema for a raw ETF country weighting returned by FMP. */
+export const fmpCountryWeightingSchema = z
+  .object({
+    country: z.string(),
+    weightPercentage: z.coerce.number().optional(),
+    weight: z.coerce.number().optional(),
+  })
+  .passthrough();
+
+/** Inferred type for a raw ETF country weighting. */
+export type FmpCountryWeighting = z.infer<typeof fmpCountryWeightingSchema>;

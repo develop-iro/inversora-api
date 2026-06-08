@@ -112,8 +112,8 @@ Si falta un dato relevante, el factor recibe una puntuación conservadora (40% d
 
 ## Cálculo automático
 
-Tras sincronizar metadatos y precios en `FundDailySyncService`, se ejecuta
-`recalculateAllScores()`:
+Tras sincronizar metadatos, precios y composición en `FundDailySyncService`, se
+ejecuta `recalculateAllScores()`:
 
 1. Carga todos los fondos persistidos.
 2. Deriva métricas de precios, holdings y sectores.

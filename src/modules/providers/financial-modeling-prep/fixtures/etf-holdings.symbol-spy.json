@@ -1,0 +1,26 @@
+[
+  {
+    "asset": "AAPL",
+    "name": "Apple Inc.",
+    "isin": "US0378331005",
+    "weightPercentage": 7.12,
+    "marketValue": 45000000000,
+    "sharesNumber": 250000000,
+    "updated": "2024-01-31"
+  },
+  {
+    "asset": "MSFT",
+    "name": "Microsoft Corporation",
+    "isin": "US5949181045",
+    "weightPercentage": 6.8,
+    "marketValue": 43000000000,
+    "sharesNumber": 120000000,
+    "updated": "2024-01-31"
+  },
+  {
+    "asset": "NVDA",
+    "name": "NVIDIA Corporation",
+    "weightPercentage": 5.4,
+    "updated": "2024-01-31"
+  }
+]

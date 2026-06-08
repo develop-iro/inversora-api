@@ -1,10 +1,13 @@
 import {
   buildIndexFundDetail,
   buildIndexFundPriceSummary,
+  buildIndexFundComposition,
+  normalizeIndexFundCountryWeightings,
   normalizeIndexFundHistoricalPrices,
   normalizeIndexFundHoldings,
   normalizeIndexFundProfile,
   normalizeIndexFundSearchResults,
+  normalizeIndexFundSectorWeightings,
 } from './financial-modeling-prep.normalizers';
 import { isIndexFundSearchResult } from './index-fund.filters';
 
@@ -146,6 +149,100 @@ describe('FinancialModelingPrep normalizers', () => {
         latestClose: 482.88,
       },
       history,
+    });
+  });
+
+  it('should normalize sector and country weightings', () => {
+    expect(
+      normalizeIndexFundSectorWeightings([
+        {
+          sector: 'Healthcare',
+          weightPercentage: 12.8,
+        },
+        {
+          sector: 'Technology',
+          weight: 0.315,
+        },
+      ]),
+    ).toEqual([
+      {
+        sector: 'Technology',
+        weightPercentage: 31.5,
+      },
+      {
+        sector: 'Healthcare',
+        weightPercentage: 12.8,
+      },
+    ]);
+
+    expect(
+      normalizeIndexFundCountryWeightings([
+        {
+          country: 'United States',
+          weightPercentage: 97.5,
+        },
+        {
+          country: 'Ireland',
+          weight: 0.012,
+        },
+      ]),
+    ).toEqual([
+      {
+        country: 'United States',
+        weightPercentage: 97.5,
+      },
+      {
+        country: 'Ireland',
+        weightPercentage: 1.2,
+      },
+    ]);
+  });
+
+  it('should build a normalized composition snapshot', () => {
+    expect(
+      buildIndexFundComposition(
+        [
+          {
+            asset: 'AAPL',
+            name: 'Apple Inc.',
+            weightPercentage: 7.12,
+            updated: '2024-01-31',
+          },
+        ],
+        [
+          {
+            sector: 'Technology',
+            weightPercentage: 31.5,
+          },
+        ],
+        [
+          {
+            country: 'United States',
+            weightPercentage: 97.5,
+          },
+        ],
+      ),
+    ).toEqual({
+      asOf: '2024-01-31',
+      holdings: [
+        {
+          asset: 'AAPL',
+          name: 'Apple Inc.',
+          weightPercentage: 7.12,
+        },
+      ],
+      sectorWeightings: [
+        {
+          sector: 'Technology',
+          weightPercentage: 31.5,
+        },
+      ],
+      countryWeightings: [
+        {
+          country: 'United States',
+          weightPercentage: 97.5,
+        },
+      ],
     });
   });
 

@@ -13,14 +13,20 @@ import {
   FinancialModelingPrepFixtureService,
 } from './financial-modeling-prep.fixture.service';
 import {
+  fmpCountryWeightingSchema,
+  fmpFundHoldingSchema,
   fmpFundProfileSchema,
   fmpHistoricalPriceSchema,
   fmpSearchResultSchema,
+  fmpSectorWeightingSchema,
 } from './financial-modeling-prep.raw.schemas';
 import type {
+  FmpCountryWeighting,
+  FmpFundHolding,
   FmpFundProfile,
   FmpHistoricalPrice,
   FmpSearchResult,
+  FmpSectorWeighting,
 } from './financial-modeling-prep.raw.schemas';
 import type { IndexFundHistoryOptions } from './financial-modeling-prep.types';
 
@@ -80,6 +86,56 @@ export class FinancialModelingPrepClient {
       fmpFundProfileSchema,
       'etf/info',
       FMP_FIXTURE_FILES.etfInfo,
+    );
+  }
+
+  /**
+   * Fetches raw ETF or mutual fund holdings.
+   *
+   * @param symbol - Fund ticker symbol.
+   * @returns Raw FMP holding rows.
+   */
+  async fetchEtfHoldings(symbol: string): Promise<FmpFundHolding[]> {
+    return this.fetchArray(
+      '/stable/etf/holdings',
+      { symbol },
+      fmpFundHoldingSchema,
+      'etf/holdings',
+      FMP_FIXTURE_FILES.etfHoldings,
+    );
+  }
+
+  /**
+   * Fetches raw ETF sector weightings.
+   *
+   * @param symbol - Fund ticker symbol.
+   * @returns Raw FMP sector weighting rows.
+   */
+  async fetchEtfSectorWeightings(symbol: string): Promise<FmpSectorWeighting[]> {
+    return this.fetchArray(
+      '/stable/etf/sector-weightings',
+      { symbol },
+      fmpSectorWeightingSchema,
+      'etf/sector-weightings',
+      FMP_FIXTURE_FILES.etfSectorWeightings,
+    );
+  }
+
+  /**
+   * Fetches raw ETF country weightings.
+   *
+   * @param symbol - Fund ticker symbol.
+   * @returns Raw FMP country weighting rows.
+   */
+  async fetchEtfCountryWeightings(
+    symbol: string,
+  ): Promise<FmpCountryWeighting[]> {
+    return this.fetchArray(
+      '/stable/etf/country-weightings',
+      { symbol },
+      fmpCountryWeightingSchema,
+      'etf/country-weightings',
+      FMP_FIXTURE_FILES.etfCountryWeightings,
     );
   }
 

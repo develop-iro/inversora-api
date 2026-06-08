@@ -1,0 +1,14 @@
+[
+  {
+    "country": "United States",
+    "weightPercentage": 97.5
+  },
+  {
+    "country": "Ireland",
+    "weightPercentage": 1.2
+  },
+  {
+    "country": "United Kingdom",
+    "weightPercentage": 0.8
+  }
+]

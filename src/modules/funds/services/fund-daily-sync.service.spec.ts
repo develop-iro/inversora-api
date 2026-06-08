@@ -4,6 +4,7 @@ import { AppConfigService } from '../../../shared/config/config.service';
 import { validateEnv } from '../../../shared/config/env.schema';
 import { FundsRepository } from '../repositories/funds.repository';
 import { ScoringService } from '../../scoring/services/scoring.service';
+import { FundCompositionSyncService } from './fund-composition-sync.service';
 import { FundDailySyncService } from './fund-daily-sync.service';
 import { FundPriceSyncService } from './fund-price-sync.service';
 import { FundSyncService } from './fund-sync.service';
@@ -25,6 +26,7 @@ describe('FundDailySyncService', () => {
   let service: FundDailySyncService;
   let fundSyncService: { syncFromFmp: jest.Mock };
   let fundPriceSyncService: { syncFromFmp: jest.Mock };
+  let fundCompositionSyncService: { syncFromFmp: jest.Mock };
   let fundsRepository: { findAll: jest.Mock };
   let scoringService: { recalculateAllScores: jest.Mock };
 
@@ -38,6 +40,13 @@ describe('FundDailySyncService', () => {
       syncFromFmp: jest.fn().mockResolvedValue({
         pricesSynced: 1,
         upToDate: false,
+      }),
+    };
+    fundCompositionSyncService = {
+      syncFromFmp: jest.fn().mockResolvedValue({
+        asOf: '2024-01-31',
+        holdingsSynced: 3,
+        allocationsSynced: 6,
       }),
     };
     fundsRepository = {
@@ -75,6 +84,10 @@ describe('FundDailySyncService', () => {
           useValue: fundPriceSyncService,
         },
         {
+          provide: FundCompositionSyncService,
+          useValue: fundCompositionSyncService,
+        },
+        {
           provide: ScoringService,
           useValue: scoringService,
         },
@@ -96,6 +109,9 @@ describe('FundDailySyncService', () => {
           fundCreated: false,
           pricesSynced: 1,
           upToDate: false,
+          holdingsSynced: 3,
+          allocationsSynced: 6,
+          compositionAsOf: '2024-01-31',
         },
         {
           symbol: 'QQQ',
@@ -103,6 +119,9 @@ describe('FundDailySyncService', () => {
           fundCreated: false,
           pricesSynced: 1,
           upToDate: false,
+          holdingsSynced: 3,
+          allocationsSynced: 6,
+          compositionAsOf: '2024-01-31',
         },
       ],
       scoring: {
@@ -117,6 +136,14 @@ describe('FundDailySyncService', () => {
     expect(fundPriceSyncService.syncFromFmp).toHaveBeenCalledWith('SPY', {
       incremental: true,
     });
+    expect(fundCompositionSyncService.syncFromFmp).toHaveBeenNthCalledWith(
+      1,
+      'SPY',
+    );
+    expect(fundCompositionSyncService.syncFromFmp).toHaveBeenNthCalledWith(
+      2,
+      'QQQ',
+    );
     expect(fundsRepository.findAll).not.toHaveBeenCalled();
     expect(scoringService.recalculateAllScores).toHaveBeenCalledTimes(1);
   });
@@ -150,6 +177,10 @@ describe('FundDailySyncService', () => {
         {
           provide: FundPriceSyncService,
           useValue: fundPriceSyncService,
+        },
+        {
+          provide: FundCompositionSyncService,
+          useValue: fundCompositionSyncService,
         },
         {
           provide: ScoringService,
@@ -200,6 +231,9 @@ describe('FundDailySyncService', () => {
           fundCreated: true,
           pricesSynced: 1,
           upToDate: false,
+          holdingsSynced: 3,
+          allocationsSynced: 6,
+          compositionAsOf: '2024-01-31',
         },
       ],
       scoring: {
@@ -278,6 +312,10 @@ describe('FundDailySyncService', () => {
         {
           provide: FundPriceSyncService,
           useValue: fundPriceSyncService,
+        },
+        {
+          provide: FundCompositionSyncService,
+          useValue: fundCompositionSyncService,
         },
         {
           provide: ScoringService,

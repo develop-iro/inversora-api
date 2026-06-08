@@ -1,0 +1,17 @@
+[
+  {
+    "symbol": "SPY",
+    "sector": "Technology",
+    "weightPercentage": 31.5
+  },
+  {
+    "symbol": "SPY",
+    "sector": "Financial Services",
+    "weightPercentage": 13.2
+  },
+  {
+    "symbol": "SPY",
+    "sector": "Healthcare",
+    "weightPercentage": 12.8
+  }
+]
