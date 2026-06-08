@@ -111,7 +111,9 @@ export class FinancialModelingPrepClient {
    * @param symbol - Fund ticker symbol.
    * @returns Raw FMP sector weighting rows.
    */
-  async fetchEtfSectorWeightings(symbol: string): Promise<FmpSectorWeighting[]> {
+  async fetchEtfSectorWeightings(
+    symbol: string,
+  ): Promise<FmpSectorWeighting[]> {
     return this.fetchArray(
       '/stable/etf/sector-weightings',
       { symbol },

@@ -67,7 +67,9 @@ describe('FundCompositionSyncService', () => {
       ],
     }).compile();
 
-    service = module.get<FundCompositionSyncService>(FundCompositionSyncService);
+    service = module.get<FundCompositionSyncService>(
+      FundCompositionSyncService,
+    );
   });
 
   it('should import composition from FMP and persist a snapshot', async () => {

@@ -192,7 +192,7 @@ export function resolveIndexFundCompositionAsOf(
     .sort();
 
   if (updatedDates.length > 0) {
-    return updatedDates[updatedDates.length - 1]!;
+    return updatedDates[updatedDates.length - 1];
   }
 
   return new Date().toISOString().slice(0, 10);
