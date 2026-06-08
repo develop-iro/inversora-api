@@ -22,6 +22,7 @@ describe('setupSwagger', () => {
       setTitle: jest.fn().mockReturnThis(),
       setDescription: jest.fn().mockReturnThis(),
       setVersion: jest.fn().mockReturnThis(),
+      addApiKey: jest.fn().mockReturnThis(),
       build: jest.fn().mockReturnValue({ openapi: '3.0.0' }),
     };
     (DocumentBuilder as jest.Mock).mockImplementation(() => builder);

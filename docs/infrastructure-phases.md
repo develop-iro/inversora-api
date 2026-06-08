@@ -53,7 +53,9 @@ npm run start:dev
 | `FMP_DATA_SOURCE` | `mock` | Usa fixtures locales sin cuota de API |
 | `FMP_SAVE_FIXTURES` | `false` | No sobrescribir fixtures accidentalmente |
 | `SYNC_SCHEDULER_ENABLED` | `false` | Evitar sync automático en desarrollo |
-| `SYNC_FUND_SYMBOLS` | `SPY,QQQ` (opcional) | Símbolos a sincronizar manualmente |
+| `SYNC_FUND_SYMBOLS` | `SPY,QQQ` (opcional) | Símbolos por defecto para sync manual o scheduler |
+| `ADMIN_SYNC_ENABLED` | `true` | Habilita `POST /admin/sync` en local |
+| `ADMIN_API_KEY` | Clave local de al menos 8 caracteres | Autenticación del endpoint admin |
 
 Referencia completa en [`.env.example`](../.env.example) y validación en [`src/shared/config/env.schema.ts`](../src/shared/config/env.schema.ts).
 

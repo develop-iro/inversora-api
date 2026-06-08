@@ -45,3 +45,59 @@ export interface FundDailySyncResult {
   /** Automatic scoring outcome after metadata and price sync. */
   scoring: FundDailySyncScoringResult;
 }
+
+/** Selectable pipeline steps for a manual synchronization run. */
+export interface ManualSyncSteps {
+  /** Sync fund metadata from the provider. */
+  metadata?: boolean;
+  /** Sync end-of-day price history. */
+  prices?: boolean;
+  /** Sync holdings and sector/country exposure allocations. */
+  composition?: boolean;
+  /** Recalculate and persist Inversora scores. */
+  scoring?: boolean;
+}
+
+/** Resolved pipeline steps with explicit booleans for each stage. */
+export interface ResolvedManualSyncSteps {
+  /** Whether fund metadata sync runs. */
+  metadata: boolean;
+  /** Whether end-of-day price sync runs. */
+  prices: boolean;
+  /** Whether composition sync runs. */
+  composition: boolean;
+  /** Whether scoring recalculation runs. */
+  scoring: boolean;
+}
+
+/** Options for a manual synchronization run triggered via admin API or CLI. */
+export interface ManualSyncOptions {
+  /** Optional symbol override; defaults to env config or persisted funds. */
+  symbols?: readonly string[];
+  /** Optional subset of pipeline steps to execute. */
+  steps?: ManualSyncSteps;
+  /** When true, resumes price sync from the latest persisted date. */
+  incrementalPrices?: boolean;
+  /** Optional lower bound for provider historical price requests. */
+  historyFrom?: string;
+  /** Optional upper bound for provider historical price requests. */
+  historyTo?: string;
+}
+
+/** Execution metadata attached to manual synchronization responses. */
+export interface ManualSyncRunMeta {
+  /** Unique identifier for correlating logs and responses. */
+  runId: string;
+  /** ISO timestamp when the run started. */
+  startedAt: string;
+  /** ISO timestamp when the run finished. */
+  finishedAt: string;
+  /** Total elapsed time in milliseconds. */
+  durationMs: number;
+  /** Pipeline steps executed during the run. */
+  steps: ResolvedManualSyncSteps;
+}
+
+/** Aggregate result for a manual synchronization run. */
+export interface ManualSyncResult
+  extends FundDailySyncResult, ManualSyncRunMeta {}

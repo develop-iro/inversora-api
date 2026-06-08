@@ -50,6 +50,7 @@ La app móvil/web vive en el repositorio hermano `invesora`. Documentación de p
 | `providers` | Integración con Financial Modeling Prep (FMP) |
 | `funds` | Catálogo, sync, precios, composición y exposición |
 | `scoring` | Cálculo y persistencia del Score Inversora |
+| `admin` | Sync manual para desarrollo y QA (`POST /admin/sync`, CLI `npm run sync:run`) |
 | `shared` | Configuración, Prisma, cliente HTTP, Swagger |
 
 ## Mantenimiento

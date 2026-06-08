@@ -55,6 +55,8 @@ describe('AppConfigService', () => {
     expect(service.syncSchedulerEnabled).toBe(false);
     expect(service.syncCronExpression).toBe('0 6 * * *');
     expect(service.syncFundSymbols).toEqual([]);
+    expect(service.adminSyncEnabled).toBe(false);
+    expect(service.adminApiKey).toBeUndefined();
   });
 
   it('should expose production mode from node env', async () => {
