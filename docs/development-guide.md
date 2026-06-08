@@ -140,6 +140,8 @@ financial-modeling-prep/
 - Validar respuestas externas con Zod antes de persistir.
 - Documentar endpoints FMP usados y límites de cuota en el PR.
 
+Referencia detallada de endpoints FMP, ejemplos de respuesta y flujo de composición: [fmp-provider.md](./fmp-provider.md).
+
 ---
 
 ## Validación de datos

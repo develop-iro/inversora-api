@@ -169,12 +169,6 @@ export function normalizeIndexFundHistoricalPrices(
 }
 
 /**
- * Maps raw FMP fund holdings to normalized holding rows.
- *
- * @param holdings - Raw FMP fund holdings.
- * @returns Normalized holdings sorted by weight descending.
- */
-/**
  * Resolves the snapshot date for a composition payload.
  *
  * @param rawHoldings - Raw provider holdings used to detect provider update dates.

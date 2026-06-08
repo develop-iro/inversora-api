@@ -36,6 +36,18 @@ const captures = [
       'historical-price-eod.symbol-spy.from-2024-01-01.to-2024-01-31.json',
     url: `${baseUrl}/stable/historical-price-eod/full?symbol=SPY&from=2024-01-01&to=2024-01-31&apikey=${apiKey}`,
   },
+  {
+    fileName: 'etf-holdings.symbol-spy.json',
+    url: `${baseUrl}/stable/etf/holdings?symbol=SPY&apikey=${apiKey}`,
+  },
+  {
+    fileName: 'etf-sector-weightings.symbol-spy.json',
+    url: `${baseUrl}/stable/etf/sector-weightings?symbol=SPY&apikey=${apiKey}`,
+  },
+  {
+    fileName: 'etf-country-weightings.symbol-spy.json',
+    url: `${baseUrl}/stable/etf/country-weightings?symbol=SPY&apikey=${apiKey}`,
+  },
 ];
 
 /**
@@ -76,5 +88,6 @@ console.log(
     'API calls used:',
     savedCount,
     'Paid-only endpoint etf/info is not captured by this script.',
+    'Composition endpoints (holdings, sector-weightings, country-weightings) are included.',
   ].join(' '),
 );
