@@ -1,5 +1,9 @@
 import { z } from 'zod';
-import { fundCategorySchema, fundProviderSchema, fundSchema } from './fund.schema';
+import {
+  fundCategorySchema,
+  fundProviderSchema,
+  fundSchema,
+} from './fund.schema';
 
 /** Supported sort fields for fund list queries. */
 export const fundListSortFieldSchema = z.enum([

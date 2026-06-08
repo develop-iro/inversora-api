@@ -225,7 +225,9 @@ describe('FundDailySyncService', () => {
   });
 
   it('should stringify non-error scoring failures', async () => {
-    scoringService.recalculateAllScores.mockRejectedValueOnce('Scoring unavailable');
+    scoringService.recalculateAllScores.mockRejectedValueOnce(
+      'Scoring unavailable',
+    );
 
     await expect(service.runDailySync()).resolves.toMatchObject({
       scoring: {

@@ -8,7 +8,10 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { FundListItemResponseDto, FundListResponseDto } from '../dto/fund-list-response.dto';
+import {
+  FundListItemResponseDto,
+  FundListResponseDto,
+} from '../dto/fund-list-response.dto';
 import { FundChartResponseDto } from '../dto/fund-chart-response.dto';
 import { FundCountryExposureResponseDto } from '../dto/fund-country-exposure-response.dto';
 import { FundHoldingsResponseDto } from '../dto/fund-holdings-response.dto';
@@ -76,7 +79,9 @@ export class FundsController {
   @ApiQuery({ name: 'maxScore', required: false, type: Number, example: 100 })
   @ApiQuery({ name: 'minTer', required: false, type: Number, example: 0.05 })
   @ApiQuery({ name: 'maxTer', required: false, type: Number, example: 0.5 })
-  listFunds(@Query() query: Record<string, unknown>): Promise<FundListResponse> {
+  listFunds(
+    @Query() query: Record<string, unknown>,
+  ): Promise<FundListResponse> {
     return this.fundsService.listFunds(query);
   }
 
@@ -91,14 +96,17 @@ export class FundsController {
     name: 'asOf',
     required: false,
     type: String,
-    description: 'Snapshot date (YYYY-MM-DD). Latest snapshot is used when omitted.',
+    description:
+      'Snapshot date (YYYY-MM-DD). Latest snapshot is used when omitted.',
     example: '2024-01-31',
   })
   @ApiOkResponse({
     description: 'Sector exposure for the requested snapshot.',
     type: FundSectorExposureResponseDto,
   })
-  @ApiBadRequestResponse({ description: 'Invalid fund id or query parameters.' })
+  @ApiBadRequestResponse({
+    description: 'Invalid fund id or query parameters.',
+  })
   @ApiNotFoundResponse({ description: 'Fund not found.' })
   getFundSectorExposure(
     @Param('id') id: string,
@@ -118,14 +126,18 @@ export class FundsController {
     name: 'asOf',
     required: false,
     type: String,
-    description: 'Snapshot date (YYYY-MM-DD). Latest snapshot is used when omitted.',
+    description:
+      'Snapshot date (YYYY-MM-DD). Latest snapshot is used when omitted.',
     example: '2024-01-31',
   })
   @ApiOkResponse({
-    description: 'Country-level geographic exposure for the requested snapshot.',
+    description:
+      'Country-level geographic exposure for the requested snapshot.',
     type: FundCountryExposureResponseDto,
   })
-  @ApiBadRequestResponse({ description: 'Invalid fund id or query parameters.' })
+  @ApiBadRequestResponse({
+    description: 'Invalid fund id or query parameters.',
+  })
   @ApiNotFoundResponse({ description: 'Fund not found.' })
   getFundCountryExposure(
     @Param('id') id: string,
@@ -145,14 +157,17 @@ export class FundsController {
     name: 'asOf',
     required: false,
     type: String,
-    description: 'Snapshot date (YYYY-MM-DD). Latest snapshot is used when omitted.',
+    description:
+      'Snapshot date (YYYY-MM-DD). Latest snapshot is used when omitted.',
     example: '2024-01-31',
   })
   @ApiOkResponse({
     description: 'Ranked fund holdings for the requested snapshot.',
     type: FundHoldingsResponseDto,
   })
-  @ApiBadRequestResponse({ description: 'Invalid fund id or query parameters.' })
+  @ApiBadRequestResponse({
+    description: 'Invalid fund id or query parameters.',
+  })
   @ApiNotFoundResponse({ description: 'Fund not found.' })
   getFundHoldings(
     @Param('id') id: string,
@@ -178,7 +193,9 @@ export class FundsController {
     description: 'Indexed historical chart series.',
     type: FundChartResponseDto,
   })
-  @ApiBadRequestResponse({ description: 'Invalid fund id or query parameters.' })
+  @ApiBadRequestResponse({
+    description: 'Invalid fund id or query parameters.',
+  })
   @ApiNotFoundResponse({ description: 'Fund not found.' })
   getFundChart(
     @Param('id') id: string,

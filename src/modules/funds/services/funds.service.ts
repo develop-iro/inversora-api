@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { z } from 'zod';
 import {
   buildFundListMeta,
@@ -9,16 +13,17 @@ import {
   fundListQuerySchema,
   fundListResponseSchema,
 } from '../entities/fund-list.schema';
-import type { FundListQuery, FundListResponse } from '../entities/fund-list.schema';
+import type {
+  FundListQuery,
+  FundListResponse,
+} from '../entities/fund-list.schema';
 import { fundIdParamSchema, fundSchema } from '../entities/fund.schema';
 import type { Fund } from '../entities/fund.schema';
 import {
   buildFundChartResponse,
   resolveChartDateRange,
 } from '../entities/fund-chart.mapper';
-import {
-  fundChartQuerySchema,
-} from '../entities/fund-chart.schema';
+import { fundChartQuerySchema } from '../entities/fund-chart.schema';
 import type { FundChartResponse } from '../entities/fund-chart.schema';
 import { buildFundHoldingsResponse } from '../entities/fund-holdings.mapper';
 import { fundHoldingsQuerySchema } from '../entities/fund-holdings.schema';
@@ -53,7 +58,9 @@ export class FundsService {
    * @param rawQuery - Raw HTTP query parameters.
    * @returns Paginated fund list response.
    */
-  async listFunds(rawQuery: Record<string, unknown>): Promise<FundListResponse> {
+  async listFunds(
+    rawQuery: Record<string, unknown>,
+  ): Promise<FundListResponse> {
     const query = this.parseListQuery(rawQuery);
     const where = buildFundListWhereInput(query);
     const orderBy = buildFundListOrderByInput(query.sortBy, query.sortOrder);

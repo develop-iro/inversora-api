@@ -190,9 +190,7 @@ export class FinancialModelingPrepProvider {
         )
       : await this.client.searchBySymbol(symbol);
 
-    return rawResults.find(
-      (result) => result.symbol.toUpperCase() === symbol,
-    );
+    return rawResults.find((result) => result.symbol.toUpperCase() === symbol);
   }
 
   private async loadHistoricalPrices(

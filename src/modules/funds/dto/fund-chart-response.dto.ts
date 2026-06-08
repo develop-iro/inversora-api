@@ -10,7 +10,8 @@ export class FundChartPointResponseDto {
 
   @ApiProperty({
     example: 102.35,
-    description: 'Indexed level where 100 equals the first point in the window.',
+    description:
+      'Indexed level where 100 equals the first point in the window.',
   })
   value!: number;
 }

@@ -29,16 +29,18 @@ import type {
  * @returns Benchmark label or `undefined`.
  */
 export function extractBenchmarkFromName(name: string): string | undefined {
-  const patterns: readonly { readonly pattern: RegExp; readonly label: string }[] =
-    [
-      { pattern: /\bs&p\s*500\b/i, label: 'S&P 500' },
-      { pattern: /\btotal stock market\b/i, label: 'US Total Stock Market' },
-      { pattern: /\bmsci\b/i, label: 'MSCI' },
-      { pattern: /\brussell\b/i, label: 'Russell' },
-      { pattern: /\bnasdaq\s*100\b/i, label: 'Nasdaq 100' },
-      { pattern: /\bftse\b/i, label: 'FTSE' },
-      { pattern: /\bindex\b/i, label: 'Broad Market Index' },
-    ];
+  const patterns: readonly {
+    readonly pattern: RegExp;
+    readonly label: string;
+  }[] = [
+    { pattern: /\bs&p\s*500\b/i, label: 'S&P 500' },
+    { pattern: /\btotal stock market\b/i, label: 'US Total Stock Market' },
+    { pattern: /\bmsci\b/i, label: 'MSCI' },
+    { pattern: /\brussell\b/i, label: 'Russell' },
+    { pattern: /\bnasdaq\s*100\b/i, label: 'Nasdaq 100' },
+    { pattern: /\bftse\b/i, label: 'FTSE' },
+    { pattern: /\bindex\b/i, label: 'Broad Market Index' },
+  ];
 
   const match = patterns.find((entry) => entry.pattern.test(name));
 
@@ -199,7 +201,9 @@ export function buildIndexFundPriceSummary(
   prices: readonly IndexFundHistoricalPrice[],
 ): IndexFundPriceSummary {
   if (prices.length === 0) {
-    throw new Error('Cannot build price summary from an empty historical series');
+    throw new Error(
+      'Cannot build price summary from an empty historical series',
+    );
   }
 
   const latest = prices[0];

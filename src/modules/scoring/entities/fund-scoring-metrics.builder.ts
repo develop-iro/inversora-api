@@ -67,8 +67,7 @@ export function findPriceAtLookback(
   }
 
   const latestDate = new Date(`${latest.date}T00:00:00.000Z`);
-  const targetTime =
-    latestDate.getTime() - lookbackDays * 24 * 60 * 60 * 1000;
+  const targetTime = latestDate.getTime() - lookbackDays * 24 * 60 * 60 * 1000;
 
   let closest: FundPrice | null = null;
   let closestDistance = Number.POSITIVE_INFINITY;
@@ -112,7 +111,9 @@ export function deriveReturnsFromPrices(prices: readonly FundPrice[]): {
     const endDate = new Date(`${latest.date}T00:00:00.000Z`);
     const elapsedDays = Math.max(
       1,
-      Math.round((endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000)),
+      Math.round(
+        (endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000),
+      ),
     );
     const totalReturn = computeTotalReturnPercent(start.close, latest.close);
 
@@ -130,7 +131,9 @@ export function deriveReturnsFromPrices(prices: readonly FundPrice[]): {
  *
  * @param holdings - Ranked holdings for a portfolio snapshot.
  */
-export function computeTop10Weight(holdings: readonly FundHolding[]): number | null {
+export function computeTop10Weight(
+  holdings: readonly FundHolding[],
+): number | null {
   if (holdings.length === 0) {
     return null;
   }

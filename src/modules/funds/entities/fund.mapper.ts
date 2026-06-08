@@ -6,10 +6,7 @@ import {
 } from '@prisma/client';
 import type { Decimal } from '@prisma/client/runtime/library';
 import type { IndexFundProfile } from '../../providers/financial-modeling-prep/financial-modeling-prep.domain.schemas';
-import {
-  fundSchema,
-  upsertFundInputSchema,
-} from './fund.schema';
+import { fundSchema, upsertFundInputSchema } from './fund.schema';
 import type {
   Fund,
   FundCategory,
@@ -155,7 +152,9 @@ export function mapDomainFundCategoryToPrisma(
  * @param profile - Normalized index fund profile.
  * @returns Uppercase 3-letter currency code.
  */
-export function resolveFundCurrencyFromProfile(profile: IndexFundProfile): string {
+export function resolveFundCurrencyFromProfile(
+  profile: IndexFundProfile,
+): string {
   const rawCurrency = profile.currency ?? profile.navCurrency ?? 'USD';
   const normalizedCurrency = rawCurrency.trim().toUpperCase();
 

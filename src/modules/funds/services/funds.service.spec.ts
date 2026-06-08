@@ -90,8 +90,9 @@ describe('FundsService', () => {
           },
         ],
       }),
-      getAllocationsByCategory: jest.fn().mockImplementation(
-        (_fundId: string, category: string) => {
+      getAllocationsByCategory: jest
+        .fn()
+        .mockImplementation((_fundId: string, category: string) => {
           if (category === 'countries') {
             return Promise.resolve({
               asOf: '2024-01-31',
@@ -127,8 +128,7 @@ describe('FundsService', () => {
               },
             ],
           });
-        },
-      ),
+        }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -287,7 +287,10 @@ describe('FundsService', () => {
 
   it('should return country exposure for the latest snapshot', async () => {
     await expect(
-      service.getFundCountryExposure('550e8400-e29b-41d4-a716-446655440000', {}),
+      service.getFundCountryExposure(
+        '550e8400-e29b-41d4-a716-446655440000',
+        {},
+      ),
     ).resolves.toEqual({
       fundId: '550e8400-e29b-41d4-a716-446655440000',
       asOf: '2024-01-31',
@@ -301,18 +304,19 @@ describe('FundsService', () => {
       ],
     });
 
-    expect(fundCompositionService.getAllocationsByCategory).toHaveBeenCalledWith(
-      fund.id,
-      'countries',
-      undefined,
-    );
+    expect(
+      fundCompositionService.getAllocationsByCategory,
+    ).toHaveBeenCalledWith(fund.id, 'countries', undefined);
   });
 
   it('should return an empty country exposure payload when no snapshot exists', async () => {
     fundCompositionService.getAllocationsByCategory.mockResolvedValueOnce(null);
 
     await expect(
-      service.getFundCountryExposure('550e8400-e29b-41d4-a716-446655440000', {}),
+      service.getFundCountryExposure(
+        '550e8400-e29b-41d4-a716-446655440000',
+        {},
+      ),
     ).resolves.toEqual({
       fundId: '550e8400-e29b-41d4-a716-446655440000',
       asOf: null,
@@ -344,11 +348,9 @@ describe('FundsService', () => {
       ],
     });
 
-    expect(fundCompositionService.getAllocationsByCategory).toHaveBeenCalledWith(
-      fund.id,
-      'sectorial',
-      undefined,
-    );
+    expect(
+      fundCompositionService.getAllocationsByCategory,
+    ).toHaveBeenCalledWith(fund.id, 'sectorial', undefined);
   });
 
   it('should return an empty sector exposure payload when no snapshot exists', async () => {
@@ -383,7 +385,10 @@ describe('FundsService', () => {
       service.getFundHoldings('550e8400-e29b-41d4-a716-446655440000', {}),
     ).rejects.toBeInstanceOf(NotFoundException);
     await expect(
-      service.getFundCountryExposure('550e8400-e29b-41d4-a716-446655440000', {}),
+      service.getFundCountryExposure(
+        '550e8400-e29b-41d4-a716-446655440000',
+        {},
+      ),
     ).rejects.toBeInstanceOf(NotFoundException);
     await expect(
       service.getFundSectorExposure('550e8400-e29b-41d4-a716-446655440000', {}),

@@ -52,10 +52,13 @@ describe('Financial Modeling Prep (integration)', () => {
   });
 
   it('should load historical prices from fixtures', async () => {
-    const history = await provider.getIndexFundHistory(INTEGRATION_FUND_SYMBOL, {
-      from: '2024-01-01',
-      to: '2024-01-31',
-    });
+    const history = await provider.getIndexFundHistory(
+      INTEGRATION_FUND_SYMBOL,
+      {
+        from: '2024-01-01',
+        to: '2024-01-31',
+      },
+    );
 
     expect(history.length).toBeGreaterThan(0);
     expect(history[0]?.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
