@@ -38,22 +38,37 @@ fixture.
    npm run db:up
    ```
 
-3. Aplica migraciones:
+3. Exporta la URL de conexión para Prisma CLI y Prisma Client:
+
+   ```bash
+   export DATABASE_URL=postgresql://inversora:inversora@localhost:5432/inversora
+   ```
+
+   Si prefieres usar `.env`, carga sus variables en el shell antes de ejecutar
+   migraciones o tests:
+
+   ```bash
+   set -a
+   . ./.env
+   set +a
+   ```
+
+4. Aplica migraciones:
 
    ```bash
    npm run prisma:migrate:deploy
    ```
 
-4. Ejecuta la suite:
+5. Ejecuta la suite:
 
    ```bash
    npm run test:integration
    ```
 
-La conexión por defecto es
-`postgresql://inversora:inversora@localhost:5432/inversora`. Si usas otra base
-de datos, exporta `DATABASE_URL` y las variables `POSTGRES_*` antes de ejecutar
-la suite.
+La suite define valores por defecto para `POSTGRES_*`, `FMP_*` y el resto de la
+configuración Nest. Aun así, `DATABASE_URL` debe existir en `process.env` para
+que Prisma Client pueda abrir la conexión real. Si usas otra base de datos,
+exporta su URL antes de ejecutar migraciones y tests.
 
 ## Datos de prueba y fixtures
 
@@ -99,7 +114,8 @@ ejecutar migraciones y tests.
 
 | Síntoma | Causa probable | Acción |
 | --- | --- | --- |
-| `Environment validation failed` | Falta `DATABASE_URL`, `FMP_API_KEY` o alguna variable requerida. | Copia `.env.example` o exporta las variables necesarias. |
+| `Environment validation failed` | Falta `FMP_API_KEY` u otra variable validada por Nest. | Copia `.env.example` o exporta las variables necesarias. |
+| `Environment variable not found: DATABASE_URL` | Prisma Client no recibe la URL en `process.env`. | Ejecuta `export DATABASE_URL=postgresql://inversora:inversora@localhost:5432/inversora` o carga `.env` con `set -a; . ./.env; set +a`. |
 | `PostgreSQL is not available. Skipping...` | El contenedor no está levantado o usa otro puerto. | Ejecuta `npm run db:up`, revisa `POSTGRES_PORT` y valida con `npm run db:validate`. |
 | Error de migración Prisma | La base no tiene el schema actual. | Ejecuta `npm run prisma:migrate:deploy` antes de la suite. |
 | Fixtures FMP vacíos o inesperados | Los archivos versionados no contienen el símbolo/rango esperado. | Revisa los fixtures de `SPY` o regenera intencionalmente con `npm run fmp:capture-fixtures`. |

@@ -77,6 +77,7 @@ aplicadas para cubrir las suites de persistencia:
 
 ```bash
 npm run db:up
+export DATABASE_URL=postgresql://inversora:inversora@localhost:5432/inversora
 npm run prisma:migrate:deploy
 npm run test:integration
 ```
