@@ -4,10 +4,13 @@ import {
 import { Decimal } from '@prisma/client/runtime/library';
 import { parseFundPriceDate } from './fund-price.mapper';
 import {
+  mapFundAllocationCategoryToPrisma,
   mapIndexFundHoldingsToUpsertInputs,
+  mapPrismaFundAllocationCategory,
   mapPrismaFundAllocationToFundAllocation,
   mapPrismaFundHoldingToFundHolding,
   mapUpsertFundAllocationInputToPrismaData,
+  mapUpsertFundHoldingInputToPrismaData,
 } from './fund-composition.mapper';
 
 describe('fund-composition.mapper', () => {
@@ -127,6 +130,75 @@ describe('fund-composition.mapper', () => {
       label: 'Renta variable',
       weight: 88,
       sortOrder: 1,
+    });
+  });
+
+  it('should map allocation categories in both directions', () => {
+    const categories = [
+      ['sectorial', PrismaFundAllocationCategory.SECTORIAL],
+      ['regional', PrismaFundAllocationCategory.REGIONAL],
+      ['countries', PrismaFundAllocationCategory.COUNTRIES],
+      ['assetAllocation', PrismaFundAllocationCategory.ASSET_ALLOCATION],
+      ['capitalization', PrismaFundAllocationCategory.CAPITALIZATION],
+      ['portfolio', PrismaFundAllocationCategory.PORTFOLIO],
+    ] as const;
+
+    for (const [domain, prismaCategory] of categories) {
+      expect(mapFundAllocationCategoryToPrisma(domain)).toBe(prismaCategory);
+      expect(mapPrismaFundAllocationCategory(prismaCategory)).toBe(domain);
+    }
+  });
+
+  it('should map holding upsert inputs to Prisma payloads', () => {
+    expect(
+      mapUpsertFundHoldingInputToPrismaData(
+        '550e8400-e29b-41d4-a716-446655440000',
+        '2024-01-31',
+        {
+          rank: 1,
+          asset: 'AAPL',
+          name: 'Apple Inc.',
+          isin: null,
+          weightPercentage: 7.12,
+          marketValue: null,
+          sharesNumber: null,
+        },
+      ),
+    ).toEqual({
+      fundId: '550e8400-e29b-41d4-a716-446655440000',
+      asOf: parseFundPriceDate('2024-01-31'),
+      rank: 1,
+      asset: 'AAPL',
+      name: 'Apple Inc.',
+      isin: null,
+      weightPercentage: 7.12,
+      marketValue: null,
+      sharesNumber: null,
+    });
+  });
+
+  it('should map nullable decimal columns to null in domain entities', () => {
+    const createdAt = new Date('2024-02-01T00:00:00.000Z');
+    const updatedAt = new Date('2024-02-01T00:00:00.000Z');
+
+    expect(
+      mapPrismaFundHoldingToFundHolding({
+        id: '550e8400-e29b-41d4-a716-446655440010',
+        fundId: '550e8400-e29b-41d4-a716-446655440000',
+        asOf: parseFundPriceDate('2024-01-31'),
+        rank: 1,
+        asset: 'AAPL',
+        name: 'Apple Inc.',
+        isin: null,
+        weightPercentage: new Decimal('7.1200'),
+        marketValue: null,
+        sharesNumber: null,
+        createdAt,
+        updatedAt,
+      }),
+    ).toMatchObject({
+      marketValue: null,
+      sharesNumber: null,
     });
   });
 });

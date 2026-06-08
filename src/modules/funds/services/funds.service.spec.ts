@@ -370,4 +370,40 @@ describe('FundsService', () => {
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
   });
+
+  it('should return not found for composition endpoints when the fund is missing', async () => {
+    repository.findById.mockResolvedValue(null);
+
+    await expect(
+      service.getFundChart('550e8400-e29b-41d4-a716-446655440000', {
+        period: '1Y',
+      }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    await expect(
+      service.getFundHoldings('550e8400-e29b-41d4-a716-446655440000', {}),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    await expect(
+      service.getFundCountryExposure('550e8400-e29b-41d4-a716-446655440000', {}),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    await expect(
+      service.getFundSectorExposure('550e8400-e29b-41d4-a716-446655440000', {}),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('should return an empty chart when no latest price exists', async () => {
+    fundPricesService.getLatestDate.mockResolvedValueOnce(null);
+
+    await expect(
+      service.getFundChart('550e8400-e29b-41d4-a716-446655440000', {
+        period: '1Y',
+      }),
+    ).resolves.toMatchObject({
+      fundId: '550e8400-e29b-41d4-a716-446655440000',
+      period: '1Y',
+      to: null,
+      asOf: null,
+      points: [],
+    });
+    expect(fundPricesService.getHistory).not.toHaveBeenCalled();
+  });
 });

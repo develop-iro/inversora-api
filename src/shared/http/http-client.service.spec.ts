@@ -54,7 +54,7 @@ describe('HttpClientService', () => {
       data: { status: 'ok' },
       status: 200,
       statusText: 'OK',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-multi': ['a', 'b'] },
       config: { headers: {} } as AxiosResponse['config'],
     };
 
@@ -67,7 +67,34 @@ describe('HttpClientService', () => {
     ).resolves.toEqual({
       data: { status: 'ok' },
       status: 200,
-      headers: { 'content-type': 'application/json' },
+      headers: {
+        'content-type': 'application/json',
+        'x-multi': 'a, b',
+      },
+    });
+  });
+
+  it('should send POST requests with a request body', async () => {
+    const axiosResponse: AxiosResponse<{ created: boolean }> = {
+      data: { created: true },
+      status: 201,
+      statusText: 'Created',
+      headers: {},
+      config: { headers: {} } as AxiosResponse['config'],
+    };
+
+    httpService.request.mockReturnValue(of(axiosResponse));
+
+    await expect(
+      service.post<{ created: boolean }>(
+        'https://api.example.com/items',
+        { name: 'SPY' },
+        { provider: 'example' },
+      ),
+    ).resolves.toEqual({
+      data: { created: true },
+      status: 201,
+      headers: {},
     });
   });
 
@@ -152,18 +179,169 @@ describe('HttpClientService', () => {
 
     httpService.request.mockReturnValue(throwError(() => timeoutError));
 
-    let caughtError: unknown;
+    await expect(
+      service.get('https://api.example.com/data', { retries: 0 }),
+    ).rejects.toMatchObject({
+      name: 'ExternalHttpError',
+      isRetryable: true,
+      message: expect.stringContaining('timed out after 1000ms'),
+    });
+  });
 
-    try {
-      await service.get('https://api.example.com/data', { retries: 0 });
-    } catch (error: unknown) {
-      caughtError = error;
-    }
-
-    expect(caughtError).toBeInstanceOf(ExternalHttpError);
-    expect((caughtError as ExternalHttpError).isRetryable).toBe(true);
-    expect((caughtError as ExternalHttpError).message).toContain(
-      'timed out after 1000ms',
+  it('should map ETIMEDOUT axios errors to ExternalHttpError', async () => {
+    const timeoutError = new AxiosError(
+      'connect ETIMEDOUT',
+      'ETIMEDOUT',
+      { headers: {} } as AxiosError['config'],
     );
+
+    httpService.request.mockReturnValue(throwError(() => timeoutError));
+
+    await expect(
+      service.get('https://api.example.com/data', { retries: 0 }),
+    ).rejects.toMatchObject({
+      name: 'ExternalHttpError',
+      isRetryable: true,
+      message: expect.stringContaining('timed out after 1000ms'),
+    });
+  });
+
+  it('should include provider name in status error messages', async () => {
+    httpService.request.mockReturnValue(
+      of({
+        data: { message: 'not found' },
+        status: 404,
+        statusText: 'Not Found',
+        headers: {},
+        config: { headers: {} } as AxiosResponse['config'],
+      }),
+    );
+
+    await expect(
+      service.get('https://api.example.com/data', {
+        provider: 'financial-modeling-prep',
+        retries: 0,
+      }),
+    ).rejects.toMatchObject({
+      message: expect.stringContaining('[financial-modeling-prep]'),
+    });
+  });
+
+  it('should map axios response errors with status codes', async () => {
+    const axiosError = new AxiosError(
+      'Request failed with status code 404',
+      'ERR_BAD_REQUEST',
+      { headers: {} } as AxiosError['config'],
+      undefined,
+      {
+        status: 404,
+        statusText: 'Not Found',
+        headers: {},
+        config: { headers: {} } as AxiosResponse['config'],
+        data: {},
+      },
+    );
+
+    httpService.request.mockReturnValue(throwError(() => axiosError));
+
+    await expect(
+      service.get('https://api.example.com/data', { retries: 0 }),
+    ).rejects.toMatchObject({
+      name: 'ExternalHttpError',
+      statusCode: 404,
+      isRetryable: false,
+    });
+  });
+
+  it('should map network errors without a response status', async () => {
+    const networkError = new AxiosError(
+      'Network Error',
+      'ERR_NETWORK',
+      { headers: {} } as AxiosError['config'],
+    );
+
+    httpService.request.mockReturnValue(throwError(() => networkError));
+
+    await expect(
+      service.get('https://api.example.com/data', { retries: 0 }),
+    ).rejects.toMatchObject({
+      name: 'ExternalHttpError',
+      isRetryable: true,
+      message: expect.stringContaining('Network Error'),
+    });
+  });
+
+  it('should map unknown thrown values to ExternalHttpError', async () => {
+    httpService.request.mockReturnValue(throwError(() => 'unexpected failure'));
+
+    await expect(
+      service.request('GET', 'https://api.example.com/data', undefined, {
+        retries: 0,
+      }),
+    ).rejects.toMatchObject({
+      name: 'ExternalHttpError',
+      message: expect.stringContaining('unexpected failure'),
+    });
+  });
+
+  it('should retry rate-limited responses', async () => {
+    const axiosResponse: AxiosResponse<{ ok: boolean }> = {
+      data: { ok: true },
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config: { headers: {} } as AxiosResponse['config'],
+    };
+
+    httpService.request
+      .mockReturnValueOnce(
+        of({
+          data: {},
+          status: 429,
+          statusText: 'Too Many Requests',
+          headers: {},
+          config: { headers: {} } as AxiosResponse['config'],
+        }),
+      )
+      .mockReturnValueOnce(of(axiosResponse));
+
+    await expect(service.get('https://api.example.com/data')).resolves.toEqual({
+      data: { ok: true },
+      status: 200,
+      headers: {},
+    });
+  });
+
+  it('should retry axios errors that include retryable status codes', async () => {
+    const axiosError503 = new AxiosError(
+      'Request failed with status code 503',
+      'ERR_BAD_RESPONSE',
+      { headers: {} } as AxiosError['config'],
+      undefined,
+      {
+        status: 503,
+        statusText: 'Service Unavailable',
+        headers: {},
+        config: { headers: {} } as AxiosResponse['config'],
+        data: {},
+      },
+    );
+    const axiosResponse: AxiosResponse<{ ok: boolean }> = {
+      data: { ok: true },
+      status: 200,
+      statusText: 'OK',
+      headers: { 'x-test': undefined as unknown as string },
+      config: { headers: {} } as AxiosResponse['config'],
+    };
+
+    httpService.request
+      .mockReturnValueOnce(throwError(() => axiosError503))
+      .mockReturnValueOnce(of(axiosResponse));
+
+    await expect(service.get('https://api.example.com/data')).resolves.toEqual({
+      data: { ok: true },
+      status: 200,
+      headers: {},
+    });
   });
 });

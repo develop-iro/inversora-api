@@ -157,4 +157,19 @@ describe('FundPriceSyncService', () => {
       NotFoundException,
     );
   });
+
+  it('should treat an empty provider response as up to date', async () => {
+    fmpProvider.getIndexFundHistory.mockResolvedValueOnce([]);
+
+    await expect(service.syncFromFmp('SPY')).resolves.toEqual({
+      fundId: persistedFund.id,
+      symbol: 'SPY',
+      pricesSynced: 0,
+      from: undefined,
+      to: undefined,
+      upToDate: true,
+    });
+
+    expect(fundPricesService.saveProviderPrices).not.toHaveBeenCalled();
+  });
 });

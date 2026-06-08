@@ -270,4 +270,140 @@ describe('FinancialModelingPrepProvider', () => {
       ExternalHttpError,
     );
   });
+
+  it('should search by name from fixtures for non-ticker queries', async () => {
+    fixtures.readFixture.mockResolvedValue([
+      {
+        symbol: 'VTI',
+        name: 'Vanguard Total Stock Market ETF',
+        exchange: 'AMEX',
+      },
+    ]);
+    fixtures.filterSearchFixture.mockImplementation((data: unknown[]) => data);
+
+    await expect(provider.searchIndexFunds('Vanguard Total')).resolves.toEqual([
+      {
+        symbol: 'VTI',
+        name: 'Vanguard Total Stock Market ETF',
+        exchange: 'AMEX',
+      },
+    ]);
+  });
+
+  it('should load index fund detail from the live client when mocks are disabled', async () => {
+    configMock.fmpUsesMocks = false;
+    client.searchBySymbol.mockResolvedValue([
+      {
+        symbol: 'SPY',
+        name: 'State Street SPDR S&P 500 ETF Trust',
+        exchange: 'AMEX',
+      },
+    ]);
+    client.fetchFundProfile.mockResolvedValue([
+      {
+        symbol: 'SPY',
+        name: 'State Street SPDR S&P 500 ETF Trust',
+        expenseRatio: 0.0945,
+      },
+    ]);
+    client.fetchHistoricalData.mockResolvedValue([
+      {
+        date: '2024-01-31',
+        open: 488.62,
+        high: 489.08,
+        low: 482.86,
+        close: 482.88,
+      },
+    ]);
+
+    await expect(provider.getIndexFundDetail('SPY')).resolves.toMatchObject({
+      symbol: 'SPY',
+      expenseRatio: 0.0945,
+    });
+
+    expect(client.fetchFundProfile).toHaveBeenCalledWith('SPY');
+    configMock.fmpUsesMocks = true;
+  });
+
+  it('should fall back to search metadata when paid profile endpoints fail', async () => {
+    configMock.fmpUsesMocks = false;
+    client.searchBySymbol.mockResolvedValue([
+      {
+        symbol: 'SPY',
+        name: 'State Street SPDR S&P 500 ETF Trust',
+        exchange: 'AMEX',
+        currency: 'USD',
+      },
+    ]);
+    client.fetchFundProfile.mockRejectedValue(
+      new ExternalHttpError({
+        message: 'Paid endpoint unavailable',
+        provider: FMP_PROVIDER_NAME,
+        statusCode: 402,
+      }),
+    );
+    client.fetchHistoricalData.mockResolvedValue([
+      {
+        date: '2024-01-31',
+        open: 488.62,
+        high: 489.08,
+        low: 482.86,
+        close: 482.88,
+      },
+    ]);
+
+    await expect(provider.getIndexFundDetail('SPY')).resolves.toMatchObject({
+      symbol: 'SPY',
+      name: 'State Street SPDR S&P 500 ETF Trust',
+      currency: 'USD',
+    });
+
+    configMock.fmpUsesMocks = true;
+  });
+
+  it('should rethrow non-paid profile errors from the live client', async () => {
+    configMock.fmpUsesMocks = false;
+    client.searchBySymbol.mockResolvedValue([
+      {
+        symbol: 'SPY',
+        name: 'State Street SPDR S&P 500 ETF Trust',
+        exchange: 'AMEX',
+      },
+    ]);
+    client.fetchFundProfile.mockRejectedValue(
+      new ExternalHttpError({
+        message: 'Provider unavailable',
+        provider: FMP_PROVIDER_NAME,
+        statusCode: 500,
+      }),
+    );
+
+    await expect(provider.getIndexFundDetail('SPY')).rejects.toMatchObject({
+      statusCode: 500,
+    });
+
+    configMock.fmpUsesMocks = true;
+  });
+
+  it('should search by name through the live client for descriptive queries', async () => {
+    configMock.fmpUsesMocks = false;
+    client.searchByName.mockResolvedValue([
+      {
+        symbol: 'VTI',
+        name: 'Vanguard Total Stock Market ETF',
+        exchange: 'AMEX',
+      },
+    ]);
+
+    await expect(provider.searchIndexFunds('Vanguard Total')).resolves.toEqual([
+      {
+        symbol: 'VTI',
+        name: 'Vanguard Total Stock Market ETF',
+        exchange: 'AMEX',
+      },
+    ]);
+
+    expect(client.searchByName).toHaveBeenCalledWith('Vanguard Total');
+    configMock.fmpUsesMocks = true;
+  });
 });

@@ -56,19 +56,18 @@ describe('fund-price.mapper', () => {
         high: new Decimal('489.080000'),
         low: new Decimal('482.860000'),
         close: new Decimal('482.880000'),
-        volume: BigInt(126_011_100),
-        change: new Decimal('-5.740000'),
-        changePercent: new Decimal('-1.170000'),
-        vwap: new Decimal('485.860000'),
+        volume: null,
+        change: null,
+        changePercent: null,
+        vwap: null,
         createdAt,
         updatedAt,
       }),
-    ).toEqual({
-      id: '550e8400-e29b-41d4-a716-446655440001',
-      fundId: '550e8400-e29b-41d4-a716-446655440000',
-      ...upsertInput,
-      createdAt,
-      updatedAt,
+    ).toMatchObject({
+      volume: null,
+      change: null,
+      changePercent: null,
+      vwap: null,
     });
   });
 

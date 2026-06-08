@@ -90,4 +90,12 @@ describe('FundSyncScheduler', () => {
 
     expect(fundDailySyncService.runDailySync).toHaveBeenCalled();
   });
+
+  it('should log errors without rethrowing when the daily sync fails', async () => {
+    fundDailySyncService.runDailySync.mockRejectedValueOnce(
+      new Error('Sync failed'),
+    );
+
+    await expect(scheduler.runScheduledSync()).resolves.toBeUndefined();
+  });
 });

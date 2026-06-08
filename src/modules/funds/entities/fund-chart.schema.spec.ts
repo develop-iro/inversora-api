@@ -89,6 +89,28 @@ describe('mapFundPricesToChartPoints', () => {
       { date: '2024-01-31', close: 482.88, value: 102.1644 },
     ]);
   });
+
+  it('should use a flat index when the first close is zero', () => {
+    expect(
+      mapFundPricesToChartPoints([
+        {
+          id: '1',
+          fundId: 'fund-1',
+          date: '2024-01-01',
+          open: 0,
+          high: 0,
+          low: 0,
+          close: 0,
+          volume: null,
+          change: null,
+          changePercent: null,
+          vwap: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ]),
+    ).toEqual([{ date: '2024-01-01', close: 0, value: 100 }]);
+  });
 });
 
 describe('buildFundChartResponse', () => {

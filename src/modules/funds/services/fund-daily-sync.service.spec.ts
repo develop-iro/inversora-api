@@ -223,4 +223,96 @@ describe('FundDailySyncService', () => {
       },
     });
   });
+
+  it('should stringify non-error scoring failures', async () => {
+    scoringService.recalculateAllScores.mockRejectedValueOnce('Scoring unavailable');
+
+    await expect(service.runDailySync()).resolves.toMatchObject({
+      scoring: {
+        status: 'failed',
+        error: 'Scoring unavailable',
+      },
+    });
+  });
+
+  it('should stringify non-error symbol sync failures', async () => {
+    fundSyncService.syncFromFmp.mockRejectedValueOnce('Provider unavailable');
+
+    const result = await service.runDailySync();
+
+    expect(result.results[0]).toEqual({
+      symbol: 'SPY',
+      status: 'failed',
+      error: 'Provider unavailable',
+    });
+  });
+
+  it('should skip sync when no symbols are configured and no funds exist', async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        ConfigModule.forRoot({
+          isGlobal: true,
+          ignoreEnvFile: true,
+          load: [
+            () =>
+              validateEnv({
+                ...validEnv,
+                SYNC_FUND_SYMBOLS: '',
+              }),
+          ],
+        }),
+      ],
+      providers: [
+        AppConfigService,
+        FundDailySyncService,
+        {
+          provide: FundsRepository,
+          useValue: fundsRepository,
+        },
+        {
+          provide: FundSyncService,
+          useValue: fundSyncService,
+        },
+        {
+          provide: FundPriceSyncService,
+          useValue: fundPriceSyncService,
+        },
+        {
+          provide: ScoringService,
+          useValue: scoringService,
+        },
+      ],
+    }).compile();
+
+    service = module.get<FundDailySyncService>(FundDailySyncService);
+    fundsRepository.findAll.mockResolvedValueOnce([]);
+    scoringService.recalculateAllScores.mockResolvedValueOnce({
+      total: 0,
+      updated: 0,
+      results: [],
+    });
+
+    await expect(service.runDailySync()).resolves.toEqual({
+      total: 0,
+      succeeded: 0,
+      failed: 0,
+      results: [],
+      scoring: { status: 'skipped' },
+    });
+
+    expect(fundSyncService.syncFromFmp).not.toHaveBeenCalled();
+    expect(scoringService.recalculateAllScores).not.toHaveBeenCalled();
+  });
+
+  it('should skip scoring when recalculation finds no funds after sync', async () => {
+    scoringService.recalculateAllScores.mockResolvedValueOnce({
+      total: 0,
+      updated: 0,
+      results: [],
+    });
+
+    await expect(service.runDailySync()).resolves.toMatchObject({
+      scoring: { status: 'skipped' },
+    });
+  });
 });

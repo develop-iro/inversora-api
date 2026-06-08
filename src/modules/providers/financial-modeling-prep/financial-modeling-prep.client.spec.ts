@@ -1,0 +1,136 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { AppConfigService } from '../../../shared/config/config.service';
+import { ExternalHttpError } from '../../../shared/http/external-http.error';
+import { HttpClientService } from '../../../shared/http/http-client.service';
+import { FinancialModelingPrepClient } from './financial-modeling-prep.client';
+import { FMP_DEFAULT_BASE_URL } from './financial-modeling-prep.constants';
+import { FinancialModelingPrepFixtureService } from './financial-modeling-prep.fixture.service';
+
+describe('FinancialModelingPrepClient', () => {
+  let client: FinancialModelingPrepClient;
+  let httpClient: { get: jest.Mock };
+  let config: { fmpBaseUrl: string | null; fmpApiKey: string };
+  let fixtures: { saveFixtureIfEnabled: jest.Mock };
+
+  const etfInfoPayload = [
+    {
+      symbol: 'SPY',
+      name: 'State Street SPDR S&P 500 ETF Trust',
+      expenseRatio: 0.0945,
+    },
+  ];
+
+  beforeEach(async () => {
+    httpClient = {
+      get: jest.fn(),
+    };
+    config = {
+      fmpBaseUrl: null,
+      fmpApiKey: 'test-api-key',
+    };
+    fixtures = {
+      saveFixtureIfEnabled: jest.fn().mockResolvedValue(undefined),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        FinancialModelingPrepClient,
+        {
+          provide: HttpClientService,
+          useValue: httpClient,
+        },
+        {
+          provide: AppConfigService,
+          useValue: config,
+        },
+        {
+          provide: FinancialModelingPrepFixtureService,
+          useValue: fixtures,
+        },
+      ],
+    }).compile();
+
+    client = module.get(FinancialModelingPrepClient);
+  });
+
+  it('should search by symbol and persist fixtures when enabled', async () => {
+    const payload = [{ symbol: 'SPY', name: 'SPDR S&P 500 ETF Trust' }];
+    httpClient.get.mockResolvedValue({ data: payload });
+
+    await expect(client.searchBySymbol('SPY')).resolves.toEqual(payload);
+    expect(httpClient.get).toHaveBeenCalledWith(
+      `${FMP_DEFAULT_BASE_URL}/stable/search-symbol`,
+      {
+        provider: 'financial-modeling-prep',
+        params: {
+          query: 'SPY',
+          apikey: 'test-api-key',
+        },
+      },
+    );
+    expect(fixtures.saveFixtureIfEnabled).toHaveBeenCalled();
+  });
+
+  it('should search by name using the configured base URL', async () => {
+    config.fmpBaseUrl = 'https://custom.example.com/';
+    const payload = [{ symbol: 'VTI', name: 'Vanguard Total Stock Market ETF' }];
+    httpClient.get.mockResolvedValue({ data: payload });
+
+    await expect(client.searchByName('Vanguard')).resolves.toEqual(payload);
+    expect(httpClient.get).toHaveBeenCalledWith(
+      'https://custom.example.com/stable/search-name',
+      expect.objectContaining({
+        params: expect.objectContaining({
+          query: 'Vanguard',
+          apikey: 'test-api-key',
+        }),
+      }),
+    );
+  });
+
+  it('should fetch fund profiles', async () => {
+    httpClient.get.mockResolvedValue({ data: etfInfoPayload });
+
+    await expect(client.fetchFundProfile('SPY')).resolves.toEqual(etfInfoPayload);
+  });
+
+  it('should fetch historical data with optional date filters', async () => {
+    const payload = [
+      {
+        date: '2024-01-31',
+        open: 480,
+        high: 485,
+        low: 478,
+        close: 482,
+      },
+    ];
+    httpClient.get.mockResolvedValue({ data: payload });
+
+    await expect(
+      client.fetchHistoricalData('SPY', {
+        from: '2024-01-01',
+        to: '2024-01-31',
+      }),
+    ).resolves.toEqual(payload);
+
+    expect(httpClient.get).toHaveBeenCalledWith(
+      `${FMP_DEFAULT_BASE_URL}/stable/historical-price-eod/full`,
+      expect.objectContaining({
+        params: {
+          symbol: 'SPY',
+          from: '2024-01-01',
+          to: '2024-01-31',
+          apikey: 'test-api-key',
+        },
+      }),
+    );
+  });
+
+  it('should reject invalid provider payloads', async () => {
+    httpClient.get.mockResolvedValue({ data: [{ invalid: true }] });
+
+    await expect(client.fetchFundProfile('SPY')).rejects.toBeInstanceOf(
+      ExternalHttpError,
+    );
+  });
+});
