@@ -39,6 +39,7 @@ Purpose: help AI coding agents become productive quickly in this NestJS TypeScri
 
 - Unit tests: `npm run test` (Jest + ts-jest)
 - E2E tests: `npm run test:e2e` (supertest); tests live under `test/` and `*.e2e-spec.ts`
+- Integration tests: `npm run test:integration`; see [docs/integration-tests.md](docs/integration-tests.md) for PostgreSQL setup, FMP fixtures, CI behavior, and troubleshooting.
 - Run `npm run test:cov` for coverage reports
 
 **How an AI Agent Should Operate**

@@ -8,8 +8,7 @@ Backend API para [Invesora](https://github.com/), una aplicación móvil para de
 - PostgreSQL (local via Docker Compose)
 - [Prisma](https://www.prisma.io/) ORM
 - ESLint + Prettier
-
-Próximamente: Financial Modeling Prep.
+- Financial Modeling Prep (fixtures locales por defecto; API live solo bajo configuración explícita)
 
 ## Requisitos
 
@@ -64,6 +63,27 @@ npm run start:dev
 
 La API estará disponible en `http://localhost:3000`.
 
+## Tests
+
+```bash
+npm run test
+npm run test:e2e
+npm run test:integration
+```
+
+Los tests de integración validan FMP en modo fixture, Prisma/PostgreSQL y el
+pipeline de sincronización de fondos. Requieren PostgreSQL y migraciones
+aplicadas para cubrir las suites de persistencia:
+
+```bash
+npm run db:up
+npm run prisma:migrate:deploy
+npm run test:integration
+```
+
+Consulta `docs/integration-tests.md` para el alcance de cada suite,
+restricciones de fixtures, CI y troubleshooting.
+
 ### Health check
 
 ```bash
@@ -90,6 +110,7 @@ Respuesta:
 | `npm run format`     | Formatea el código con Prettier      |
 | `npm run test`       | Ejecuta tests unitarios              |
 | `npm run test:e2e`   | Ejecuta tests end-to-end             |
+| `npm run test:integration` | Ejecuta tests de integración FMP, Prisma y PostgreSQL |
 | `npm run db:up`      | Arranca PostgreSQL con Docker        |
 | `npm run db:down`    | Detiene PostgreSQL                   |
 | `npm run db:validate`| Valida la conexión a PostgreSQL      |
