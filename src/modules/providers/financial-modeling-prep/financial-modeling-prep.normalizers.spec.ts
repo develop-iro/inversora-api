@@ -177,4 +177,78 @@ describe('FinancialModelingPrep normalizers', () => {
       },
     ]);
   });
+
+  it('should fall back to search metadata when profile fields are missing', () => {
+    expect(
+      normalizeIndexFundProfile(
+        {
+          symbol: 'SPY',
+        },
+        {
+          symbol: 'SPY',
+          name: 'State Street SPDR S&P 500 ETF Trust',
+          currency: 'USD',
+          exchangeFullName: 'New York Stock Exchange Arca',
+        },
+      ),
+    ).toMatchObject({
+      symbol: 'SPY',
+      name: 'State Street SPDR S&P 500 ETF Trust',
+      currency: 'USD',
+      exchangeFullName: 'New York Stock Exchange Arca',
+    });
+  });
+
+  it('should normalize holdings that only provide an asset ticker', () => {
+    expect(
+      normalizeIndexFundHoldings([
+        {
+          asset: 'AAPL',
+          weightPercentage: 7.12,
+        },
+      ]),
+    ).toEqual([
+      {
+        asset: 'AAPL',
+        name: 'AAPL',
+        weightPercentage: 7.12,
+      },
+    ]);
+  });
+
+  it('should reject empty historical series when building summaries', () => {
+    expect(() => buildIndexFundPriceSummary([])).toThrow(
+      'Cannot build price summary from an empty historical series',
+    );
+  });
+
+  it('should handle zero starting closes and omit optional history', () => {
+    const history = normalizeIndexFundHistoricalPrices([
+      {
+        date: '2024-01-31',
+        open: 0,
+        high: 0,
+        low: 0,
+        close: 10,
+      },
+      {
+        date: '2024-01-01',
+        open: 0,
+        high: 0,
+        low: 0,
+        close: 0,
+      },
+    ]);
+
+    expect(buildIndexFundPriceSummary(history).periodReturnPercent).toBe(0);
+    expect(
+      buildIndexFundDetail(
+        {
+          symbol: 'SPY',
+          name: 'State Street SPDR S&P 500 ETF Trust',
+        },
+        history,
+      ).history,
+    ).toBeUndefined();
+  });
 });

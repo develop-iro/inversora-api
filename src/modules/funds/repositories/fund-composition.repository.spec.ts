@@ -205,4 +205,79 @@ describe('FundCompositionRepository', () => {
       ],
     });
   });
+
+  it('should return null when no composition snapshot exists', async () => {
+    const fundId = '550e8400-e29b-41d4-a716-446655440000';
+
+    await expect(repository.findSnapshot(fundId)).resolves.toBeNull();
+    await expect(
+      repository.findAllocationsByCategory(fundId, 'countries'),
+    ).resolves.toBeNull();
+    await expect(repository.findHoldings(fundId)).resolves.toBeNull();
+  });
+
+  it('should read a full snapshot for an explicit as-of date', async () => {
+    const fundId = '550e8400-e29b-41d4-a716-446655440000';
+    const createdAt = new Date('2024-02-01T00:00:00.000Z');
+    const updatedAt = new Date('2024-02-01T00:00:00.000Z');
+
+    prisma.fundHolding.findMany.mockResolvedValueOnce([
+      {
+        id: '550e8400-e29b-41d4-a716-446655440010',
+        fundId,
+        asOf: parseFundPriceDate('2024-01-31'),
+        rank: 1,
+        asset: 'AAPL',
+        name: 'Apple Inc.',
+        isin: null,
+        weightPercentage: { toNumber: () => 7.12 },
+        marketValue: null,
+        sharesNumber: null,
+        createdAt,
+        updatedAt,
+      },
+    ]);
+    prisma.fundAllocation.findMany.mockResolvedValueOnce([
+      {
+        id: '550e8400-e29b-41d4-a716-446655440011',
+        fundId,
+        asOf: parseFundPriceDate('2024-01-31'),
+        category: PrismaFundAllocationCategory.SECTORIAL,
+        label: 'Tecnología',
+        weight: { toNumber: () => 31.5 },
+        sortOrder: 0,
+        createdAt,
+        updatedAt,
+      },
+    ]);
+
+    await expect(
+      repository.findSnapshot(fundId, '2024-01-31'),
+    ).resolves.toEqual({
+      asOf: '2024-01-31',
+      holdings: [
+        expect.objectContaining({
+          asset: 'AAPL',
+        }),
+      ],
+      allocations: [
+        expect.objectContaining({
+          category: 'sectorial',
+        }),
+      ],
+    });
+  });
+
+  it('should resolve the latest composition date from holdings and allocations', async () => {
+    const fundId = '550e8400-e29b-41d4-a716-446655440000';
+
+    prisma.fundHolding.findFirst.mockResolvedValueOnce({
+      asOf: parseFundPriceDate('2024-01-15'),
+    });
+    prisma.fundAllocation.findFirst.mockResolvedValueOnce({
+      asOf: parseFundPriceDate('2024-01-31'),
+    });
+
+    await expect(repository.findLatestAsOf(fundId)).resolves.toBe('2024-01-31');
+  });
 });

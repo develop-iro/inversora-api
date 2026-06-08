@@ -1,10 +1,20 @@
-import { FundCategory, FundProvider } from '@prisma/client';
-import { Decimal } from '@prisma/client/runtime/library';
 import {
+  FundCategory as PrismaFundCategory,
+  FundProvider as PrismaFundProvider,
+} from '@prisma/client';
+import { Decimal } from '@prisma/client/runtime/library';
+import type { FundCategory, FundProvider } from './fund.schema';
+import {
+  mapFundMetricsToPrismaFields,
   mapIndexFundProfileToUpsertFundInput,
+  mapDomainFundCategoryToPrisma,
+  mapDomainFundProviderToPrisma,
+  mapPrismaFundCategory,
   mapPrismaFundMetrics,
+  mapPrismaFundProvider,
   mapPrismaFundToFund,
   mapUpsertFundInputToPrismaCreateData,
+  mapUpsertFundInputToPrismaUpdateData,
   normalizeOptionalFundIsin,
   resolveFundCurrencyFromProfile,
 } from './fund.mapper';
@@ -14,8 +24,8 @@ const prismaFundRow = {
   symbol: 'SPY',
   isin: 'US78462F1030',
   name: 'State Street SPDR S&P 500 ETF Trust',
-  provider: FundProvider.FINANCIAL_MODELING_PREP,
-  category: FundCategory.INDEX,
+  provider: PrismaFundProvider.FINANCIAL_MODELING_PREP,
+  category: PrismaFundCategory.INDEX,
   currency: 'USD',
   benchmark: 'S&P 500',
   volatility: new Decimal('14.2500'),
@@ -41,6 +51,29 @@ describe('mapPrismaFundMetrics', () => {
       per: 24.5,
       dividendYield: 1.32,
       trackingError: 0.05,
+    });
+  });
+
+  it('should map null metric columns to null in the domain object', () => {
+    expect(
+      mapPrismaFundMetrics({
+        ...prismaFundRow,
+        volatility: null,
+        drawdown: null,
+        ter: null,
+        aum: null,
+        per: null,
+        dividendYield: null,
+        trackingError: null,
+      }),
+    ).toEqual({
+      volatility: null,
+      drawdown: null,
+      ter: null,
+      aum: null,
+      per: null,
+      dividendYield: null,
+      trackingError: null,
     });
   });
 });
@@ -100,6 +133,13 @@ describe('resolveFundCurrencyFromProfile', () => {
         currency: 'US DOLLAR',
       }),
     ).toBe('USD');
+
+    expect(
+      resolveFundCurrencyFromProfile({
+        symbol: 'FALLBACK',
+        name: 'Fallback Currency Fund',
+      }),
+    ).toBe('USD');
   });
 });
 
@@ -143,6 +183,46 @@ describe('mapIndexFundProfileToUpsertFundInput', () => {
       },
     });
   });
+
+  it('should map omitted optional profile fields to null metrics and benchmark', () => {
+    expect(
+      mapIndexFundProfileToUpsertFundInput({
+        symbol: 'qqq',
+        name: 'Invesco QQQ Trust',
+      }),
+    ).toEqual({
+      symbol: 'QQQ',
+      isin: undefined,
+      name: 'Invesco QQQ Trust',
+      provider: 'financial-modeling-prep',
+      category: 'index',
+      currency: 'USD',
+      benchmark: null,
+      metrics: {
+        ter: null,
+        aum: null,
+        volatility: null,
+        drawdown: null,
+        per: null,
+        dividendYield: null,
+        trackingError: null,
+      },
+    });
+  });
+});
+
+describe('mapFundMetricsToPrismaFields', () => {
+  it('should default all metric columns to null when metrics are omitted', () => {
+    expect(mapFundMetricsToPrismaFields()).toEqual({
+      volatility: null,
+      drawdown: null,
+      ter: null,
+      aum: null,
+      per: null,
+      dividendYield: null,
+      trackingError: null,
+    });
+  });
 });
 
 describe('mapUpsertFundInputToPrismaCreateData', () => {
@@ -165,8 +245,8 @@ describe('mapUpsertFundInputToPrismaCreateData', () => {
       symbol: 'SPY',
       isin: 'US78462F1030',
       name: 'State Street SPDR S&P 500 ETF Trust',
-      provider: FundProvider.FINANCIAL_MODELING_PREP,
-      category: FundCategory.INDEX,
+      provider: PrismaFundProvider.FINANCIAL_MODELING_PREP,
+      category: PrismaFundCategory.INDEX,
       currency: 'USD',
       benchmark: 'S&P 500',
       ter: 0.0945,
@@ -179,5 +259,74 @@ describe('mapUpsertFundInputToPrismaCreateData', () => {
       riskLevel: null,
       score: null,
     });
+  });
+});
+
+describe('mapUpsertFundInputToPrismaUpdateData', () => {
+  it('should map upsert input fields to Prisma update payload columns', () => {
+    expect(
+      mapUpsertFundInputToPrismaUpdateData({
+        symbol: 'SPY',
+        isin: null,
+        name: 'Updated Fund Name',
+        provider: 'financial-modeling-prep',
+        category: 'index',
+        currency: 'USD',
+        benchmark: null,
+        metrics: {
+          ter: 0.1,
+        },
+        riskLevel: 3,
+        score: 75,
+      }),
+    ).toEqual({
+      isin: null,
+      name: 'Updated Fund Name',
+      category: PrismaFundCategory.INDEX,
+      currency: 'USD',
+      benchmark: null,
+      ter: 0.1,
+      volatility: null,
+      drawdown: null,
+      aum: null,
+      per: null,
+      dividendYield: null,
+      trackingError: null,
+      riskLevel: 3,
+      score: 75,
+    });
+  });
+});
+
+describe('domain enum mappers', () => {
+  it('should map domain provider and category values to Prisma enums', () => {
+    expect(mapDomainFundProviderToPrisma('financial-modeling-prep')).toBe(
+      PrismaFundProvider.FINANCIAL_MODELING_PREP,
+    );
+    expect(mapDomainFundCategoryToPrisma('index')).toBe(
+      PrismaFundCategory.INDEX,
+    );
+  });
+
+  it('should pass through unknown enum values in exhaustive default branches', () => {
+    const unknownPrismaProvider = 'UNKNOWN' as PrismaFundProvider;
+    expect(mapPrismaFundProvider(unknownPrismaProvider)).toBe(
+      unknownPrismaProvider,
+    );
+
+    const unknownPrismaCategory = 'UNKNOWN' as PrismaFundCategory;
+    expect(mapPrismaFundCategory(unknownPrismaCategory)).toBe(
+      unknownPrismaCategory,
+    );
+
+    const unknownDomainProvider = 'unknown-provider' as FundProvider;
+    expect(mapDomainFundProviderToPrisma(unknownDomainProvider)).toBe(
+      unknownDomainProvider,
+    );
+
+    const unknownDomainCategory = 'unknown-category' as FundCategory;
+    expect(mapDomainFundCategoryToPrisma(unknownDomainCategory)).toBe(
+      unknownDomainCategory,
+    );
   });
 });

@@ -56,4 +56,26 @@ describe('AppConfigService', () => {
     expect(service.syncCronExpression).toBe('0 6 * * *');
     expect(service.syncFundSymbols).toEqual([]);
   });
+
+  it('should expose production mode from node env', async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        ConfigModule.forRoot({
+          isGlobal: true,
+          ignoreEnvFile: true,
+          load: [
+            () =>
+              validateEnv({
+                ...validEnv,
+                NODE_ENV: 'production',
+              }),
+          ],
+        }),
+      ],
+      providers: [AppConfigService],
+    }).compile();
+
+    service = module.get(AppConfigService);
+    expect(service.isProduction).toBe(true);
+  });
 });

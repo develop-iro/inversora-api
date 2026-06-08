@@ -65,11 +65,27 @@ describe('FundPricesService', () => {
     const fundId = '550e8400-e29b-41d4-a716-446655440000';
 
     await service.getHistory(fundId, { from: '2024-01-01' });
+    await service.getHistory(fundId);
     await service.getLatestDate(fundId);
+    await service.savePrices(fundId, [
+      {
+        date: '2024-01-31',
+        open: 488.62,
+        high: 489.08,
+        low: 482.86,
+        close: 482.88,
+        volume: null,
+        change: null,
+        changePercent: null,
+        vwap: null,
+      },
+    ]);
 
     expect(repository.findHistory).toHaveBeenCalledWith(fundId, {
       from: '2024-01-01',
     });
+    expect(repository.findHistory).toHaveBeenCalledWith(fundId, {});
     expect(repository.findLatestDate).toHaveBeenCalledWith(fundId);
+    expect(repository.upsertMany).toHaveBeenCalled();
   });
 });

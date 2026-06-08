@@ -139,4 +139,17 @@ describe('FundSyncService', () => {
       incremental: false,
     });
   });
+
+  it('should default incremental price sync to true when requested', async () => {
+    await service.syncFromFmp('SPY', {
+      includePrices: true,
+      incrementalPrices: true,
+    });
+
+    expect(fundPriceSyncService.syncFromFmp).toHaveBeenCalledWith('SPY', {
+      from: undefined,
+      to: undefined,
+      incremental: true,
+    });
+  });
 });

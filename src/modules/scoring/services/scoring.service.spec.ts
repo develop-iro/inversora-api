@@ -132,6 +132,36 @@ describe('ScoringService', () => {
     expect(result?.score).toBeGreaterThanOrEqual(0);
   });
 
+  it('should return null when the fund id does not exist', async () => {
+    fundsRepository.findById.mockResolvedValueOnce(null);
+
+    await expect(service.calculateScoreForFundId(fund.id)).resolves.toBeNull();
+  });
+
+  it('should compare a fund against peers in the same benchmark group', async () => {
+    const peerFund = {
+      ...fund,
+      id: '660e8400-e29b-41d4-a716-446655440001',
+      symbol: 'VOO',
+    };
+    fundsRepository.findAll.mockResolvedValue([fund, peerFund]);
+
+    await expect(service.calculateScoreForFundId(fund.id)).resolves.toMatchObject({
+      score: expect.any(Number),
+    });
+  });
+
+  it('should skip recalculation when there are no funds', async () => {
+    fundsRepository.findAll.mockResolvedValueOnce([]);
+
+    await expect(service.recalculateAllScores()).resolves.toEqual({
+      total: 0,
+      updated: 0,
+      results: [],
+    });
+    expect(fundsRepository.updateScore).not.toHaveBeenCalled();
+  });
+
   it('should recalculate and persist scores for all funds', async () => {
     const result = await service.recalculateAllScores();
 
@@ -147,5 +177,16 @@ describe('ScoringService', () => {
       fund.id,
       expect.any(Number),
     );
+  });
+
+  it('should skip persistence when a computed score is missing', async () => {
+    jest.spyOn(service, 'calculateCategoryScores').mockReturnValue(new Map());
+
+    await expect(service.recalculateAllScores()).resolves.toEqual({
+      total: 1,
+      updated: 0,
+      results: [],
+    });
+    expect(fundsRepository.updateScore).not.toHaveBeenCalled();
   });
 });

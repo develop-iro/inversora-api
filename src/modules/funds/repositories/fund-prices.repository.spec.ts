@@ -87,4 +87,65 @@ describe('FundPricesRepository', () => {
       orderBy: { date: 'asc' },
     });
   });
+
+  it('should return zero when upserting an empty price batch', async () => {
+    await expect(
+      repository.upsertMany('550e8400-e29b-41d4-a716-446655440000', []),
+    ).resolves.toBe(0);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('should query history without date filters', async () => {
+    const fundId = '550e8400-e29b-41d4-a716-446655440000';
+
+    await repository.findHistory(fundId);
+
+    expect(prisma.fundPrice.findMany).toHaveBeenCalledWith({
+      where: { fundId },
+      orderBy: { date: 'asc' },
+    });
+  });
+
+  it('should query history with only a start date', async () => {
+    const fundId = '550e8400-e29b-41d4-a716-446655440000';
+
+    await repository.findHistory(fundId, { from: '2024-01-01' });
+
+    expect(prisma.fundPrice.findMany).toHaveBeenCalledWith({
+      where: {
+        fundId,
+        date: { gte: parseFundPriceDate('2024-01-01') },
+      },
+      orderBy: { date: 'asc' },
+    });
+  });
+
+  it('should query history with only an end date', async () => {
+    const fundId = '550e8400-e29b-41d4-a716-446655440000';
+
+    await repository.findHistory(fundId, { to: '2024-01-31' });
+
+    expect(prisma.fundPrice.findMany).toHaveBeenCalledWith({
+      where: {
+        fundId,
+        date: { lte: parseFundPriceDate('2024-01-31') },
+      },
+      orderBy: { date: 'asc' },
+    });
+  });
+
+  it('should return the latest persisted price date', async () => {
+    const fundId = '550e8400-e29b-41d4-a716-446655440000';
+    prisma.fundPrice.findFirst.mockResolvedValueOnce({
+      date: parseFundPriceDate('2024-01-31'),
+    });
+
+    await expect(repository.findLatestDate(fundId)).resolves.toBe('2024-01-31');
+  });
+
+  it('should return null when no prices exist', async () => {
+    await expect(
+      repository.findLatestDate('550e8400-e29b-41d4-a716-446655440000'),
+    ).resolves.toBeNull();
+  });
 });
