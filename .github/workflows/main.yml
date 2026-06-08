@@ -36,6 +36,9 @@ jobs:
     name: Prisma schema
     runs-on: ubuntu-latest
 
+    env:
+      DATABASE_URL: postgresql://inversora:inversora@localhost:5432/inversora
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
