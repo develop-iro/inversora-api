@@ -14,6 +14,7 @@
 | Algoritmo del Score Inversora (implementación actual) | [scoring-algorithm.md](./scoring-algorithm.md) |
 | Arranque rápido local (instalación, scripts, health check) | [README.md](../README.md) |
 | Contrato HTTP vivo (endpoints, DTOs) | Swagger en `http://localhost:3000/api/docs` |
+| **Contrato BFF** `GET /funds/:isin` → `FundDetail` (app) | [bff-fund-detail-contract.md](./bff-fund-detail-contract.md) |
 
 ## Jerarquía de fuentes de verdad
 
@@ -61,6 +62,7 @@ Actualiza la documentación en el mismo PR o issue cuando:
 | Cambio | Documentos afectados |
 |--------|----------------------|
 | Nuevo módulo o endpoint público | `roles-and-responsibilities.md`, Swagger, `development-guide.md` si aplica |
+| Contrato BFF fund detail | `bff-fund-detail-contract.md`, schema Zod en app y API |
 | Nueva variable de entorno | `.env.example`, `infrastructure-phases.md` |
 | Cambio de fase de despliegue o CI | `infrastructure-phases.md` |
 | Cambio de pesos o versión del scoring | `scoring-algorithm.md` y `invesora/docs/product/scoring.md` |
