@@ -13,6 +13,16 @@ export function setupSwagger(app: INestApplication): void {
       'Backend API for Inversora, a mobile app to discover and analyze investment funds.',
     )
     .setVersion('0.0.1')
+    .addApiKey(
+      {
+        type: 'apiKey',
+        in: 'header',
+        name: 'X-Admin-Api-Key',
+        description:
+          'Shared secret for manual admin sync (ADMIN_API_KEY). Bearer auth is also supported.',
+      },
+      'admin-api-key',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

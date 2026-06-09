@@ -69,6 +69,7 @@ Cliente HTTP
 | `providers` | Cliente FMP, normalizers, fixtures mock/live | `shared/http`, `shared/config` |
 | `funds` | Lectura de catálogo, sync de metadata y precios, composición, exposición | `providers`, `shared/database` |
 | `scoring` | Cálculo del Score Inversora, persistencia, endpoint `GET /funds/:id/score` | `funds` |
+| `admin` | Sync manual para desarrollo/QA (`POST /admin/sync`) | `funds`, `shared/config` |
 | `shared` | Configuración Zod, Prisma, cliente HTTP con reintentos, Swagger | — |
 
 ### Registro en AppModule
@@ -83,6 +84,7 @@ AppModule
   ├── PrismaModule         (conexión DB)
   ├── ProvidersModule      (FMP)
   ├── FundsModule          (dominio principal)
+  ├── AdminModule          (sync manual dev/QA)
   ├── ScoringModule        (score)
   └── HealthModule         (liveness)
 ```

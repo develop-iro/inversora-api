@@ -107,4 +107,14 @@ export class AppConfigService {
   get syncFundSymbols(): readonly string[] {
     return this.configService.get('SYNC_FUND_SYMBOLS', { infer: true });
   }
+
+  /** Whether the manual admin sync endpoint and CLI are available. */
+  get adminSyncEnabled(): boolean {
+    return this.configService.get('ADMIN_SYNC_ENABLED', { infer: true });
+  }
+
+  /** Shared secret for authenticating manual admin sync requests. */
+  get adminApiKey(): string | undefined {
+    return this.configService.get('ADMIN_API_KEY', { infer: true });
+  }
 }

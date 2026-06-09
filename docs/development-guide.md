@@ -229,10 +229,74 @@ Los fixtures en `src/modules/providers/financial-modeling-prep/fixtures/` permit
 
 ### Sync manual en desarrollo
 
-Con la API en marcha y PostgreSQL activo, puedes invocar el sync programáticamente o activar el scheduler:
+El scheduler automático permanece desactivado por defecto (`SYNC_SCHEDULER_ENABLED=false`). Para poblar PostgreSQL durante desarrollo o QA, usa el endpoint administrativo o el CLI.
+
+#### Variables de entorno
 
 ```bash
 # .env
+ADMIN_SYNC_ENABLED=true
+ADMIN_API_KEY=local-dev-admin-key   # mínimo 8 caracteres
+SYNC_FUND_SYMBOLS=SPY,QQQ,VTI     # opcional; si está vacío, usa fondos ya persistidos
+FMP_DATA_SOURCE=mock              # recomendado en local/CI
+```
+
+#### Endpoint HTTP
+
+```bash
+curl -X POST http://localhost:3000/admin/sync \
+  -H "Content-Type: application/json" \
+  -H "X-Admin-Api-Key: local-dev-admin-key" \
+  -d '{
+    "symbols": ["SPY", "QQQ"],
+    "steps": {
+      "metadata": true,
+      "prices": true,
+      "composition": true,
+      "scoring": true
+    },
+    "incrementalPrices": true
+  }'
+```
+
+También puedes autenticarte con `Authorization: Bearer <ADMIN_API_KEY>`.
+
+Parámetros opcionales del body:
+
+| Campo | Descripción |
+|-------|-------------|
+| `symbols` | Lista de tickers a sincronizar. Omite para usar `SYNC_FUND_SYMBOLS` o todos los fondos persistidos. |
+| `steps.metadata` | Importa metadata del fondo desde FMP. |
+| `steps.prices` | Importa precios EOD. |
+| `steps.composition` | Importa holdings y exposiciones sector/país. |
+| `steps.scoring` | Recalcula scores Inversora. |
+| `incrementalPrices` | Reanuda precios desde la última fecha persistida (default `true`). |
+| `historyFrom` / `historyTo` | Ventana explícita de precios (`YYYY-MM-DD`). |
+
+La respuesta incluye `runId`, tiempos de ejecución, resultados por símbolo y el estado del scoring. Los upserts son idempotentes; un fallo en un símbolo no aborta el resto.
+
+Si `ADMIN_SYNC_ENABLED=false`, el endpoint responde `404` (oculto). Con clave inválida responde `401`.
+
+Documentación interactiva: Swagger en `/api/docs` (sección **admin**).
+
+#### CLI
+
+Ejecuta el mismo pipeline sin levantar el servidor HTTP:
+
+```bash
+npm run sync:run -- --symbols SPY,QQQ
+npm run sync:run -- --symbols SPY --no-composition --no-scoring
+npm run sync:run -- --scoring
+npm run sync:run -- --help
+```
+
+Requisitos: PostgreSQL activo, migraciones aplicadas y `.env` configurado (incluye `DATABASE_URL` y `FMP_API_KEY`). El CLI no exige `ADMIN_SYNC_ENABLED`; invoca directamente `FundDailySyncService`.
+
+#### Alternativa: scheduler automático
+
+Para sync recurrente en un entorno controlado:
+
+```bash
 SYNC_SCHEDULER_ENABLED=true
 SYNC_FUND_SYMBOLS=SPY,QQQ,VTI
 ```

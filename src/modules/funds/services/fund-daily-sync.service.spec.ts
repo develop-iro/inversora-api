@@ -355,4 +355,59 @@ describe('FundDailySyncService', () => {
       scoring: { status: 'skipped' },
     });
   });
+
+  it('should run only selected manual sync steps', async () => {
+    await service.runManualSync({
+      symbols: ['SPY'],
+      steps: {
+        metadata: false,
+        prices: true,
+        composition: false,
+        scoring: false,
+      },
+      incrementalPrices: false,
+      historyFrom: '2024-01-01',
+      historyTo: '2024-01-31',
+    });
+
+    expect(fundSyncService.syncFromFmp).not.toHaveBeenCalled();
+    expect(fundPriceSyncService.syncFromFmp).toHaveBeenCalledWith('SPY', {
+      incremental: false,
+      from: '2024-01-01',
+      to: '2024-01-31',
+    });
+    expect(fundCompositionSyncService.syncFromFmp).not.toHaveBeenCalled();
+    expect(scoringService.recalculateAllScores).not.toHaveBeenCalled();
+  });
+
+  it('should run scoring only when requested without symbol sync', async () => {
+    const result = await service.runManualSync({
+      steps: {
+        metadata: false,
+        prices: false,
+        composition: false,
+        scoring: true,
+      },
+    });
+
+    expect(result.total).toBe(0);
+    expect(result.results).toEqual([]);
+    expect(fundSyncService.syncFromFmp).not.toHaveBeenCalled();
+    expect(scoringService.recalculateAllScores).toHaveBeenCalledTimes(1);
+  });
+
+  it('should include execution metadata in manual sync responses', async () => {
+    const result = await service.runManualSync({ symbols: ['SPY'] });
+
+    expect(result.runId).toEqual(expect.any(String));
+    expect(result.startedAt).toEqual(expect.any(String));
+    expect(result.finishedAt).toEqual(expect.any(String));
+    expect(result.durationMs).toEqual(expect.any(Number));
+    expect(result.steps).toEqual({
+      metadata: true,
+      prices: true,
+      composition: true,
+      scoring: true,
+    });
+  });
 });

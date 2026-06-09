@@ -33,6 +33,8 @@ describe('validateEnv', () => {
       SYNC_SCHEDULER_ENABLED: false,
       SYNC_CRON_EXPRESSION: '0 6 * * *',
       SYNC_FUND_SYMBOLS: [],
+      ADMIN_SYNC_ENABLED: false,
+      ADMIN_API_KEY: undefined,
     });
   });
 
@@ -65,6 +67,8 @@ describe('validateEnv', () => {
       SYNC_SCHEDULER_ENABLED: false,
       SYNC_CRON_EXPRESSION: '0 6 * * *',
       SYNC_FUND_SYMBOLS: [],
+      ADMIN_SYNC_ENABLED: false,
+      ADMIN_API_KEY: undefined,
     });
   });
 
@@ -93,6 +97,28 @@ describe('validateEnv', () => {
       SYNC_SCHEDULER_ENABLED: true,
       SYNC_CRON_EXPRESSION: '30 7 * * *',
       SYNC_FUND_SYMBOLS: ['SPY', 'QQQ'],
+    });
+  });
+
+  it('should require ADMIN_API_KEY when admin sync is enabled', () => {
+    expect(() =>
+      validateEnv({
+        ...validEnv,
+        ADMIN_SYNC_ENABLED: 'true',
+      }),
+    ).toThrow('Environment validation failed');
+  });
+
+  it('should parse admin sync configuration', () => {
+    expect(
+      validateEnv({
+        ...validEnv,
+        ADMIN_SYNC_ENABLED: 'true',
+        ADMIN_API_KEY: 'local-dev-admin-key',
+      }),
+    ).toMatchObject({
+      ADMIN_SYNC_ENABLED: true,
+      ADMIN_API_KEY: 'local-dev-admin-key',
     });
   });
 });
