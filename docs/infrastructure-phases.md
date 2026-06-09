@@ -75,7 +75,7 @@ La app Inversora deja de usar mocks locales y consume la API en un entorno stagi
 | PostgreSQL staging | Instancia gestionada (Neon, Supabase Postgres, RDS) |
 | CORS | Configurar orígenes permitidos para Expo web y dispositivos de desarrollo |
 | Seed inicial | Script o job de sync para poblar fondos antes de la primera demo |
-| Contrato API | Endpoints alineados con `FundDetail` de la app (ver fase de diseño BFF) |
+| Contrato API | [bff-fund-detail-contract.md](./bff-fund-detail-contract.md) — `GET /funds/:isin` → `FundDetail` |
 
 ### Criterios para pasar a fase 1
 

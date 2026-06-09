@@ -139,6 +139,7 @@ El scheduler (`FundSyncScheduler`) está desactivado por defecto (`SYNC_SCHEDULE
 | `GET` | `/funds/:id/exposure/countries` | funds | Exposición geográfica |
 | `GET` | `/funds/:id/exposure/sectors` | funds | Exposición sectorial |
 | `GET` | `/funds/:id/score` | scoring | Score Inversora con desglose |
+| `GET` | `/funds/:isin` | **bff** (planificado) | Agregado `FundDetail` para la app — ver [bff-fund-detail-contract.md](./bff-fund-detail-contract.md) |
 | `GET` | `/api/docs` | shared | Swagger UI |
 
 Documentación interactiva completa en `http://localhost:3000/api/docs` con la API en marcha.
