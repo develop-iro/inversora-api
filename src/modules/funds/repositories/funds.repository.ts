@@ -91,6 +91,22 @@ export class FundsRepository {
   }
 
   /**
+   * Finds a persisted fund by ISIN.
+   *
+   * @param isin - ISO 6166 ISIN in uppercase format.
+   * @returns Persisted fund or `null`.
+   */
+  async findByIsin(isin: string): Promise<Fund | null> {
+    const record = await this.prisma.fund.findUnique({
+      where: {
+        isin: isin.trim().toUpperCase(),
+      },
+    });
+
+    return record === null ? null : mapPrismaFundToFund(record);
+  }
+
+  /**
    * Finds a persisted fund by primary key.
    *
    * @param id - Fund identifier.

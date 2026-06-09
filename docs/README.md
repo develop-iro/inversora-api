@@ -14,6 +14,7 @@
 | Algoritmo del Score Inversora (implementación actual) | [scoring-algorithm.md](./scoring-algorithm.md) |
 | Arranque rápido local (instalación, scripts, health check) | [README.md](../README.md) |
 | Contrato HTTP vivo (endpoints, DTOs) | Swagger en `http://localhost:3000/api/docs` |
+| Contrato BFF `GET /funds/:isin` → `FundDetail` | [bff-fund-detail-contract.md](./bff-fund-detail-contract.md) |
 
 ## Jerarquía de fuentes de verdad
 

@@ -8,10 +8,7 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import {
-  FundListItemResponseDto,
-  FundListResponseDto,
-} from '../dto/fund-list-response.dto';
+import { FundListResponseDto } from '../dto/fund-list-response.dto';
 import { FundChartResponseDto } from '../dto/fund-chart-response.dto';
 import { FundCountryExposureResponseDto } from '../dto/fund-country-exposure-response.dto';
 import { FundHoldingsResponseDto } from '../dto/fund-holdings-response.dto';
@@ -21,7 +18,6 @@ import type { FundChartResponse } from '../entities/fund-chart.schema';
 import type { FundCountryExposureResponse } from '../entities/fund-country-exposure.schema';
 import type { FundHoldingsResponse } from '../entities/fund-holdings.schema';
 import type { FundSectorExposureResponse } from '../entities/fund-sector-exposure.schema';
-import type { Fund } from '../entities/fund.schema';
 import { FundsService } from '../services/funds.service';
 
 @ApiTags('funds')
@@ -202,22 +198,5 @@ export class FundsController {
     @Query() query: Record<string, unknown>,
   ): Promise<FundChartResponse> {
     return this.fundsService.getFundChart(id, query);
-  }
-
-  @Get(':id')
-  @ApiOperation({ summary: 'Get fund detail by id' })
-  @ApiParam({
-    name: 'id',
-    description: 'Fund UUID',
-    example: '550e8400-e29b-41d4-a716-446655440000',
-  })
-  @ApiOkResponse({
-    description: 'Fund detail.',
-    type: FundListItemResponseDto,
-  })
-  @ApiBadRequestResponse({ description: 'Invalid fund id.' })
-  @ApiNotFoundResponse({ description: 'Fund not found.' })
-  getFundById(@Param('id') id: string): Promise<Fund> {
-    return this.fundsService.getFundById(id);
   }
 }

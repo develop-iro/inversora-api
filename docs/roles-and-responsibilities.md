@@ -133,7 +133,8 @@ El scheduler (`FundSyncScheduler`) está desactivado por defecto (`SYNC_SCHEDULE
 |--------|------|--------|-------------|
 | `GET` | `/health` | health | Estado del servicio |
 | `GET` | `/funds` | funds | Listado paginado con filtros y orden |
-| `GET` | `/funds/:id` | funds | Detalle de un fondo |
+| `GET` | `/funds/:isin` | bff | Agregado `FundDetail` (score, market, profile, exposición) |
+| `GET` | `/funds/:id` | bff / funds | UUID legado: entidad `Fund`; ISIN: agregado `FundDetail` |
 | `GET` | `/funds/:id/chart` | funds | Serie histórica indexada |
 | `GET` | `/funds/:id/holdings` | funds | Posiciones del portfolio |
 | `GET` | `/funds/:id/exposure/countries` | funds | Exposición geográfica |
