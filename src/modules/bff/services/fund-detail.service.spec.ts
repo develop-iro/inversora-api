@@ -156,12 +156,82 @@ describe('FundDetailService', () => {
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 
+  it('should return 404 when the persisted fund has a null ISIN', async () => {
+    fundsRepository.findByIsin.mockResolvedValue({ ...fund, isin: null });
+
+    await expect(
+      service.getFundDetailByIsin('US78462F1030'),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('should build detail when price history is empty', async () => {
+    fundPricesService.getHistory.mockResolvedValue([]);
+    fundPricesService.getLatestDate.mockResolvedValue(null);
+
+    const response = await service.getFundDetailByIsin('US78462F1030');
+
+    expect(response.market.performanceByTimeframe.max.points).toEqual([]);
+    expect(
+      response.profile.returnsByPeriod.every((row) => row.percent === null),
+    ).toBe(true);
+  });
+
   it('should return 503 when score aggregation fails', async () => {
     scoringService.calculateScoreForFundId.mockResolvedValue(null);
 
     await expect(
       service.getFundDetailByIsin('US78462F1030'),
     ).rejects.toBeInstanceOf(ServiceUnavailableException);
+  });
+
+  it('should return 503 when aggregation throws unexpectedly', async () => {
+    fundsService.getFundChart.mockRejectedValue(new Error('database timeout'));
+
+    await expect(
+      service.getFundDetailByIsin('US78462F1030'),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+  });
+
+  it('should omit rank when the fund is outside the scored peer group', async () => {
+    fundsRepository.findAll.mockResolvedValue([]);
+
+    const response = await service.getFundDetailByIsin('US78462F1030');
+
+    expect(response.rank).toBeUndefined();
+  });
+
+  it('should omit rank when the fund cannot be reloaded for ranking', async () => {
+    fundsRepository.findById.mockResolvedValue(null);
+
+    const response = await service.getFundDetailByIsin('US78462F1030');
+
+    expect(response.rank).toBeUndefined();
+  });
+
+  it('should calculate rank among scored peers in the same benchmark', async () => {
+    fundsRepository.findAll.mockResolvedValue([
+      fund,
+      {
+        ...fund,
+        id: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
+        score: 90,
+      },
+      {
+        ...fund,
+        id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+        benchmark: 'MSCI World',
+        score: 75,
+      },
+      {
+        ...fund,
+        id: 'bbbbbbbb-cccc-dddd-eeee-ffffffffffff',
+        score: null,
+      },
+    ]);
+
+    const response = await service.getFundDetailByIsin('US78462F1030');
+
+    expect(response.rank).toBe(2);
   });
 
   it('should aggregate fund detail for a valid ISIN', async () => {

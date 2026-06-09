@@ -438,12 +438,7 @@ export function buildReturnsByYear(
     return [];
   }
 
-  const latest = prices.at(-1);
-
-  if (!latest) {
-    return [];
-  }
-
+  const latest = prices.at(-1)!;
   const latestYear = Number(latest.date.slice(0, 4));
   const years: FundDetailProfile['returnsByYear'] = [];
 

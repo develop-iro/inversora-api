@@ -108,7 +108,6 @@ export class FundDetailService {
       }
 
       const resolvedYtdPrices = filterPricesForYtd(allPrices, latestDate);
-      const maxPrices = allPrices;
 
       return buildFundDetailResponse({
         fund,
@@ -120,7 +119,7 @@ export class FundDetailService {
           '5Y': chart5Y,
         },
         ytdPrices: resolvedYtdPrices,
-        maxPrices: maxPrices.length > 0 ? maxPrices : allPrices,
+        maxPrices: allPrices,
         allPrices,
         countries,
         sectors,
@@ -170,7 +169,7 @@ export class FundDetailService {
           resolveScoringPeerGroupKey(peer) === peerGroupKey &&
           peer.score !== null,
       )
-      .sort((left, right) => (right.score ?? 0) - (left.score ?? 0));
+      .sort((left, right) => right.score! - left.score!);
     const index = rankedPeers.findIndex((peer) => peer.id === fundId);
 
     return index >= 0 ? index + 1 : undefined;
