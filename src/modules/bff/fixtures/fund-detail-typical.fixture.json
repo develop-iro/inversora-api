@@ -1,0 +1,144 @@
+{
+  "fund": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "isin": "US78462F1030",
+    "name": "State Street SPDR S&P 500 ETF Trust",
+    "categoryLabel": "Índice S&P 500",
+    "themeLabel": "",
+    "badge": "",
+    "idealForBeginners": true,
+    "efficiencyScore": 84,
+    "terPercent": 0.07,
+    "riskLevel": "medium",
+    "diversification": "high",
+    "quarterTag": "Q2 2026",
+    "periodStart": "2026-04-01",
+    "periodEnd": "2026-06-30",
+    "benefitSummary": "Fondo indexado con referencia S&P 500.",
+    "featuredReason": "",
+    "isFeatured": false
+  },
+  "inversoraScore": 84,
+  "rank": 1,
+  "scoredBreakdown": [
+    { "id": "ter", "label": "Comisión (TER)", "points": 29, "maxPoints": 30 },
+    { "id": "tracking", "label": "Tracking error", "points": 16, "maxPoints": 20 },
+    { "id": "aum", "label": "Patrimonio (AUM)", "points": 14, "maxPoints": 15 },
+    { "id": "age", "label": "Antigüedad del fondo", "points": 9, "maxPoints": 10 },
+    { "id": "consistency", "label": "Consistencia histórica", "points": 11, "maxPoints": 15 },
+    { "id": "dataQuality", "label": "Calidad de datos", "points": 5, "maxPoints": 10 }
+  ],
+  "scoringStatus": "ok",
+  "market": {
+    "performanceByTimeframe": {
+      "ytd": {
+        "timeframe": "ytd",
+        "points": [
+          { "date": "2026-01-02", "value": 100 },
+          { "date": "2026-06-09", "value": 106.1 }
+        ],
+        "asOf": "2026-06-09T00:00:00.000Z",
+        "sourceLabel": "Financial Modeling Prep"
+      },
+      "1y": {
+        "timeframe": "1y",
+        "points": [
+          { "date": "2025-06-09", "value": 100 },
+          { "date": "2026-06-09", "value": 112.5 }
+        ],
+        "asOf": "2026-06-09T00:00:00.000Z",
+        "sourceLabel": "Financial Modeling Prep"
+      },
+      "3y": {
+        "timeframe": "3y",
+        "points": [
+          { "date": "2023-06-09", "value": 100 },
+          { "date": "2026-06-09", "value": 142.3 }
+        ],
+        "asOf": "2026-06-09T00:00:00.000Z",
+        "sourceLabel": "Financial Modeling Prep"
+      },
+      "5y": {
+        "timeframe": "5y",
+        "points": [
+          { "date": "2021-06-09", "value": 100 },
+          { "date": "2026-06-09", "value": 178.9 }
+        ],
+        "asOf": "2026-06-09T00:00:00.000Z",
+        "sourceLabel": "Financial Modeling Prep"
+      },
+      "max": {
+        "timeframe": "max",
+        "points": [
+          { "date": "2018-01-02", "value": 100 },
+          { "date": "2026-06-09", "value": 210.2 }
+        ],
+        "asOf": "2026-06-09T00:00:00.000Z",
+        "sourceLabel": "Financial Modeling Prep"
+      }
+    },
+    "regions": [
+      { "label": "United States", "percent": 99.1 },
+      { "label": "Other", "percent": 0.9 }
+    ],
+    "stabilityLabel": "Volatilidad media"
+  },
+  "profile": {
+    "asOf": "2026-06-09T00:00:00.000Z",
+    "sourceLabel": "Financial Modeling Prep",
+    "description": "Replica el índice S&P 500 con acumulación de dividendos.",
+    "manager": "—",
+    "benchmark": "S&P 500",
+    "isIndexed": true,
+    "fundAum": "520.0 BUSD",
+    "inceptionDate": "02/01/2024",
+    "summaryRows": [
+      { "id": "symbol", "label": "Ticker", "value": "SPY" },
+      { "id": "currency", "label": "Divisa", "value": "USD" }
+    ],
+    "feeRows": [{ "id": "ter", "label": "TER", "value": "0,07 %" }],
+    "documents": [
+      { "id": "kiid", "label": "KIID", "status": "coming_soon" },
+      { "id": "prospectus", "label": "Folleto", "status": "coming_soon" }
+    ],
+    "returnsByPeriod": [
+      { "id": "ytd", "label": "YTD", "percent": 6.1 },
+      { "id": "1y", "label": "1 año", "percent": 12.5 },
+      { "id": "3y", "label": "3 años", "percent": 42.3 },
+      { "id": "5y", "label": "5 años", "percent": 78.9 }
+    ],
+    "returnsByYear": [
+      { "year": 2025, "percent": 11.2 },
+      { "year": 2024, "percent": 18.4 }
+    ],
+    "currencyNote": "* Calculada en USD",
+    "methodNote": "Rentabilidades netas de comisiones del fondo.",
+    "ratiosByHorizon": {
+      "12m": [
+        { "id": "volatility", "label": "Volatilidad", "value": "14,20 %" },
+        { "id": "drawdown", "label": "Caída máxima", "value": "8,50 %" }
+      ],
+      "3y": [
+        { "id": "volatility", "label": "Volatilidad", "value": "14,20 %" },
+        { "id": "drawdown", "label": "Caída máxima", "value": "8,50 %" }
+      ],
+      "5y": [
+        { "id": "volatility", "label": "Volatilidad", "value": "14,20 %" },
+        { "id": "drawdown", "label": "Caída máxima", "value": "8,50 %" }
+      ]
+    },
+    "exposureByTab": {
+      "sectorial": [
+        { "label": "Technology", "percent": 31.2, "icon": "laptop" }
+      ],
+      "regional": [{ "label": "United States", "percent": 99.1 }],
+      "assetAllocation": [],
+      "capitalization": [],
+      "portfolio": [
+        { "label": "Apple Inc.", "percent": 7.1 },
+        { "label": "Microsoft Corp.", "percent": 6.8 }
+      ]
+    },
+    "distributors": []
+  }
+}

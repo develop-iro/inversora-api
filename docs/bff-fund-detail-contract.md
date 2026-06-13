@@ -2,14 +2,14 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Estado** | Borrador — pendiente de aprobación en reunión de alineamiento |
-| **Versión del contrato** | `bff-fund-detail-v0.1` |
+| **Estado** | Implementado (v1) — spec de diseño + implementación en `src/modules/bff/` |
+| **Versión del contrato** | `bff-fund-detail-v1` |
 | **Dominio de referencia (app)** | `invesora/src/core/domain/catalog.ts` → `FundDetail` |
 | **Última revisión** | 2026-06-09 |
 
 ## Objetivo
 
-Definir el JSON que devolverá la capa **BFF** (Backend-for-Frontend) en `GET /funds/:isin`, alineado con el tipo `FundDetail` que consume la app móvil. Este documento es el **punto de acuerdo** entre frontend y backend **antes** de implementar el agregador.
+Definir el JSON que devuelve la capa **BFF** (Backend-for-Frontend) en `GET /funds/:isin`, alineado con el tipo `FundDetail` que consume la app móvil. Este documento es el **punto de acuerdo** entre frontend y backend y la referencia del agregador implementado.
 
 La app enruta por ISIN (`/funds/[isin]`). El backend core identifica fondos por UUID (`GET /funds/:id`). El BFF resuelve ISIN → fondo interno y agrega las respuestas parciales del core en un único payload listo para la UI.
 
@@ -552,36 +552,65 @@ Archivo de referencia para tests E2E del BFF:
 
 ---
 
+## Implementación (v1)
+
+| Artefacto | Ubicación |
+|-----------|-----------|
+| Módulo BFF | `src/modules/bff/bff.module.ts` |
+| Controlador | `src/modules/bff/controllers/fund-detail.controller.ts` — `GET /funds/:identifier` |
+| Agregador | `src/modules/bff/services/fund-detail.service.ts` — `Promise.all` atómico; sin respuestas parciales |
+| Schema Zod | `src/modules/bff/entities/fund-detail.schema.ts` |
+| Mapper | `src/modules/bff/entities/fund-detail.mapper.ts` |
+| Validación ISIN | `src/modules/bff/entities/fund-isin.utils.ts` |
+| Swagger DTO | `src/modules/bff/dto/fund-detail-response.dto.ts` — tag `@ApiTags('bff')` |
+| Fixtures | `src/modules/bff/fixtures/fund-detail-minimal.fixture.json`, `fund-detail-typical.fixture.json` |
+| Tests integración | `test/integration/fund-detail.integration-spec.ts` |
+
+Comportamiento del endpoint:
+
+- **ISIN** en la ruta → respuesta `FundDetail` agregada (score, market, profile, exposición).
+- **UUID** en la ruta → respuesta legada de entidad `Fund` (compatibilidad con clientes core).
+- **400** — ISIN con formato inválido.
+- **404** — fondo no encontrado o sin ISIN asociado.
+- **503** — fallo en alguna subconsulta del agregador (sin payload parcial).
+
+Desglose de score: mapeo transitorio **A** (factores backend → 6 criterios de la app).
+
+Ejemplo:
+
+```bash
+curl -s "http://localhost:3000/funds/US78462F1030" | jq '.fund.isin, .inversoraScore'
+```
+
+---
+
 ## OpenAPI / Swagger
 
 | Estado | Acción |
 |--------|--------|
-| **Hoy** | El endpoint BFF **no está implementado**; Swagger solo documenta el core (`/funds/:id`, …) |
-| **Tras aprobación** | Añadir módulo `bff` (o extender `funds`) con `FundDetailResponseDto` y tag `@ApiTags('bff')` |
-| **Validación** | Schema Zod espejo en backend + schema Zod en app (`core/api/schemas/fund-detail.schema.ts`) derivados de este documento |
+| **Implementado** | Módulo `bff` con `FundDetailResponseDto` y tag `@ApiTags('bff')` en `GET /funds/:identifier` |
+| **Validación** | Schema Zod en backend (`fund-detail.schema.ts`); schema Zod en app (`core/api/schemas/fund-detail.schema.ts`) derivados de este documento |
 
-Campos planificados en Swagger:
+DTOs documentados en Swagger:
 
 - `FundDetailResponseDto` — raíz
 - DTOs anidados reutilizando nombres de dominio: `FeaturedFundDto`, `FundMarketSnapshotDto`, `FundDetailProfileDto`, `ScoreCriterionResultDto`
 
-URL prevista: `http://localhost:3000/api/docs` → sección **bff**.
+URL: `http://localhost:3000/api/docs` → sección **bff**.
 
 ---
 
 ## Checklist de reunión de alineamiento
 
-Marcar antes de implementar:
-
-- [ ] Aprobado formato JSON raíz `FundDetail` (sin wrapper `{ data: … }`)
-- [ ] Acordado `fund.id` = UUID backend (vs slug de mocks)
-- [ ] Decisión desglose score: mapeo transitorio **A** vs migración UI **B**
+- [x] Aprobado formato JSON raíz `FundDetail` (sin wrapper `{ data: … }`)
+- [x] Acordado `fund.id` = UUID backend (vs slug de mocks)
+- [x] Decisión desglose score: mapeo transitorio **A** (implementado)
 - [ ] Origen de campos de producto (`themeLabel`, `badge`, destacados trimestre)
-- [ ] Comportamiento 404 vs 200 para fondos en cuarentena
+- [x] Comportamiento 404 para fondos no encontrados / sin ISIN
 - [ ] Umbrales `idealForBeginners` y `diversification`
 - [ ] Idioma de `categoryLabel` y labels de exposición (ES fijo vs i18n futuro)
 - [ ] Estrategia de caché y TTL del agregador BFF
-- [ ] Responsable de schema Zod compartido y tests de contrato (Pact / fixtures JSON)
+- [x] Fixtures JSON y tests de integración en backend
 
 ---
 

@@ -8,8 +8,10 @@ import { validateEnv } from '../../src/shared/config/env.schema';
 import { PrismaModule } from '../../src/shared/database/prisma.module';
 import type { PrismaService } from '../../src/shared/database/prisma.service';
 import { HttpClientModule } from '../../src/shared/http/http-client.module';
+import { BffModule } from '../../src/modules/bff/bff.module';
 import { FundsModule } from '../../src/modules/funds/funds.module';
 import { ProvidersModule } from '../../src/modules/providers/providers.module';
+import { ScoringModule } from '../../src/modules/scoring/scoring.module';
 
 /** Symbol used by committed FMP fixtures and sync integration scenarios. */
 export const INTEGRATION_FUND_SYMBOL = 'SPY';
@@ -97,6 +99,8 @@ export async function createProvidersIntegrationModule(): Promise<TestingModule>
  * @returns Compiled testing module with Prisma, providers, and funds domain services.
  */
 export async function createFundsIntegrationModule(): Promise<TestingModule> {
+  process.env.DATABASE_URL ??= integrationTestEnv.DATABASE_URL;
+
   return Test.createTestingModule({
     imports: [
       IntegrationTestConfigModule,
@@ -105,6 +109,8 @@ export async function createFundsIntegrationModule(): Promise<TestingModule> {
       PrismaModule,
       ProvidersModule,
       FundsModule,
+      ScoringModule,
+      BffModule,
     ],
   }).compile();
 }

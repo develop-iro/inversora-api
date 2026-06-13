@@ -74,6 +74,24 @@ describe('FundsRepository', () => {
     repository = module.get<FundsRepository>(FundsRepository);
   });
 
+  it('should find a fund by ISIN', async () => {
+    prisma.fund.findUnique.mockResolvedValueOnce(prismaFundRow);
+
+    await expect(repository.findByIsin('us78462f1030')).resolves.toMatchObject({
+      isin: 'US78462F1030',
+    });
+
+    expect(prisma.fund.findUnique).toHaveBeenCalledWith({
+      where: { isin: 'US78462F1030' },
+    });
+  });
+
+  it('should return null when ISIN is not found', async () => {
+    prisma.fund.findUnique.mockResolvedValueOnce(null);
+
+    await expect(repository.findByIsin('IE00B4L5Y983')).resolves.toBeNull();
+  });
+
   it('should find a fund by symbol and provider', async () => {
     prisma.fund.findUnique.mockResolvedValueOnce(prismaFundRow);
 

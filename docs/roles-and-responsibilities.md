@@ -133,13 +133,12 @@ El scheduler (`FundSyncScheduler`) está desactivado por defecto (`SYNC_SCHEDULE
 |--------|------|--------|-------------|
 | `GET` | `/health` | health | Estado del servicio |
 | `GET` | `/funds` | funds | Listado paginado con filtros y orden |
-| `GET` | `/funds/:id` | funds | Detalle de un fondo |
+| `GET` | `/funds/:identifier` | bff | ISIN → agregado `FundDetail`; UUID → entidad `Fund` legada — ver [bff-fund-detail-contract.md](./bff-fund-detail-contract.md) |
 | `GET` | `/funds/:id/chart` | funds | Serie histórica indexada |
 | `GET` | `/funds/:id/holdings` | funds | Posiciones del portfolio |
 | `GET` | `/funds/:id/exposure/countries` | funds | Exposición geográfica |
 | `GET` | `/funds/:id/exposure/sectors` | funds | Exposición sectorial |
 | `GET` | `/funds/:id/score` | scoring | Score Inversora con desglose |
-| `GET` | `/funds/:isin` | **bff** (planificado) | Agregado `FundDetail` para la app — ver [bff-fund-detail-contract.md](./bff-fund-detail-contract.md) |
 | `GET` | `/api/docs` | shared | Swagger UI |
 
 Documentación interactiva completa en `http://localhost:3000/api/docs` con la API en marcha.

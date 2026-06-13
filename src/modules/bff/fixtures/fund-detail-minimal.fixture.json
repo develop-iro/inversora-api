@@ -1,0 +1,108 @@
+{
+  "fund": {
+    "id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+    "isin": "IE00B4L5Y983",
+    "name": "MSCI World Index Core",
+    "categoryLabel": "Índice MSCI World",
+    "themeLabel": "",
+    "badge": "",
+    "idealForBeginners": true,
+    "efficiencyScore": 72,
+    "terPercent": 0.12,
+    "riskLevel": "medium",
+    "diversification": "medium",
+    "quarterTag": "Q2 2026",
+    "periodStart": "2026-04-01",
+    "periodEnd": "2026-06-30",
+    "benefitSummary": "Fondo indexado global con comisión baja.",
+    "featuredReason": "",
+    "isFeatured": false
+  },
+  "inversoraScore": 72,
+  "scoredBreakdown": [
+    { "id": "ter", "label": "Comisión (TER)", "points": 22, "maxPoints": 30 },
+    { "id": "tracking", "label": "Tracking error", "points": 12, "maxPoints": 20 },
+    { "id": "aum", "label": "Patrimonio (AUM)", "points": 10, "maxPoints": 15 },
+    { "id": "age", "label": "Antigüedad del fondo", "points": 4, "maxPoints": 10 },
+    { "id": "consistency", "label": "Consistencia histórica", "points": 14, "maxPoints": 15 },
+    { "id": "dataQuality", "label": "Calidad de datos", "points": 10, "maxPoints": 10 }
+  ],
+  "scoringStatus": "warning",
+  "market": {
+    "performanceByTimeframe": {
+      "ytd": {
+        "timeframe": "ytd",
+        "points": [],
+        "asOf": "2026-06-09T00:00:00.000Z",
+        "sourceLabel": "Financial Modeling Prep"
+      },
+      "1y": {
+        "timeframe": "1y",
+        "points": [
+          { "date": "2025-06-09", "value": 100 },
+          { "date": "2026-06-09", "value": 108.2 }
+        ],
+        "asOf": "2026-06-09T00:00:00.000Z",
+        "sourceLabel": "Financial Modeling Prep"
+      },
+      "3y": {
+        "timeframe": "3y",
+        "points": [],
+        "asOf": "2026-06-09T00:00:00.000Z",
+        "sourceLabel": "Financial Modeling Prep"
+      },
+      "5y": {
+        "timeframe": "5y",
+        "points": [],
+        "asOf": "2026-06-09T00:00:00.000Z",
+        "sourceLabel": "Financial Modeling Prep"
+      },
+      "max": {
+        "timeframe": "max",
+        "points": [
+          { "date": "2024-01-02", "value": 100 },
+          { "date": "2026-06-09", "value": 115.4 }
+        ],
+        "asOf": "2026-06-09T00:00:00.000Z",
+        "sourceLabel": "Financial Modeling Prep"
+      }
+    },
+    "regions": [{ "label": "Estados Unidos", "percent": 68.2 }],
+    "stabilityLabel": "Volatilidad media"
+  },
+  "profile": {
+    "asOf": "2026-06-09T00:00:00.000Z",
+    "sourceLabel": "Financial Modeling Prep",
+    "description": "Fondo indexado que replica el MSCI World.",
+    "manager": "—",
+    "benchmark": "MSCI World",
+    "isIndexed": true,
+    "fundAum": "850 MUSD",
+    "inceptionDate": "15/03/2024",
+    "summaryRows": [],
+    "feeRows": [{ "id": "ter", "label": "TER", "value": "0,12 %" }],
+    "documents": [{ "id": "kiid", "label": "KIID", "status": "coming_soon" }],
+    "returnsByPeriod": [
+      { "id": "ytd", "label": "YTD", "percent": 4.1 },
+      { "id": "1y", "label": "1 año", "percent": 8.2 },
+      { "id": "3y", "label": "3 años", "percent": null },
+      { "id": "5y", "label": "5 años", "percent": null }
+    ],
+    "returnsByYear": [{ "year": 2025, "percent": 6.8 }],
+    "currencyNote": "* Calculada en USD",
+    "methodNote": "Rentabilidades netas de comisiones del fondo.",
+    "ratiosByHorizon": {
+      "12m": [{ "id": "volatility", "label": "Volatilidad", "value": "—" }],
+      "3y": [],
+      "5y": []
+    },
+    "exposureByTab": {
+      "sectorial": [],
+      "regional": [{ "label": "América del Norte", "percent": 72.1 }],
+      "assetAllocation": [],
+      "capitalization": [],
+      "portfolio": []
+    },
+    "distributors": []
+  }
+}

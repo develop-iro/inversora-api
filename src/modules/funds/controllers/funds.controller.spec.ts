@@ -74,14 +74,6 @@ describe('FundsController', () => {
     expect(service.listFunds).toHaveBeenCalledWith(query);
   });
 
-  it('should delegate fund detail reads to the service', async () => {
-    const fundId = '550e8400-e29b-41d4-a716-446655440000';
-
-    await controller.getFundById(fundId);
-
-    expect(service.getFundById).toHaveBeenCalledWith(fundId);
-  });
-
   it('should delegate chart reads to the service', async () => {
     const fundId = '550e8400-e29b-41d4-a716-446655440000';
     const query = { period: '3M' };
