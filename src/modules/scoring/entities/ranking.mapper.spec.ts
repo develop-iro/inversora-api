@@ -42,6 +42,15 @@ describe('isRankingEligible', () => {
     expect(isRankingEligible(RANKING_FIXTURE_FUNDS[5])).toBe(false);
     expect(isRankingEligible(RANKING_FIXTURE_FUNDS[6])).toBe(false);
   });
+
+  it('should reject funds with a blank benchmark label', () => {
+    expect(
+      isRankingEligible({
+        ...RANKING_FIXTURE_FUNDS[0],
+        benchmark: '   ',
+      }),
+    ).toBe(false);
+  });
 });
 
 describe('normalizeBenchmarkKey', () => {
@@ -114,6 +123,32 @@ describe('buildRankingsResponse', () => {
     expect(response.data[0]?.funds.map((fund) => fund.symbol)).toEqual([
       'IVV',
       'SPY',
+    ]);
+  });
+
+  it('should break ties by symbol when scores are equal', () => {
+    const tiedFunds = [
+      {
+        ...RANKING_FIXTURE_FUNDS[0],
+        id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+        symbol: 'ZZZ',
+        score: 90,
+      },
+      {
+        ...RANKING_FIXTURE_FUNDS[1],
+        id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+        symbol: 'AAA',
+        score: 90,
+      },
+    ];
+
+    const response = buildRankingsResponse(tiedFunds, {
+      benchmark: 'S&P 500',
+    });
+
+    expect(response.data[0]?.funds.map((fund) => fund.symbol)).toEqual([
+      'AAA',
+      'ZZZ',
     ]);
   });
 });

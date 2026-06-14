@@ -46,4 +46,10 @@ describe('RankingsService', () => {
       BadRequestException,
     );
   });
+
+  it('should throw when the benchmark filter is blank', async () => {
+    await expect(
+      service.getRankings({ benchmark: '   ' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
 });
