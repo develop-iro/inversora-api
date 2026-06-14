@@ -605,7 +605,7 @@ URL: `http://localhost:3000/api/docs` → sección **bff**.
 - [x] Aprobado formato JSON raíz `FundDetail` (sin wrapper `{ data: … }`)
 - [x] Acordado `fund.id` = UUID backend (vs slug de mocks)
 - [x] Decisión desglose score: mapeo transitorio **A** (implementado)
-- [ ] Origen de campos de producto (`themeLabel`, `badge`, destacados trimestre)
+- [x] Origen de campos de producto (`themeLabel`, `badge`, destacados trimestre) — ver [featured-funds-endpoint.md](./featured-funds-endpoint.md)
 - [x] Comportamiento 404 para fondos no encontrados / sin ISIN
 - [ ] Umbrales `idealForBeginners` y `diversification`
 - [ ] Idioma de `categoryLabel` y labels de exposición (ES fijo vs i18n futuro)

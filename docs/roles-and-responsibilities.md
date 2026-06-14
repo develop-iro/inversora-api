@@ -140,6 +140,7 @@ El scheduler (`FundSyncScheduler`) está desactivado por defecto (`SYNC_SCHEDULE
 | `GET` | `/funds/:id/exposure/sectors` | funds | Exposición sectorial |
 | `GET` | `/funds/:id/score` | scoring | Score Inversora con desglose |
 | `GET` | `/rankings` | scoring | Rankings por benchmark comparables (RN-02) |
+| `GET` | `/featured` | bff | Destacados trimestrales para dashboard — ver [featured-funds-endpoint.md](./featured-funds-endpoint.md) |
 | `GET` | `/api/docs` | shared | Swagger UI |
 
 Documentación interactiva completa en `http://localhost:3000/api/docs` con la API en marcha.

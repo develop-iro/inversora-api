@@ -1,0 +1,27 @@
+{
+  "quarter": "2026-Q2",
+  "quarterTag": "Q2 2026",
+  "periodStart": "2026-04-01",
+  "periodEnd": "2026-06-30",
+  "data": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "isin": "US78462F1030",
+      "name": "State Street SPDR S&P 500 ETF Trust",
+      "categoryLabel": "Índice S&P 500",
+      "themeLabel": "Referencia S&P 500",
+      "badge": "Núcleo USA",
+      "idealForBeginners": true,
+      "efficiencyScore": 82,
+      "terPercent": 0.0945,
+      "riskLevel": "medium",
+      "diversification": "medium",
+      "quarterTag": "Q2 2026",
+      "periodStart": "2026-04-01",
+      "periodEnd": "2026-06-30",
+      "benefitSummary": "Replica el índice S&P 500 con alta liquidez y costes competitivos.",
+      "featuredReason": "Referencia global + datos verificados en catálogo",
+      "isFeatured": true
+    }
+  ]
+}

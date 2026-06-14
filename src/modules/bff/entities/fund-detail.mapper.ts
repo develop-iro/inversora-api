@@ -25,6 +25,10 @@ import {
   type FundMarketSnapshot,
   type ScoreCriterionResult,
 } from './fund-detail.schema';
+import {
+  buildQuarterMetadata,
+  resolveCurrentQuarterParts,
+} from './quarter-metadata.utils';
 
 const DATA_SOURCE_LABEL = 'Financial Modeling Prep';
 
@@ -526,23 +530,12 @@ export function buildCurrentQuarterMetadata(): {
   periodStart: string;
   periodEnd: string;
 } {
-  const now = new Date();
-  const year = now.getUTCFullYear();
-  const month = now.getUTCMonth();
-  const quarter = Math.floor(month / 3) + 1;
-  const periodStartMonth = (quarter - 1) * 3;
-  const periodEndMonth = periodStartMonth + 2;
-  const periodStart = formatFundPriceDate(
-    new Date(Date.UTC(year, periodStartMonth, 1)),
-  );
-  const periodEnd = formatFundPriceDate(
-    new Date(Date.UTC(year, periodEndMonth + 1, 0)),
-  );
+  const quarter = buildQuarterMetadata(resolveCurrentQuarterParts());
 
   return {
-    quarterTag: `Q${quarter} ${year}`,
-    periodStart,
-    periodEnd,
+    quarterTag: quarter.quarterTag,
+    periodStart: quarter.periodStart,
+    periodEnd: quarter.periodEnd,
   };
 }
 
