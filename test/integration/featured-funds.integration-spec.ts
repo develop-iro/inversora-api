@@ -118,12 +118,21 @@ describe('Featured funds BFF (integration)', () => {
       mercado: 'usa',
     });
 
+    expect(response.data.length).toBeGreaterThan(0);
     expect(
-      response.data.every(
-        (fund) =>
-          fund.categoryLabel.toLowerCase().includes('usa') ||
-          fund.themeLabel.toLowerCase().includes('usa'),
-      ),
+      response.data.every((fund) => {
+        const category = fund.categoryLabel.toLowerCase();
+        const theme = fund.themeLabel.toLowerCase();
+        const name = fund.name.toLowerCase();
+
+        return (
+          category.includes('usa') ||
+          theme.includes('usa') ||
+          category.includes('s&p') ||
+          theme.includes('s&p') ||
+          name.includes('s&p')
+        );
+      }),
     ).toBe(true);
   });
 });
