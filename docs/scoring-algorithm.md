@@ -1,17 +1,21 @@
-# Score Invesora — Algoritmo MVP
+# Score Inversora — Algoritmo legado (mvp-1)
 
-Versión: `mvp-1`
+> **Estado:** implementación experimental / legado. **No usar** para rankings públicos ni producción.
+>
+> **Versión canónica del MVP:** [RN-04 (rn-04)](./scoring-rn-04.md) — decisión en [ADR-002](./architecture/adr-002-scoring-mvp-version.md).
 
-## Objetivo
+Versión en código: `mvp-1`
 
-Puntuación de **0 a 100** para evaluar fondos indexados y ETFs de forma sencilla y comparable. El score **no predice** rentabilidad futura; mide si un fondo parece **eficiente, rentable, razonable en riesgo, diversificado y sólido** frente a productos similares.
+## Objetivo (mvp-1)
 
-La fiscalidad **no** forma parte del score principal.
+Puntuación de **0 a 100** con seis factores (rentabilidad, riesgo, coste, diversificación, AUM, antigüedad). Fue un prototipo técnico del backend antes de alinear con las reglas de producto RN-04.
 
-## Fórmula
+Este documento describe **lo que el código hace hoy**. Para lo que debe hacer el MVP en producción, ver [scoring-rn-04.md](./scoring-rn-04.md).
+
+## Fórmula (mvp-1)
 
 ```txt
-Score Invesora =
+Score Inversora =
   40% Rentabilidad ajustada al riesgo
 + 20% Riesgo
 + 15% Coste (comisión anual / TER)
@@ -20,7 +24,7 @@ Score Invesora =
 +  5% Antigüedad
 ```
 
-Los pesos viven en `src/modules/scoring/entities/score-weights.ts` como constantes configurables.
+Los pesos viven en `src/modules/scoring/entities/score-weights.ts`.
 
 ## Comparación por categoría
 
@@ -97,28 +101,30 @@ Basado en AUM:
 
 Si falta un dato relevante, el factor recibe una puntuación conservadora (40% del máximo) y se marca `incomplete: true` en el desglose. La respuesta incluye una advertencia para el usuario.
 
-## Evolución futura
+## Migración a rn-04
 
-- Perfiles de inversor (conservador, equilibrado, agresivo) pueden reutilizar los mismos calculadores cambiando `SCORE_WEIGHTS`.
-- Fiscalidad como dimensión separada (`Fiscal Score España`).
-- Volatilidad y drawdown calculados desde histórico de precios en el pipeline de sync.
+Ver checklist en [ADR-002](./architecture/adr-002-scoring-mvp-version.md). Los factores de rentabilidad, riesgo y diversificación de `mvp-1` podrían reutilizarse en una **v2** del modelo como métricas informativas, no como parte del score MVP.
 
-## Implementación
+## Implementación actual (mvp-1)
 
-- Servicio principal: `ScoringService.calculateFundScore(fund, metrics, context?)`
-- Persistencia automática: `ScoringService.recalculateAllScores()` tras el sync diario
-- Endpoint: `GET /funds/:id/score`
+- Servicio: `ScoringService.calculateFundScore(fund, metrics, context?)`
+- Persistencia: `ScoringService.recalculateAllScores()` tras sync diario
+- Endpoint: `GET /funds/:id/score` (devuelve `version: "mvp-1"`)
 - Tests: `src/modules/scoring/**/*.spec.ts`
 
 ## Cálculo automático
 
-Tras sincronizar metadatos, precios y composición en `FundDailySyncService`, se
-ejecuta `recalculateAllScores()`:
+Tras sincronizar metadatos y precios en `FundDailySyncService`, se ejecuta `recalculateAllScores()`:
 
 1. Carga todos los fondos persistidos.
 2. Deriva métricas de precios, holdings y sectores.
 3. Calcula el score con comparación por benchmark/categoría.
 4. Guarda el resultado en `funds.score`.
 
-Si el scoring falla, el sync diario sigue reportando éxito en metadatos/precios y
-devuelve `scoring.status = failed` sin interrumpir el job.
+Si el scoring falla, el sync reporta `scoring.status = failed` sin interrumpir metadata/precios.
+
+## Ver también
+
+- [scoring-rn-04.md](./scoring-rn-04.md) — especificación MVP de producción
+- [architecture/adr-002-scoring-mvp-version.md](./architecture/adr-002-scoring-mvp-version.md)
+- `invesora/docs/product/scoring.md`
