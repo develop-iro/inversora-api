@@ -136,9 +136,8 @@ describe('FundDetailService', () => {
         { provide: FundsRepository, useValue: fundsRepository },
         {
           provide: CatalogVisibilityService,
-          useValue: {
-            assertPublicCatalogVisible: jest.fn(),
-          },
+          useFactory: () =>
+            new CatalogVisibilityService(fundsRepository as never),
         },
         { provide: FundsService, useValue: fundsService },
         { provide: FundPricesService, useValue: fundPricesService },
@@ -166,6 +165,17 @@ describe('FundDetailService', () => {
 
   it('should return 404 when the persisted fund has a null ISIN', async () => {
     fundsRepository.findByIsin.mockResolvedValue({ ...fund, isin: null });
+
+    await expect(
+      service.getFundDetailByIsin('US78462F1030'),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('should return 404 when the fund is not publicly visible', async () => {
+    fundsRepository.findByIsin.mockResolvedValue({
+      ...fund,
+      catalogVisibility: 'quarantined',
+    });
 
     await expect(
       service.getFundDetailByIsin('US78462F1030'),

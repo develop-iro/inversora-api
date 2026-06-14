@@ -150,9 +150,9 @@ describe('FundsService', () => {
         },
         {
           provide: CatalogVisibilityService,
-          useValue: {
-            assertPublicCatalogVisible: jest.fn(),
-          },
+          useFactory: (repo: FundsRepository) =>
+            new CatalogVisibilityService(repo),
+          inject: [FundsRepository],
         },
       ],
     }).compile();
@@ -217,6 +217,17 @@ describe('FundsService', () => {
     await expect(
       service.getFundById('550e8400-e29b-41d4-a716-446655440000'),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('should hide non-visible funds from fund detail routes', async () => {
+    repository.findById.mockResolvedValueOnce({
+      ...fund,
+      catalogVisibility: 'blocked',
+    });
+
+    await expect(service.getFundById(fund.id)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
   });
 
   it('should return indexed chart data for a requested period', async () => {

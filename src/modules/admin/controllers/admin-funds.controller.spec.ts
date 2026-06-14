@@ -1,0 +1,104 @@
+import { BadRequestException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { FundsRepository } from '../../funds/repositories/funds.repository';
+import { CatalogVisibilityService } from '../../funds/services/catalog-visibility.service';
+import { AdminApiKeyGuard } from '../guards/admin-api-key.guard';
+import { AdminCatalogEnabledGuard } from '../guards/admin-catalog-enabled.guard';
+import { AdminFundsController } from './admin-funds.controller';
+
+const fund = {
+  id: '550e8400-e29b-41d4-a716-446655440000',
+  symbol: 'SPY',
+  isin: 'US78462F1030',
+  name: 'State Street SPDR S&P 500 ETF Trust',
+  provider: 'financial-modeling-prep',
+  category: 'index',
+  currency: 'USD',
+  benchmark: 'S&P 500',
+  metrics: {
+    volatility: null,
+    drawdown: null,
+    ter: 0.0945,
+    aum: 520_000_000_000,
+    per: null,
+    dividendYield: null,
+    trackingError: null,
+  },
+  riskLevel: 4,
+  score: 82.5,
+  catalogVisibility: 'visible' as const,
+  createdAt: new Date('2024-01-01T00:00:00.000Z'),
+  updatedAt: new Date('2024-02-01T00:00:00.000Z'),
+};
+
+describe('AdminFundsController', () => {
+  let controller: AdminFundsController;
+  let fundsRepository: { findMany: jest.Mock };
+  let catalogVisibilityService: {
+    updateCatalogVisibility: jest.Mock;
+    listVisibilityAudits: jest.Mock;
+  };
+
+  beforeEach(async () => {
+    fundsRepository = {
+      findMany: jest.fn().mockResolvedValue({ items: [fund], total: 1 }),
+    };
+    catalogVisibilityService = {
+      updateCatalogVisibility: jest.fn().mockResolvedValue(fund),
+      listVisibilityAudits: jest.fn().mockResolvedValue([]),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [AdminFundsController],
+      providers: [
+        { provide: FundsRepository, useValue: fundsRepository },
+        {
+          provide: CatalogVisibilityService,
+          useValue: catalogVisibilityService,
+        },
+      ],
+    })
+      .overrideGuard(AdminApiKeyGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(AdminCatalogEnabledGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
+
+    controller = module.get(AdminFundsController);
+  });
+
+  it('should list funds for admin queries', async () => {
+    const response = await controller.listFunds({ page: '1', limit: '20' });
+
+    expect(response.data).toHaveLength(1);
+    expect(fundsRepository.findMany).toHaveBeenCalled();
+  });
+
+  it('should update catalog visibility', async () => {
+    await controller.updateCatalogVisibility(fund.id, {
+      catalogVisibility: 'quarantined',
+      reason: 'Manual review pending',
+    });
+
+    expect(
+      catalogVisibilityService.updateCatalogVisibility,
+    ).toHaveBeenCalledWith({
+      fundId: fund.id,
+      catalogVisibility: 'quarantined',
+      reason: 'Manual review pending',
+      actor: undefined,
+    });
+  });
+
+  it('should return visibility audit history', async () => {
+    await expect(
+      controller.listCatalogVisibilityAudit(fund.id),
+    ).resolves.toEqual({ data: [] });
+  });
+
+  it('should reject invalid admin list queries', () => {
+    expect(() => controller.listFunds({ page: '0' })).toThrow(
+      BadRequestException,
+    );
+  });
+});

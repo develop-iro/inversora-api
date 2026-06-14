@@ -12,6 +12,27 @@ describe('fund-list.mapper', () => {
     });
   });
 
+  it('should honor explicit admin visibility filters', () => {
+    expect(
+      buildFundListWhereInput(
+        {},
+        { catalogVisibility: ['visible', 'quarantined', 'blocked'] },
+      ),
+    ).toEqual({
+      AND: [
+        {
+          catalogVisibility: {
+            in: [
+              CatalogVisibility.VISIBLE,
+              CatalogVisibility.QUARANTINED,
+              CatalogVisibility.BLOCKED,
+            ],
+          },
+        },
+      ],
+    });
+  });
+
   it('should build filters for all supported query parameters', () => {
     expect(
       buildFundListWhereInput({

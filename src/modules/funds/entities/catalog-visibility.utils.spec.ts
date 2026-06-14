@@ -41,6 +41,13 @@ describe('catalog-visibility.utils', () => {
         score: null,
       }),
     ).toEqual(['missing-isin', 'missing-benchmark', 'missing-score']);
+
+    expect(
+      collectCatalogDataQualityIssues({
+        ...completeFund,
+        metrics: { ...completeFund.metrics, ter: null },
+      }),
+    ).toEqual(['missing-ter']);
   });
 
   it('should mark complete visible funds as catalog-ready', () => {
@@ -60,6 +67,21 @@ describe('catalog-visibility.utils', () => {
     expect(
       buildAutomaticCatalogVisibilityReason(incompleteFund, 'quarantined'),
     ).toContain('missing-score');
+  });
+
+  it('should detect a blank fund name as missing catalog data', () => {
+    expect(
+      collectCatalogDataQualityIssues({
+        ...completeFund,
+        name: '   ',
+      }),
+    ).toContain('missing-name');
+  });
+
+  it('should build a visible-state automatic reason', () => {
+    expect(
+      buildAutomaticCatalogVisibilityReason(completeFund, 'visible'),
+    ).toContain('requirements satisfied');
   });
 
   it('should never auto-change blocked or quarantined funds', () => {

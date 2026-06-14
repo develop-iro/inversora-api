@@ -122,6 +122,24 @@ describe('FeaturedFundsService', () => {
     expect(response.data).toEqual([]);
   });
 
+  it('should skip non-visible catalog funds', async () => {
+    fundsRepository.findByIsins.mockResolvedValue(
+      new Map([
+        [
+          'US78462F1030',
+          {
+            ...fund,
+            catalogVisibility: 'quarantined' as const,
+          },
+        ],
+      ]),
+    );
+
+    const response = await service.getFeaturedFunds({ quarter: '2026-Q2' });
+
+    expect(response.data).toEqual([]);
+  });
+
   it('should propagate unexpected quarter parsing failures', async () => {
     const parseSpy = jest
       .spyOn(featuredFundsMapper, 'parseFeaturedQuarterQuery')

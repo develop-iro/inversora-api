@@ -10,6 +10,8 @@ import {
   mapIndexFundProfileToUpsertFundInput,
   mapDomainFundCategoryToPrisma,
   mapDomainFundProviderToPrisma,
+  mapDomainCatalogVisibilityToPrisma,
+  mapPrismaCatalogVisibility,
   mapPrismaFundCategory,
   mapPrismaFundMetrics,
   mapPrismaFundProvider,
@@ -108,6 +110,32 @@ describe('mapPrismaFundToFund', () => {
       createdAt,
       updatedAt,
     });
+  });
+});
+
+describe('catalog visibility mappers', () => {
+  it('should map Prisma catalog visibility values to the domain enum', () => {
+    expect(mapPrismaCatalogVisibility(PrismaCatalogVisibility.VISIBLE)).toBe(
+      'visible',
+    );
+    expect(
+      mapPrismaCatalogVisibility(PrismaCatalogVisibility.QUARANTINED),
+    ).toBe('quarantined');
+    expect(mapPrismaCatalogVisibility(PrismaCatalogVisibility.BLOCKED)).toBe(
+      'blocked',
+    );
+  });
+
+  it('should map domain catalog visibility values to Prisma enums', () => {
+    expect(mapDomainCatalogVisibilityToPrisma('visible')).toBe(
+      PrismaCatalogVisibility.VISIBLE,
+    );
+    expect(mapDomainCatalogVisibilityToPrisma('quarantined')).toBe(
+      PrismaCatalogVisibility.QUARANTINED,
+    );
+    expect(mapDomainCatalogVisibilityToPrisma('blocked')).toBe(
+      PrismaCatalogVisibility.BLOCKED,
+    );
   });
 });
 
@@ -263,6 +291,19 @@ describe('mapUpsertFundInputToPrismaCreateData', () => {
       riskLevel: null,
       score: null,
     });
+  });
+
+  it('should map explicit catalog visibility on create payloads', () => {
+    expect(
+      mapUpsertFundInputToPrismaCreateData({
+        symbol: 'SPY',
+        name: 'State Street SPDR S&P 500 ETF Trust',
+        provider: 'financial-modeling-prep',
+        category: 'index',
+        currency: 'USD',
+        catalogVisibility: 'blocked',
+      }).catalogVisibility,
+    ).toBe(PrismaCatalogVisibility.BLOCKED);
   });
 });
 

@@ -56,7 +56,34 @@ describe('AppConfigService', () => {
     expect(service.syncCronExpression).toBe('0 6 * * *');
     expect(service.syncFundSymbols).toEqual([]);
     expect(service.adminSyncEnabled).toBe(false);
+    expect(service.adminCatalogEnabled).toBe(false);
+    expect(service.adminApiEnabled).toBe(false);
     expect(service.adminApiKey).toBeUndefined();
+  });
+
+  it('should expose admin catalog and combined admin API flags', async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        ConfigModule.forRoot({
+          isGlobal: true,
+          ignoreEnvFile: true,
+          load: [
+            () =>
+              validateEnv({
+                ...validEnv,
+                ADMIN_CATALOG_ENABLED: 'true',
+                ADMIN_API_KEY: 'local-dev-admin-key',
+              }),
+          ],
+        }),
+      ],
+      providers: [AppConfigService],
+    }).compile();
+
+    service = module.get(AppConfigService);
+    expect(service.adminCatalogEnabled).toBe(true);
+    expect(service.adminApiEnabled).toBe(true);
+    expect(service.adminApiKey).toBe('local-dev-admin-key');
   });
 
   it('should expose production mode from node env', async () => {

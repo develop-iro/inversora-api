@@ -85,6 +85,62 @@ describe('CatalogVisibilityService', () => {
     );
   });
 
+  it('should skip automatic updates when visibility already matches', async () => {
+    await expect(
+      service.applyAutomaticVisibilityRules(fund),
+    ).resolves.toMatchObject({ catalogVisibility: 'visible' });
+
+    expect(repository.updateCatalogVisibility).not.toHaveBeenCalled();
+  });
+
+  it('should return audit history for an existing fund', async () => {
+    repository.findCatalogVisibilityAudits.mockResolvedValueOnce([
+      {
+        id: 'audit-1',
+        fundId: fund.id,
+        previousState: 'visible',
+        newState: 'quarantined',
+        reason: 'Missing score',
+        actor: 'system',
+        createdAt: new Date('2024-03-01T00:00:00.000Z'),
+      },
+    ]);
+
+    await expect(service.listVisibilityAudits(fund.id)).resolves.toHaveLength(
+      1,
+    );
+  });
+
+  it('should return the fund unchanged when visibility is already set', async () => {
+    await expect(
+      service.updateCatalogVisibility({
+        fundId: fund.id,
+        catalogVisibility: 'visible',
+        reason: 'No change needed',
+      }),
+    ).resolves.toMatchObject({ catalogVisibility: 'visible' });
+
+    expect(repository.updateCatalogVisibility).not.toHaveBeenCalled();
+  });
+
+  it('should reject updates and audit lookups for unknown funds', async () => {
+    repository.findById.mockResolvedValueOnce(null);
+
+    await expect(
+      service.updateCatalogVisibility({
+        fundId: fund.id,
+        catalogVisibility: 'blocked',
+        reason: 'Block unknown fund',
+      }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+
+    repository.findById.mockResolvedValueOnce(null);
+
+    await expect(service.listVisibilityAudits(fund.id)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+  });
+
   it('should update catalog visibility through the admin workflow', async () => {
     await service.updateCatalogVisibility({
       fundId: fund.id,
@@ -99,5 +155,17 @@ describe('CatalogVisibilityService', () => {
       reason: 'Manual block: non-index product',
       actor: 'ops@inversora.dev',
     });
+  });
+
+  it('should default the audit actor to admin when omitted', async () => {
+    await service.updateCatalogVisibility({
+      fundId: fund.id,
+      catalogVisibility: 'blocked',
+      reason: 'Manual block',
+    });
+
+    expect(repository.updateCatalogVisibility).toHaveBeenCalledWith(
+      expect.objectContaining({ actor: 'admin' }),
+    );
   });
 });
