@@ -15,6 +15,7 @@
 | Arranque rápido local (instalación, scripts, health check) | [README.md](../README.md) |
 | Contrato HTTP vivo (endpoints, DTOs) | Swagger en `http://localhost:3000/api/docs` |
 | **Contrato BFF** `GET /funds/:isin` → `FundDetail` (app) | [bff-fund-detail-contract.md](./bff-fund-detail-contract.md) |
+| **Destacados trimestre** `GET /featured` (dashboard) | [featured-funds-endpoint.md](./featured-funds-endpoint.md) |
 
 ## Jerarquía de fuentes de verdad
 

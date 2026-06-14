@@ -107,6 +107,38 @@ export class FundsRepository {
   }
 
   /**
+   * Finds persisted funds for a list of ISINs.
+   *
+   * @param isins - ISO 6166 ISIN codes in any casing.
+   * @returns Map keyed by normalized uppercase ISIN.
+   */
+  async findByIsins(isins: readonly string[]): Promise<Map<string, Fund>> {
+    if (isins.length === 0) {
+      return new Map();
+    }
+
+    const normalizedIsins = [
+      ...new Set(isins.map((isin) => isin.trim().toUpperCase())),
+    ];
+    const records = await this.prisma.fund.findMany({
+      where: {
+        isin: {
+          in: normalizedIsins,
+        },
+      },
+    });
+
+    return new Map(
+      records
+        .filter((record) => record.isin !== null)
+        .map((record) => {
+          const fund = mapPrismaFundToFund(record);
+          return [record.isin as string, fund] as const;
+        }),
+    );
+  }
+
+  /**
    * Finds a persisted fund by primary key.
    *
    * @param id - Fund identifier.
