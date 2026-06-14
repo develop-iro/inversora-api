@@ -2,12 +2,15 @@ import type { Prisma } from '@prisma/client';
 import {
   mapDomainFundCategoryToPrisma,
   mapDomainFundProviderToPrisma,
+  mapDomainCatalogVisibilityToPrisma,
 } from './fund.mapper';
+import { CatalogVisibility as PrismaCatalogVisibility } from '@prisma/client';
 import type {
   FundListQuery,
   FundListSortField,
   FundListSortOrder,
 } from './fund-list.schema';
+import type { CatalogVisibility } from './catalog-visibility.schema';
 
 const SORT_FIELD_TO_PRISMA_COLUMN: Record<
   FundListSortField,
@@ -28,12 +31,26 @@ const SORT_FIELD_TO_PRISMA_COLUMN: Record<
  * Builds a Prisma filter from validated fund list query parameters.
  *
  * @param query - Validated list query.
+ * @param options - Optional visibility scope for public vs admin listings.
  * @returns Prisma where input.
  */
 export function buildFundListWhereInput(
   query: FundListQuery,
+  options: {
+    catalogVisibility?: readonly CatalogVisibility[];
+  } = {},
 ): Prisma.FundWhereInput {
   const conditions: Prisma.FundWhereInput[] = [];
+  const visibilityFilter =
+    options.catalogVisibility === undefined
+      ? [PrismaCatalogVisibility.VISIBLE]
+      : options.catalogVisibility.map(mapDomainCatalogVisibilityToPrisma);
+
+  conditions.push({
+    catalogVisibility: {
+      in: visibilityFilter,
+    },
+  });
 
   if (query.q !== undefined) {
     conditions.push({

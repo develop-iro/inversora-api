@@ -44,15 +44,21 @@ export const envSchema = z
       .enum(['true', 'false'])
       .default('false')
       .transform((value) => value === 'true'),
+    ADMIN_CATALOG_ENABLED: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((value) => value === 'true'),
     ADMIN_API_KEY: z.string().min(8).optional(),
   })
   .superRefine((env, ctx) => {
-    if (env.ADMIN_SYNC_ENABLED && env.ADMIN_API_KEY === undefined) {
+    const adminApiEnabled = env.ADMIN_SYNC_ENABLED || env.ADMIN_CATALOG_ENABLED;
+
+    if (adminApiEnabled && env.ADMIN_API_KEY === undefined) {
       ctx.addIssue({
         code: 'custom',
         path: ['ADMIN_API_KEY'],
         message:
-          'ADMIN_API_KEY is required when ADMIN_SYNC_ENABLED is true (minimum 8 characters)',
+          'ADMIN_API_KEY is required when ADMIN_SYNC_ENABLED or ADMIN_CATALOG_ENABLED is true (minimum 8 characters)',
       });
     }
   });

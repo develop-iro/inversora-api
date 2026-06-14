@@ -2,6 +2,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FundDailySyncService } from '../../funds/services/fund-daily-sync.service';
 import { AdminSyncController } from './admin-sync.controller';
+import { AdminSyncEnabledGuard } from '../guards/admin-sync-enabled.guard';
 import { AdminApiKeyGuard } from '../guards/admin-api-key.guard';
 
 describe('AdminSyncController', () => {
@@ -39,6 +40,8 @@ describe('AdminSyncController', () => {
       ],
     })
       .overrideGuard(AdminApiKeyGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(AdminSyncEnabledGuard)
       .useValue({ canActivate: () => true })
       .compile();
 
@@ -88,9 +91,11 @@ describe('AdminSyncController guard wiring', () => {
     expect(guards).toContain(AdminApiKeyGuard);
   });
 
-  it('should expose NotFound when admin sync is disabled via guard', () => {
+  it('should expose NotFound when admin API is disabled via guard', () => {
     const guard = new AdminApiKeyGuard({
       adminSyncEnabled: false,
+      adminCatalogEnabled: false,
+      adminApiEnabled: false,
       adminApiKey: 'test-admin-key',
     } as never);
 

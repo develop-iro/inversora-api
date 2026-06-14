@@ -1,4 +1,4 @@
-import { FundCategory, FundProvider } from '@prisma/client';
+import { CatalogVisibility, FundCategory, FundProvider } from '@prisma/client';
 import {
   buildFundListMeta,
   buildFundListOrderByInput,
@@ -6,8 +6,10 @@ import {
 } from './fund-list.mapper';
 
 describe('fund-list.mapper', () => {
-  it('should build an empty filter when no query params are provided', () => {
-    expect(buildFundListWhereInput({})).toEqual({});
+  it('should default to visible-only catalog filtering', () => {
+    expect(buildFundListWhereInput({})).toEqual({
+      AND: [{ catalogVisibility: { in: [CatalogVisibility.VISIBLE] } }],
+    });
   });
 
   it('should build filters for all supported query parameters', () => {
@@ -26,6 +28,7 @@ describe('fund-list.mapper', () => {
       }),
     ).toEqual({
       AND: [
+        { catalogVisibility: { in: [CatalogVisibility.VISIBLE] } },
         {
           OR: [
             { symbol: { contains: 'spy', mode: 'insensitive' } },
@@ -50,13 +53,19 @@ describe('fund-list.mapper', () => {
       buildFundListWhereInput({
         minScore: 80,
       }).AND,
-    ).toEqual([{ score: { gte: 80 } }]);
+    ).toEqual([
+      { catalogVisibility: { in: [CatalogVisibility.VISIBLE] } },
+      { score: { gte: 80 } },
+    ]);
 
     expect(
       buildFundListWhereInput({
         maxTer: 0.2,
       }).AND,
-    ).toEqual([{ ter: { lte: 0.2 } }]);
+    ).toEqual([
+      { catalogVisibility: { in: [CatalogVisibility.VISIBLE] } },
+      { ter: { lte: 0.2 } },
+    ]);
   });
 
   it('should map sort fields to Prisma order clauses', () => {

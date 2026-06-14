@@ -4,10 +4,12 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import { CatalogVisibilityService } from '../../funds/services/catalog-visibility.service';
 import { FundsRepository } from '../../funds/repositories/funds.repository';
 import { FundCompositionService } from '../../funds/services/fund-composition.service';
 import { FundPricesService } from '../../funds/services/fund-prices.service';
 import { FundsService } from '../../funds/services/funds.service';
+import { isCatalogVisible } from '../../funds/entities/catalog-visibility.schema';
 import { resolveScoringPeerGroupKey } from '../../scoring/entities/fund-scoring-metrics.builder';
 import { ScoringService } from '../../scoring/services/scoring.service';
 import { normalizeFundIsin } from '../entities/fund-isin.utils';
@@ -24,6 +26,7 @@ import type { FundDetailResponse } from '../entities/fund-detail.schema';
 export class FundDetailService {
   constructor(
     private readonly fundsRepository: FundsRepository,
+    private readonly catalogVisibilityService: CatalogVisibilityService,
     private readonly fundsService: FundsService,
     private readonly fundPricesService: FundPricesService,
     private readonly fundCompositionService: FundCompositionService,
@@ -58,6 +61,8 @@ export class FundDetailService {
         statusCode: 404,
       });
     }
+
+    this.catalogVisibilityService.assertPublicCatalogVisible(fund);
 
     try {
       const [
@@ -166,6 +171,7 @@ export class FundDetailService {
     const rankedPeers = peers
       .filter(
         (peer) =>
+          isCatalogVisible(peer) &&
           resolveScoringPeerGroupKey(peer) === peerGroupKey &&
           peer.score !== null,
       )

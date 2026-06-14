@@ -38,6 +38,7 @@ import { buildFundSectorExposureResponse } from '../entities/fund-sector-exposur
 import { FUND_SECTOR_EXPOSURE_CATEGORY } from '../entities/fund-sector-exposure.schema';
 import type { FundSectorExposureResponse } from '../entities/fund-sector-exposure.schema';
 import { FundsRepository } from '../repositories/funds.repository';
+import { CatalogVisibilityService } from './catalog-visibility.service';
 import { FundCompositionService } from './fund-composition.service';
 import { FundPricesService } from './fund-prices.service';
 
@@ -48,6 +49,7 @@ import { FundPricesService } from './fund-prices.service';
 export class FundsService {
   constructor(
     private readonly fundsRepository: FundsRepository,
+    private readonly catalogVisibilityService: CatalogVisibilityService,
     private readonly fundPricesService: FundPricesService,
     private readonly fundCompositionService: FundCompositionService,
   ) {}
@@ -92,6 +94,8 @@ export class FundsService {
       throw new NotFoundException(`Fund ${fundId} was not found`);
     }
 
+    this.catalogVisibilityService.assertPublicCatalogVisible(fund);
+
     return fundSchema.parse(fund);
   }
 
@@ -112,6 +116,8 @@ export class FundsService {
     if (fund === null) {
       throw new NotFoundException(`Fund ${fundId} was not found`);
     }
+
+    this.catalogVisibilityService.assertPublicCatalogVisible(fund);
 
     const query = this.parseExposureQuery(rawQuery);
     const snapshot = await this.fundCompositionService.getAllocationsByCategory(
@@ -145,6 +151,8 @@ export class FundsService {
       throw new NotFoundException(`Fund ${fundId} was not found`);
     }
 
+    this.catalogVisibilityService.assertPublicCatalogVisible(fund);
+
     const query = this.parseExposureQuery(rawQuery);
     const snapshot = await this.fundCompositionService.getAllocationsByCategory(
       fundId,
@@ -177,6 +185,8 @@ export class FundsService {
       throw new NotFoundException(`Fund ${fundId} was not found`);
     }
 
+    this.catalogVisibilityService.assertPublicCatalogVisible(fund);
+
     const query = this.parseHoldingsQuery(rawQuery);
     const snapshot = await this.fundCompositionService.getHoldings(
       fundId,
@@ -207,6 +217,8 @@ export class FundsService {
     if (fund === null) {
       throw new NotFoundException(`Fund ${fundId} was not found`);
     }
+
+    this.catalogVisibilityService.assertPublicCatalogVisible(fund);
 
     const query = this.parseChartQuery(rawQuery);
     const latestDate = await this.fundPricesService.getLatestDate(fundId);

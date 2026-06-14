@@ -113,7 +113,17 @@ export class AppConfigService {
     return this.configService.get('ADMIN_SYNC_ENABLED', { infer: true });
   }
 
-  /** Shared secret for authenticating manual admin sync requests. */
+  /** Whether admin catalog visibility endpoints are available. */
+  get adminCatalogEnabled(): boolean {
+    return this.configService.get('ADMIN_CATALOG_ENABLED', { infer: true });
+  }
+
+  /** Whether any authenticated admin API surface is enabled. */
+  get adminApiEnabled(): boolean {
+    return this.adminSyncEnabled || this.adminCatalogEnabled;
+  }
+
+  /** Shared secret for authenticating manual admin requests. */
   get adminApiKey(): string | undefined {
     return this.configService.get('ADMIN_API_KEY', { infer: true });
   }

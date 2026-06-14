@@ -4,6 +4,7 @@ import { ProvidersModule } from '../providers/providers.module';
 import { ScoringModule } from '../scoring/scoring.module';
 import { FundsController } from './controllers/funds.controller';
 import { FundSyncScheduler } from './schedulers/fund-sync.scheduler';
+import { CatalogVisibilityService } from './services/catalog-visibility.service';
 import { FundCompositionRepository } from './repositories/fund-composition.repository';
 import { FundPricesRepository } from './repositories/fund-prices.repository';
 import { FundsRepository } from './repositories/funds.repository';
@@ -33,10 +34,12 @@ import { FundsService } from './services/funds.service';
     FundSyncService,
     FundDailySyncService,
     FundSyncScheduler,
+    CatalogVisibilityService,
   ],
   exports: [
     FundsRepository,
     FundsService,
+    CatalogVisibilityService,
     FundPricesService,
     FundCompositionService,
     FundCompositionSyncService,

@@ -1,4 +1,5 @@
 import {
+  CatalogVisibility as PrismaCatalogVisibility,
   FundCategory as PrismaFundCategory,
   FundProvider as PrismaFundProvider,
 } from '@prisma/client';
@@ -37,6 +38,7 @@ const prismaFundRow = {
   trackingError: new Decimal('0.0500'),
   riskLevel: 4,
   score: new Decimal('82.50'),
+  catalogVisibility: PrismaCatalogVisibility.VISIBLE,
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   updatedAt: new Date('2024-02-01T00:00:00.000Z'),
 };
@@ -102,6 +104,7 @@ describe('mapPrismaFundToFund', () => {
       },
       riskLevel: 4,
       score: 82.5,
+      catalogVisibility: 'visible',
       createdAt,
       updatedAt,
     });
@@ -249,6 +252,7 @@ describe('mapUpsertFundInputToPrismaCreateData', () => {
       category: PrismaFundCategory.INDEX,
       currency: 'USD',
       benchmark: 'S&P 500',
+      catalogVisibility: PrismaCatalogVisibility.VISIBLE,
       ter: 0.0945,
       aum: 520_000_000_000,
       volatility: null,

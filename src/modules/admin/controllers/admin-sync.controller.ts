@@ -21,6 +21,7 @@ import {
   AdminSyncRequestDto,
   AdminSyncResponseDto,
 } from '../dto/admin-sync.dto';
+import { AdminSyncEnabledGuard } from '../guards/admin-sync-enabled.guard';
 import { AdminApiKeyGuard } from '../guards/admin-api-key.guard';
 import {
   mapAdminSyncRequestToManualSyncOptions,
@@ -30,7 +31,7 @@ import {
 @ApiTags('admin')
 @ApiSecurity('admin-api-key')
 @Controller('admin')
-@UseGuards(AdminApiKeyGuard)
+@UseGuards(AdminApiKeyGuard, AdminSyncEnabledGuard)
 export class AdminSyncController {
   constructor(private readonly fundDailySyncService: FundDailySyncService) {}
 

@@ -4,6 +4,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { CatalogVisibilityService } from '../../funds/services/catalog-visibility.service';
 import { FundsRepository } from '../../funds/repositories/funds.repository';
 import { FundCompositionService } from '../../funds/services/fund-composition.service';
 import { FundPricesService } from '../../funds/services/fund-prices.service';
@@ -31,6 +32,7 @@ const fund = {
   },
   riskLevel: 4,
   score: 82,
+  catalogVisibility: 'visible' as const,
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   updatedAt: new Date('2024-02-01T00:00:00.000Z'),
 };
@@ -132,6 +134,12 @@ describe('FundDetailService', () => {
       providers: [
         FundDetailService,
         { provide: FundsRepository, useValue: fundsRepository },
+        {
+          provide: CatalogVisibilityService,
+          useValue: {
+            assertPublicCatalogVisible: jest.fn(),
+          },
+        },
         { provide: FundsService, useValue: fundsService },
         { provide: FundPricesService, useValue: fundPricesService },
         { provide: FundCompositionService, useValue: fundCompositionService },

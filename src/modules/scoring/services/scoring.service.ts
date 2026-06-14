@@ -4,6 +4,7 @@ import { FUND_SECTOR_EXPOSURE_CATEGORY } from '../../funds/entities/fund-sector-
 import { FundCompositionService } from '../../funds/services/fund-composition.service';
 import { FundPricesService } from '../../funds/services/fund-prices.service';
 import { FundsRepository } from '../../funds/repositories/funds.repository';
+import { CatalogVisibilityService } from '../../funds/services/catalog-visibility.service';
 import {
   buildFundScoringMetrics,
   resolveScoringPeerGroupKey,
@@ -54,6 +55,7 @@ const FACTOR_LABELS = {
 export class ScoringService {
   constructor(
     private readonly fundsRepository: FundsRepository,
+    private readonly catalogVisibilityService: CatalogVisibilityService,
     private readonly fundPricesService: FundPricesService,
     private readonly fundCompositionService: FundCompositionService,
   ) {}
@@ -232,9 +234,13 @@ export class ScoringService {
         continue;
       }
 
-      await this.fundsRepository.updateScore(
+      const updatedFund = await this.fundsRepository.updateScore(
         entry.fund.id,
         computedScore.score,
+      );
+
+      await this.catalogVisibilityService.applyAutomaticVisibilityRules(
+        updatedFund,
       );
 
       results.push({

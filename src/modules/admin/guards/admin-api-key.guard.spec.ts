@@ -12,9 +12,9 @@ describe('AdminApiKeyGuard', () => {
       }),
     }) as ExecutionContext;
 
-  it('should reject requests when admin sync is disabled', () => {
+  it('should reject requests when admin API is disabled', () => {
     const guard = new AdminApiKeyGuard({
-      adminSyncEnabled: false,
+      adminApiEnabled: false,
       adminApiKey: 'test-admin-key',
     } as never);
 
@@ -25,7 +25,7 @@ describe('AdminApiKeyGuard', () => {
 
   it('should reject requests without a configured admin key', () => {
     const guard = new AdminApiKeyGuard({
-      adminSyncEnabled: true,
+      adminApiEnabled: true,
       adminApiKey: undefined,
     } as never);
 
@@ -36,7 +36,7 @@ describe('AdminApiKeyGuard', () => {
 
   it('should accept a valid X-Admin-Api-Key header', () => {
     const guard = new AdminApiKeyGuard({
-      adminSyncEnabled: true,
+      adminApiEnabled: true,
       adminApiKey: 'test-admin-key',
     } as never);
 
@@ -47,7 +47,7 @@ describe('AdminApiKeyGuard', () => {
 
   it('should accept a valid Bearer token', () => {
     const guard = new AdminApiKeyGuard({
-      adminSyncEnabled: true,
+      adminApiEnabled: true,
       adminApiKey: 'test-admin-key',
     } as never);
 
@@ -60,7 +60,7 @@ describe('AdminApiKeyGuard', () => {
 
   it('should reject invalid credentials', () => {
     const guard = new AdminApiKeyGuard({
-      adminSyncEnabled: true,
+      adminApiEnabled: true,
       adminApiKey: 'test-admin-key',
     } as never);
 
@@ -71,7 +71,7 @@ describe('AdminApiKeyGuard', () => {
 
   it('should reject requests without credentials', () => {
     const guard = new AdminApiKeyGuard({
-      adminSyncEnabled: true,
+      adminApiEnabled: true,
       adminApiKey: 'test-admin-key',
     } as never);
 
@@ -82,7 +82,7 @@ describe('AdminApiKeyGuard', () => {
 
   it('should reject malformed bearer authorization headers', () => {
     const guard = new AdminApiKeyGuard({
-      adminSyncEnabled: true,
+      adminApiEnabled: true,
       adminApiKey: 'test-admin-key',
     } as never);
 

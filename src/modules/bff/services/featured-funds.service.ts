@@ -13,6 +13,7 @@ import {
   type FeaturedFundsQuery,
   type FeaturedFundsResponse,
 } from '../entities/featured-funds.schema';
+import { isCatalogVisible } from '../../funds/entities/catalog-visibility.schema';
 import { FundsRepository } from '../../funds/repositories/funds.repository';
 
 const FEATURED_FUNDS_CACHE_TTL_MS = 5 * 60 * 1000;
@@ -64,7 +65,7 @@ export class FeaturedFundsService {
     const hydrated = selection.entries.flatMap((editorial) => {
       const fund = fundsByIsin.get(editorial.isin);
 
-      if (fund === undefined || fund.isin === null) {
+      if (fund === undefined || fund.isin === null || !isCatalogVisible(fund)) {
         return [];
       }
 

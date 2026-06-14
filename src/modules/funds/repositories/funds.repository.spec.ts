@@ -1,4 +1,4 @@
-import { FundCategory, FundProvider } from '@prisma/client';
+import { CatalogVisibility, FundCategory, FundProvider } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../../shared/database/prisma.service';
@@ -22,6 +22,7 @@ const prismaFundRow = {
   trackingError: null,
   riskLevel: null,
   score: null,
+  catalogVisibility: CatalogVisibility.VISIBLE,
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   updatedAt: new Date('2024-02-01T00:00:00.000Z'),
 };
@@ -50,6 +51,10 @@ describe('FundsRepository', () => {
           score: new Decimal('87.00'),
         }),
         count: jest.fn().mockResolvedValue(0),
+      },
+      fundCatalogVisibilityAudit: {
+        create: jest.fn(),
+        findMany: jest.fn().mockResolvedValue([]),
       },
       $transaction: jest.fn(),
     };

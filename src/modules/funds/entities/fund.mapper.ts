@@ -1,4 +1,5 @@
 import {
+  CatalogVisibility as PrismaCatalogVisibility,
   FundCategory as PrismaFundCategory,
   FundProvider as PrismaFundProvider,
   type Fund as PrismaFund,
@@ -14,9 +15,54 @@ import type {
   FundProvider,
   UpsertFundInput,
 } from './fund.schema';
+import type { CatalogVisibility } from './catalog-visibility.schema';
 
 const ISO_4217_CURRENCY_PATTERN = /^[A-Z]{3}$/;
 const ISO_6166_ISIN_PATTERN = /^[A-Z]{2}[A-Z0-9]{9}[0-9]$/;
+
+/**
+ * Maps a Prisma catalog visibility enum to the domain value.
+ *
+ * @param visibility - Prisma catalog visibility enum.
+ */
+export function mapPrismaCatalogVisibility(
+  visibility: PrismaCatalogVisibility,
+): CatalogVisibility {
+  switch (visibility) {
+    case PrismaCatalogVisibility.VISIBLE:
+      return 'visible';
+    case PrismaCatalogVisibility.QUARANTINED:
+      return 'quarantined';
+    case PrismaCatalogVisibility.BLOCKED:
+      return 'blocked';
+    default: {
+      const exhaustiveCheck: never = visibility;
+      return exhaustiveCheck;
+    }
+  }
+}
+
+/**
+ * Maps a domain catalog visibility value to the Prisma enum.
+ *
+ * @param visibility - Domain catalog visibility value.
+ */
+export function mapDomainCatalogVisibilityToPrisma(
+  visibility: CatalogVisibility,
+): PrismaCatalogVisibility {
+  switch (visibility) {
+    case 'visible':
+      return PrismaCatalogVisibility.VISIBLE;
+    case 'quarantined':
+      return PrismaCatalogVisibility.QUARANTINED;
+    case 'blocked':
+      return PrismaCatalogVisibility.BLOCKED;
+    default: {
+      const exhaustiveCheck: never = visibility;
+      return exhaustiveCheck;
+    }
+  }
+}
 
 /**
  * Maps a Prisma fund provider enum to the domain provider value.
@@ -103,6 +149,7 @@ export function mapPrismaFundToFund(record: PrismaFund): Fund {
     metrics: mapPrismaFundMetrics(record),
     riskLevel: record.riskLevel,
     score: mapNullableDecimal(record.score),
+    catalogVisibility: mapPrismaCatalogVisibility(record.catalogVisibility),
     createdAt: record.createdAt,
     updatedAt: record.updatedAt,
   });
@@ -265,6 +312,10 @@ export function mapUpsertFundInputToPrismaCreateData(
     ...mapFundMetricsToPrismaFields(input.metrics ?? {}),
     riskLevel: input.riskLevel ?? null,
     score: input.score ?? null,
+    catalogVisibility:
+      input.catalogVisibility === undefined
+        ? PrismaCatalogVisibility.VISIBLE
+        : mapDomainCatalogVisibilityToPrisma(input.catalogVisibility),
   };
 }
 

@@ -1,4 +1,5 @@
 import type { Fund } from '../../funds/entities/fund.schema';
+import { isCatalogVisible } from '../../funds/entities/catalog-visibility.schema';
 import { resolveScoringPeerGroupKey } from './fund-scoring-metrics.builder';
 import type {
   BenchmarkRankingGroup,
@@ -23,6 +24,10 @@ export function normalizeBenchmarkKey(benchmark: string): string {
  * @param fund - Persisted fund entity.
  */
 export function isRankingEligible(fund: Fund): boolean {
+  if (!isCatalogVisible(fund)) {
+    return false;
+  }
+
   const benchmark = fund.benchmark?.trim();
 
   return (
