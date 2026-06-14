@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import type { Fund } from '../../funds/entities/fund.schema';
 import { FundsRepository } from '../../funds/repositories/funds.repository';
+import * as featuredFundsMapper from '../entities/featured-funds.mapper';
 import { FeaturedFundsService } from './featured-funds.service';
 
 const fund: Fund = {
@@ -89,5 +90,48 @@ describe('FeaturedFundsService', () => {
     await expect(
       service.getFeaturedFunds({ quarter: '2026-Q2', limit: '0' }),
     ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('should return cached responses for repeated requests', async () => {
+    fundsRepository.findByIsins.mockResolvedValue(
+      new Map([[fund.isin as string, fund]]),
+    );
+
+    await service.getFeaturedFunds({ quarter: '2026-Q2' });
+    await service.getFeaturedFunds({ quarter: '2026-Q2' });
+
+    expect(fundsRepository.findByIsins).toHaveBeenCalledTimes(1);
+  });
+
+  it('should skip hydrated funds without a persisted ISIN', async () => {
+    fundsRepository.findByIsins.mockResolvedValue(
+      new Map([
+        [
+          'US78462F1030',
+          {
+            ...fund,
+            isin: null,
+          },
+        ],
+      ]),
+    );
+
+    const response = await service.getFeaturedFunds({ quarter: '2026-Q2' });
+
+    expect(response.data).toEqual([]);
+  });
+
+  it('should propagate unexpected quarter parsing failures', async () => {
+    const parseSpy = jest
+      .spyOn(featuredFundsMapper, 'parseFeaturedQuarterQuery')
+      .mockImplementationOnce(() => {
+        throw new Error('unexpected parser failure');
+      });
+
+    await expect(
+      service.getFeaturedFunds({ quarter: '2026-Q2' }),
+    ).rejects.toThrow('unexpected parser failure');
+
+    parseSpy.mockRestore();
   });
 });

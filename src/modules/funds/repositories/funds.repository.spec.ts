@@ -117,6 +117,11 @@ describe('FundsRepository', () => {
     });
   });
 
+  it('should return an empty map when no ISINs are provided', async () => {
+    await expect(repository.findByIsins([])).resolves.toEqual(new Map());
+    expect(prisma.fund.findMany).not.toHaveBeenCalled();
+  });
+
   it('should find a fund by symbol and provider', async () => {
     prisma.fund.findUnique.mockResolvedValueOnce(prismaFundRow);
 

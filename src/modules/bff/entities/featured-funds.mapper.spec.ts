@@ -106,10 +106,86 @@ describe('featured-funds.mapper', () => {
       filterFeaturedFunds([mapped], { benchmark: 's&p 500' }),
     ).toHaveLength(1);
     expect(filterFeaturedFunds([mapped], { mercado: 'usa' })).toHaveLength(1);
+    expect(filterFeaturedFunds([mapped], { mercado: 'us' })).toHaveLength(1);
     expect(filterFeaturedFunds([mapped], { mercado: 'europa' })).toHaveLength(
       0,
     );
+    expect(filterFeaturedFunds([mapped], { mercado: 'europe' })).toHaveLength(
+      0,
+    );
     expect(filterFeaturedFunds([mapped], { limit: 1 })).toHaveLength(1);
+  });
+
+  it('should support global and free-text mercado filters', () => {
+    const globalFund = mapFundToFeaturedFund({
+      fund: {
+        ...fund,
+        name: 'Global Index Fund',
+        benchmark: 'MSCI World',
+      },
+      quarter,
+      editorial: {
+        isin: 'IE00B4L5Y983',
+        themeLabel: 'Multisector global',
+        badge: 'Global',
+        benefitSummary: 'Summary',
+        featuredReason: 'Reason',
+      },
+    });
+
+    expect(
+      filterFeaturedFunds([globalFund], { mercado: 'global' }),
+    ).toHaveLength(1);
+    expect(
+      filterFeaturedFunds([globalFund], { mercado: 'multisector' }),
+    ).toHaveLength(1);
+  });
+
+  it('should match europa mercado filters', () => {
+    const europeFund = mapFundToFeaturedFund({
+      fund: {
+        ...fund,
+        name: 'Europe Quality Fund',
+        benchmark: 'STOXX Europe',
+      },
+      quarter,
+      editorial: {
+        isin: 'LU1781541179',
+        themeLabel: 'Europa ESG',
+        badge: 'ESG',
+        benefitSummary: 'Summary',
+        featuredReason: 'Reason',
+      },
+    });
+
+    expect(
+      filterFeaturedFunds([europeFund], { mercado: 'europa' }),
+    ).toHaveLength(1);
+  });
+
+  it('should default missing score and TER values when mapping funds', () => {
+    const mapped = mapFundToFeaturedFund({
+      fund: {
+        ...fund,
+        score: null,
+        metrics: {
+          ...fund.metrics,
+          ter: null,
+        },
+      },
+      quarter,
+      editorial: {
+        isin: 'US78462F1030',
+        themeLabel: 'Referencia S&P 500',
+        badge: 'Núcleo USA',
+        benefitSummary: 'Summary',
+        featuredReason: 'Reason',
+      },
+    });
+
+    expect(mapped.efficiencyScore).toBe(0);
+    expect(mapped.terPercent).toBe(0);
+    expect(mapped.idealForBeginners).toBe(false);
   });
 
   it('should validate the example fixture shape', () => {
