@@ -1,5 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 import type { TestingModule } from '@nestjs/testing';
+import { CatalogVisibility, FundCategory, FundProvider } from '@prisma/client';
 import { FundsService } from '../../src/modules/funds/services/funds.service';
 import { CatalogVisibilityService } from '../../src/modules/funds/services/catalog-visibility.service';
 import { buildFundListWhereInput } from '../../src/modules/funds/entities/fund-list.mapper';
@@ -10,6 +11,19 @@ import {
   deleteFundBySymbol,
   isDatabaseAvailable,
 } from './integration-test.utils';
+
+const visibilityQaFundData = {
+  symbol: 'VISQA',
+  isin: 'IE00B4L5Y983',
+  name: 'Visibility QA Fund',
+  provider: FundProvider.FINANCIAL_MODELING_PREP,
+  category: FundCategory.INDEX,
+  currency: 'EUR',
+  benchmark: 'MSCI World',
+  ter: 0.2,
+  score: 75,
+  catalogVisibility: CatalogVisibility.QUARANTINED,
+} as const;
 
 describe('Catalog visibility (integration)', () => {
   let moduleRef: TestingModule | undefined;
@@ -61,18 +75,7 @@ describe('Catalog visibility (integration)', () => {
     }
 
     const created = await prisma.fund.create({
-      data: {
-        symbol: 'VISQA',
-        isin: 'IE00B4L5Y983',
-        name: 'Visibility QA Fund',
-        provider: 'financial-modeling-prep',
-        category: 'index',
-        currency: 'EUR',
-        benchmark: 'MSCI World',
-        ter: 0.2,
-        score: 75,
-        catalogVisibility: 'quarantined',
-      },
+      data: visibilityQaFundData,
     });
 
     const publicList = await fundsService.listFunds({ q: 'VISQA' });
@@ -106,18 +109,7 @@ describe('Catalog visibility (integration)', () => {
     }
 
     const created = await prisma.fund.create({
-      data: {
-        symbol: 'VISQA',
-        isin: 'IE00B4L5Y983',
-        name: 'Visibility QA Fund',
-        provider: 'financial-modeling-prep',
-        category: 'index',
-        currency: 'EUR',
-        benchmark: 'MSCI World',
-        ter: 0.2,
-        score: 75,
-        catalogVisibility: 'quarantined',
-      },
+      data: visibilityQaFundData,
     });
 
     const updated = await catalogVisibilityService.updateCatalogVisibility({
