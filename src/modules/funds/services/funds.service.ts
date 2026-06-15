@@ -4,19 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { z } from 'zod';
-import {
-  buildFundListMeta,
-  buildFundListOrderByInput,
-  buildFundListWhereInput,
-} from '../entities/fund-list.mapper';
-import {
-  fundListQuerySchema,
-  fundListResponseSchema,
-} from '../entities/fund-list.schema';
-import type {
-  FundListQuery,
-  FundListResponse,
-} from '../entities/fund-list.schema';
+import type { FundListResponse } from '../entities/fund-list.schema';
 import { fundIdParamSchema, fundSchema } from '../entities/fund.schema';
 import type { Fund } from '../entities/fund.schema';
 import {
@@ -38,6 +26,7 @@ import { buildFundSectorExposureResponse } from '../entities/fund-sector-exposur
 import { FUND_SECTOR_EXPOSURE_CATEGORY } from '../entities/fund-sector-exposure.schema';
 import type { FundSectorExposureResponse } from '../entities/fund-sector-exposure.schema';
 import { FundsRepository } from '../repositories/funds.repository';
+import { GetFundsUseCase } from '../get-funds';
 import { CatalogVisibilityService } from './catalog-visibility.service';
 import { FundCompositionService } from './fund-composition.service';
 import { FundPricesService } from './fund-prices.service';
@@ -48,6 +37,7 @@ import { FundPricesService } from './fund-prices.service';
 @Injectable()
 export class FundsService {
   constructor(
+    private readonly getFundsUseCase: GetFundsUseCase,
     private readonly fundsRepository: FundsRepository,
     private readonly catalogVisibilityService: CatalogVisibilityService,
     private readonly fundPricesService: FundPricesService,
@@ -63,21 +53,7 @@ export class FundsService {
   async listFunds(
     rawQuery: Record<string, unknown>,
   ): Promise<FundListResponse> {
-    const query = this.parseListQuery(rawQuery);
-    const where = buildFundListWhereInput(query);
-    const orderBy = buildFundListOrderByInput(query.sortBy, query.sortOrder);
-    const skip = (query.page - 1) * query.limit;
-    const { items, total } = await this.fundsRepository.findMany({
-      where,
-      orderBy,
-      skip,
-      take: query.limit,
-    });
-
-    return fundListResponseSchema.parse({
-      data: items,
-      meta: buildFundListMeta(query.page, query.limit, total),
-    });
+    return this.getFundsUseCase.execute(rawQuery);
   }
 
   /**
@@ -290,18 +266,5 @@ export class FundsService {
     }
 
     return parsed.data.id;
-  }
-
-  private parseListQuery(rawQuery: Record<string, unknown>): FundListQuery {
-    const parsed = fundListQuerySchema.safeParse(rawQuery);
-
-    if (!parsed.success) {
-      throw new BadRequestException({
-        message: 'Invalid fund list query parameters',
-        issues: z.treeifyError(parsed.error),
-      });
-    }
-
-    return parsed.data;
   }
 }

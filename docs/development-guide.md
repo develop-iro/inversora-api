@@ -144,6 +144,72 @@ Referencia detallada de endpoints FMP, ejemplos de respuesta y flujo de composic
 
 ---
 
+## Capa `core/api`
+
+La capa [`src/core/api/`](../src/core/api/) centraliza contratos Zod de respuestas públicas, validación de salida y un wrapper HTTP para proveedores externos.
+
+```text
+src/core/api/
+  core-api.module.ts
+  http-client.ts              # CoreApiHttpClient → delega en shared/http
+  parse-api-response.ts       # parseApiResponse(schema, data, context)
+  index.ts
+  schemas/
+    fund-list.schema.ts       # GET /funds
+    fund-detail.schema.ts     # GET /funds/:isin (BFF)
+    rankings.schema.ts        # GET /rankings
+```
+
+### Cuándo usar cada cliente HTTP
+
+| Cliente | Uso |
+|---------|-----|
+| `HttpClientService` (`shared/http`) | Implementación base con reintentos y timeout. Usado hoy por FMP. |
+| `CoreApiHttpClient` (`core/api`) | Wrapper que mapea fallos externos a `BadGatewayException` (502). Preferirlo en nuevas integraciones outbound. |
+
+### Validar respuestas ensambladas
+
+Después de construir una respuesta HTTP pública, validar con `parseApiResponse`:
+
+```typescript
+import { parseApiResponse } from '../../core/api/parse-api-response';
+import { fundListResponseSchema } from '../../core/api/schemas/fund-list.schema';
+
+return parseApiResponse(
+  fundListResponseSchema,
+  { data: items, meta },
+  'get-funds',
+);
+```
+
+Si la validación falla, se lanza `UnprocessableEntityException` (422) y se registra el payload truncado para depuración.
+
+### Use-cases de lectura pública
+
+Los endpoints de catálogo, detalle BFF y rankings delegan en use-cases inyectables:
+
+| Use-case | Archivo | Endpoint |
+|----------|---------|----------|
+| `GetFundsUseCase` | `src/modules/funds/get-funds.ts` | `GET /funds` |
+| `GetFundByIsinUseCase` | `src/modules/bff/get-fund-by-isin.ts` | `GET /funds/:isin` |
+| `GetRankingsUseCase` | `src/modules/scoring/get-rankings.ts` | `GET /rankings` |
+
+Los services (`FundsService`, `FundDetailService`, `RankingsService`) permanecen finos y delegan en estos use-cases.
+
+### Errores estandarizados
+
+| Situación | Excepción HTTP |
+|-----------|----------------|
+| Query/param inválido | `BadRequestException` (400) |
+| Fondo no encontrado u oculto | `NotFoundException` (404) |
+| Agregación BFF fallida | `ServiceUnavailableException` (503) |
+| Fallo HTTP proveedor externo | `BadGatewayException` (502) |
+| Respuesta no cumple schema Zod | `UnprocessableEntityException` (422) |
+
+Los schemas canónicos viven en `core/api/schemas/`. Los paths históricos en `modules/*/entities/*.schema.ts` re-exportan desde `core/api` para compatibilidad.
+
+---
+
 ## Validación de datos
 
 ### Variables de entorno

@@ -1,5 +1,6 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { GetFundsUseCase } from '../get-funds';
 import { FundsRepository } from '../repositories/funds.repository';
 import { CatalogVisibilityService } from './catalog-visibility.service';
 import { FundCompositionService } from './fund-composition.service';
@@ -34,6 +35,7 @@ const fund = {
 
 describe('FundsService', () => {
   let service: FundsService;
+  let getFundsUseCase: { execute: jest.Mock };
   let repository: { findMany: jest.Mock; findById: jest.Mock };
   let fundPricesService: {
     getLatestDate: jest.Mock;
@@ -45,6 +47,9 @@ describe('FundsService', () => {
   };
 
   beforeEach(async () => {
+    getFundsUseCase = {
+      execute: jest.fn(),
+    };
     repository = {
       findMany: jest.fn().mockResolvedValue({
         items: [fund],
@@ -138,6 +143,10 @@ describe('FundsService', () => {
       providers: [
         FundsService,
         {
+          provide: GetFundsUseCase,
+          useValue: getFundsUseCase,
+        },
+        {
           provide: FundsRepository,
           useValue: repository,
         },
@@ -161,15 +170,8 @@ describe('FundsService', () => {
     service = module.get<FundsService>(FundsService);
   });
 
-  it('should return a paginated fund list', async () => {
-    await expect(
-      service.listFunds({
-        page: '1',
-        limit: '20',
-        sortBy: 'score',
-        sortOrder: 'desc',
-      }),
-    ).resolves.toEqual({
+  it('should delegate fund list reads to GetFundsUseCase', async () => {
+    const response = {
       data: [fund],
       meta: {
         page: 1,
@@ -177,23 +179,24 @@ describe('FundsService', () => {
         total: 1,
         totalPages: 1,
       },
-    });
+    };
+    getFundsUseCase.execute.mockResolvedValue(response);
 
-    expect(repository.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        skip: 0,
-        take: 20,
-        orderBy: { score: 'desc' },
-      }),
-    );
-  });
-
-  it('should reject invalid query parameters', async () => {
     await expect(
       service.listFunds({
-        page: '0',
+        page: '1',
+        limit: '20',
+        sortBy: 'score',
+        sortOrder: 'desc',
       }),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    ).resolves.toBe(response);
+
+    expect(getFundsUseCase.execute).toHaveBeenCalledWith({
+      page: '1',
+      limit: '20',
+      sortBy: 'score',
+      sortOrder: 'desc',
+    });
   });
 
   it('should return a fund by id', async () => {

@@ -2,6 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { FundsModule } from '../funds/funds.module';
 import { RankingsController } from './controllers/rankings.controller';
 import { ScoringController } from './controllers/scoring.controller';
+import { GetRankingsUseCase } from './get-rankings';
 import { RankingsService } from './services/rankings.service';
 import { ScoringService } from './services/scoring.service';
 
@@ -11,7 +12,7 @@ import { ScoringService } from './services/scoring.service';
 @Module({
   imports: [forwardRef(() => FundsModule)],
   controllers: [ScoringController, RankingsController],
-  providers: [ScoringService, RankingsService],
+  providers: [GetRankingsUseCase, ScoringService, RankingsService],
   exports: [ScoringService, RankingsService],
 })
 export class ScoringModule {}

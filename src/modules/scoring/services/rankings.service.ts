@@ -1,19 +1,13 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { z } from 'zod';
-import { FundsRepository } from '../../funds/repositories/funds.repository';
-import { buildRankingsResponse } from '../entities/ranking.mapper';
-import {
-  rankingsQuerySchema,
-  type RankingsQuery,
-  type RankingsResponse,
-} from '../entities/ranking.schema';
+import { Injectable } from '@nestjs/common';
+import type { RankingsResponse } from '../entities/ranking.schema';
+import { GetRankingsUseCase } from '../get-rankings';
 
 /**
  * Application service for benchmark-scoped fund rankings.
  */
 @Injectable()
 export class RankingsService {
-  constructor(private readonly fundsRepository: FundsRepository) {}
+  constructor(private readonly getRankingsUseCase: GetRankingsUseCase) {}
 
   /**
    * Returns funds ranked by Inversora Score inside comparable benchmark groups.
@@ -24,22 +18,6 @@ export class RankingsService {
   async getRankings(
     rawQuery: Record<string, unknown>,
   ): Promise<RankingsResponse> {
-    const query = this.parseRankingsQuery(rawQuery);
-    const funds = await this.fundsRepository.findAll();
-
-    return buildRankingsResponse(funds, query);
-  }
-
-  private parseRankingsQuery(rawQuery: Record<string, unknown>): RankingsQuery {
-    const parsed = rankingsQuerySchema.safeParse(rawQuery);
-
-    if (!parsed.success) {
-      throw new BadRequestException({
-        message: 'Invalid rankings query parameters',
-        issues: z.treeifyError(parsed.error),
-      });
-    }
-
-    return parsed.data;
+    return this.getRankingsUseCase.execute(rawQuery);
   }
 }

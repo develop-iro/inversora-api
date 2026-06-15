@@ -8,6 +8,7 @@ import { ScoringModule } from './modules/scoring/scoring.module';
 import { ProvidersModule } from './modules/providers/providers.module';
 import { AppConfigModule } from './shared/config/config.module';
 import { PrismaModule } from './shared/database/prisma.module';
+import { CoreApiModule } from './core/api/core-api.module';
 import { HttpClientModule } from './shared/http/http-client.module';
 
 @Module({
@@ -15,6 +16,7 @@ import { HttpClientModule } from './shared/http/http-client.module';
     AppConfigModule,
     ScheduleModule.forRoot(),
     HttpClientModule,
+    CoreApiModule,
     PrismaModule,
     ProvidersModule,
     FundsModule,

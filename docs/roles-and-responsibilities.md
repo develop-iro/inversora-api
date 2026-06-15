@@ -30,6 +30,7 @@ Arquitectura semi-hexagonal basada en NestJS. Cada capa tiene una responsabilida
 | **Repository** | Acceso a datos vía Prisma; sin lógica de negocio | `src/modules/*/repositories/` |
 | **Provider** | Integraciones con sistemas externos (FMP) | `src/modules/providers/` |
 | **Entity / Schema / Mapper** | Contratos Zod, tipos inferidos, transformaciones dominio ↔ persistencia | `src/modules/*/entities/` |
+| **Core API** | Contratos Zod de respuestas públicas, validación de salida, wrapper HTTP outbound | `src/core/api/` |
 | **DTO** | Contratos de respuesta HTTP documentados en OpenAPI | `src/modules/*/dto/` |
 | **Scheduler** | Tareas programadas (sync diario de fondos) | `src/modules/*/schedulers/` |
 | **Shared** | Configuración, cliente HTTP, Prisma, Swagger | `src/shared/` |
@@ -43,6 +44,7 @@ Arquitectura semi-hexagonal basada en NestJS. Cada capa tiene una responsabilida
 | Repository | `src/modules/funds/repositories/funds.repository.ts` |
 | Provider | `src/modules/providers/financial-modeling-prep/financial-modeling-prep.provider.ts` |
 | Entity / Schema | `src/modules/funds/entities/fund.schema.ts` |
+| Core API schemas | `src/core/api/schemas/fund-list.schema.ts` |
 | Scheduler | `src/modules/funds/schedulers/fund-sync.scheduler.ts` |
 | Config | `src/shared/config/env.schema.ts` |
 
@@ -81,6 +83,7 @@ AppModule
   ├── AppConfigModule      (env validado)
   ├── ScheduleModule       (cron jobs)
   ├── HttpClientModule     (axios + reintentos)
+  ├── CoreApiModule        (wrapper HTTP + schemas públicos)
   ├── PrismaModule         (conexión DB)
   ├── ProvidersModule      (FMP)
   ├── FundsModule          (dominio principal)
