@@ -3,6 +3,7 @@ import { PrismaModule } from '../../shared/database/prisma.module';
 import { ProvidersModule } from '../providers/providers.module';
 import { ScoringModule } from '../scoring/scoring.module';
 import { FundsController } from './controllers/funds.controller';
+import { GetFundsUseCase } from './get-funds';
 import { FundSyncScheduler } from './schedulers/fund-sync.scheduler';
 import { CatalogVisibilityService } from './services/catalog-visibility.service';
 import { FundEditorialService } from './services/fund-editorial.service';
@@ -25,6 +26,7 @@ import { FundsService } from './services/funds.service';
   controllers: [FundsController],
   providers: [
     FundsRepository,
+    GetFundsUseCase,
     FundsService,
     FundPricesRepository,
     FundPricesService,
