@@ -192,27 +192,75 @@ export function resolveIndexFundCompositionAsOf(
   return new Date().toISOString().slice(0, 10);
 }
 
+type WeightScale = 'percent' | 'fraction';
+
 /**
- * Maps a raw FMP weight field to a percentage in the 0-100 range.
+ * Detects whether a batch of `weight` fields is expressed as fractions (0–1) or percentages.
+ *
+ * @param rawWeights - Raw `weight` field values from a single exposure snapshot.
+ */
+export function detectWeightScale(rawWeights: readonly number[]): WeightScale {
+  const positiveWeights = rawWeights.filter((weight) => weight > 0);
+
+  if (positiveWeights.length === 0) {
+    return 'percent';
+  }
+
+  const maxWeight = Math.max(...positiveWeights);
+  const totalWeight = positiveWeights.reduce(
+    (total, weight) => total + weight,
+    0,
+  );
+
+  if (maxWeight <= 1 && totalWeight >= 0.9 && totalWeight <= 1.1) {
+    return 'fraction';
+  }
+
+  return 'percent';
+}
+
+/**
+ * Maps a raw FMP weight field to a percentage in the 0–100 range.
  *
  * @param weighting - Raw sector or country weighting row.
+ * @param weightFieldScale - Detected scale for rows that only expose `weight`.
  * @returns Normalized percentage or `null` when no weight is available.
  */
-function normalizeWeightPercentage(weighting: {
-  readonly weightPercentage?: number;
-  readonly weight?: number;
-}): number | null {
-  const rawWeight = weighting.weightPercentage ?? weighting.weight;
+function normalizeWeightPercentage(
+  weighting: {
+    readonly weightPercentage?: number;
+    readonly weight?: number;
+  },
+  weightFieldScale: WeightScale,
+): number | null {
+  if (
+    weighting.weightPercentage !== undefined &&
+    !Number.isNaN(weighting.weightPercentage)
+  ) {
+    if (weighting.weightPercentage <= 0) {
+      return null;
+    }
 
-  if (rawWeight === undefined || Number.isNaN(rawWeight)) {
+    return weighting.weightPercentage;
+  }
+
+  if (weighting.weight === undefined || Number.isNaN(weighting.weight)) {
     return null;
   }
 
-  if (rawWeight > 0 && rawWeight <= 1) {
-    return rawWeight * 100;
+  if (weighting.weight <= 0) {
+    return null;
   }
 
-  return rawWeight;
+  if (weightFieldScale === 'fraction') {
+    return weighting.weight * 100;
+  }
+
+  if (weighting.weight > 0 && weighting.weight <= 1) {
+    return weighting.weight * 100;
+  }
+
+  return weighting.weight;
 }
 
 /**
@@ -224,9 +272,18 @@ function normalizeWeightPercentage(weighting: {
 export function normalizeIndexFundSectorWeightings(
   weightings: readonly FmpSectorWeighting[],
 ): IndexFundSectorWeighting[] {
+  const weightFieldScale = detectWeightScale(
+    weightings
+      .map((weighting) => weighting.weight)
+      .filter((weight): weight is number => weight !== undefined),
+  );
+
   return weightings
     .map((weighting) => {
-      const weightPercentage = normalizeWeightPercentage(weighting);
+      const weightPercentage = normalizeWeightPercentage(
+        weighting,
+        weightFieldScale,
+      );
 
       if (weightPercentage === null || weightPercentage <= 0) {
         return null;
@@ -252,9 +309,18 @@ export function normalizeIndexFundSectorWeightings(
 export function normalizeIndexFundCountryWeightings(
   weightings: readonly FmpCountryWeighting[],
 ): IndexFundCountryWeighting[] {
+  const weightFieldScale = detectWeightScale(
+    weightings
+      .map((weighting) => weighting.weight)
+      .filter((weight): weight is number => weight !== undefined),
+  );
+
   return weightings
     .map((weighting) => {
-      const weightPercentage = normalizeWeightPercentage(weighting);
+      const weightPercentage = normalizeWeightPercentage(
+        weighting,
+        weightFieldScale,
+      );
 
       if (weightPercentage === null || weightPercentage <= 0) {
         return null;

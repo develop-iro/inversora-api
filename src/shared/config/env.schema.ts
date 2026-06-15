@@ -49,6 +49,10 @@ export const envSchema = z
       .default('false')
       .transform((value) => value === 'true'),
     ADMIN_API_KEY: z.string().min(8).optional(),
+    CORS_ORIGINS: z
+      .string()
+      .default('')
+      .transform((value) => parseCommaSeparatedList(value)),
   })
   .superRefine((env, ctx) => {
     const adminApiEnabled = env.ADMIN_SYNC_ENABLED || env.ADMIN_CATALOG_ENABLED;
@@ -74,6 +78,19 @@ function parseFundSymbolList(value: string): readonly string[] {
     .split(',')
     .map((symbol) => symbol.trim().toUpperCase())
     .filter((symbol) => symbol.length > 0);
+}
+
+/**
+ * Parses a comma-separated list from environment configuration.
+ *
+ * @param value - Raw comma-separated string.
+ * @returns Normalized non-empty entries.
+ */
+function parseCommaSeparatedList(value: string): readonly string[] {
+  return value
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
 }
 
 /** Validated, typed environment configuration. */

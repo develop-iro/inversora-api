@@ -36,6 +36,7 @@ describe('validateEnv', () => {
       ADMIN_SYNC_ENABLED: false,
       ADMIN_CATALOG_ENABLED: false,
       ADMIN_API_KEY: undefined,
+      CORS_ORIGINS: [],
     });
   });
 
@@ -71,6 +72,7 @@ describe('validateEnv', () => {
       ADMIN_SYNC_ENABLED: false,
       ADMIN_CATALOG_ENABLED: false,
       ADMIN_API_KEY: undefined,
+      CORS_ORIGINS: [],
     });
   });
 

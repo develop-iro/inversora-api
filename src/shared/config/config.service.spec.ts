@@ -58,6 +58,13 @@ describe('AppConfigService', () => {
     expect(service.adminSyncEnabled).toBe(false);
     expect(service.adminCatalogEnabled).toBe(false);
     expect(service.adminApiEnabled).toBe(false);
+    expect(service.corsOrigins).toEqual([
+      'http://localhost:8081',
+      'http://127.0.0.1:8081',
+      'http://localhost:19006',
+      'http://127.0.0.1:19006',
+    ]);
+    expect(service.corsEnabled).toBe(true);
     expect(service.adminApiKey).toBeUndefined();
   });
 
