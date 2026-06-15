@@ -1,6 +1,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FundsRepository } from '../repositories/funds.repository';
+import { CatalogVisibilityService } from './catalog-visibility.service';
 import { FundCompositionService } from './fund-composition.service';
 import { FundPricesService } from './fund-prices.service';
 import { FundsService } from './funds.service';
@@ -25,6 +26,7 @@ const fund = {
   },
   riskLevel: 4,
   score: 82.5,
+  catalogVisibility: 'visible' as const,
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   updatedAt: new Date('2024-02-01T00:00:00.000Z'),
 };
@@ -146,6 +148,12 @@ describe('FundsService', () => {
           provide: FundCompositionService,
           useValue: fundCompositionService,
         },
+        {
+          provide: CatalogVisibilityService,
+          useFactory: (repo: FundsRepository) =>
+            new CatalogVisibilityService(repo),
+          inject: [FundsRepository],
+        },
       ],
     }).compile();
 
@@ -209,6 +217,17 @@ describe('FundsService', () => {
     await expect(
       service.getFundById('550e8400-e29b-41d4-a716-446655440000'),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('should hide non-visible funds from fund detail routes', async () => {
+    repository.findById.mockResolvedValueOnce({
+      ...fund,
+      catalogVisibility: 'blocked',
+    });
+
+    await expect(service.getFundById(fund.id)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
   });
 
   it('should return indexed chart data for a requested period', async () => {

@@ -1,3 +1,4 @@
+import { CatalogVisibility } from '@prisma/client';
 import {
   buildFundListMeta,
   buildFundListOrderByInput,
@@ -59,6 +60,7 @@ describe('buildFundListWhereInput', () => {
       ),
     ).toEqual({
       AND: [
+        { catalogVisibility: { in: [CatalogVisibility.VISIBLE] } },
         {
           OR: [
             { symbol: { contains: 'SPY', mode: 'insensitive' } },

@@ -43,11 +43,11 @@ describe('isRankingEligible', () => {
     expect(isRankingEligible(RANKING_FIXTURE_FUNDS[6])).toBe(false);
   });
 
-  it('should reject funds with a blank benchmark label', () => {
+  it('should reject non-visible funds even when ranking data is complete', () => {
     expect(
       isRankingEligible({
         ...RANKING_FIXTURE_FUNDS[0],
-        benchmark: '   ',
+        catalogVisibility: 'quarantined',
       }),
     ).toBe(false);
   });

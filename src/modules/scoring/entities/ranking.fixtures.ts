@@ -3,6 +3,7 @@ import type { Fund } from '../../funds/entities/fund.schema';
 const baseTimestamps = {
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   updatedAt: new Date('2024-02-01T00:00:00.000Z'),
+  catalogVisibility: 'visible' as const,
 };
 
 const baseMetrics = {

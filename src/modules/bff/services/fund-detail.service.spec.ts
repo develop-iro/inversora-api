@@ -4,6 +4,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { CatalogVisibilityService } from '../../funds/services/catalog-visibility.service';
 import { FundsRepository } from '../../funds/repositories/funds.repository';
 import { FundCompositionService } from '../../funds/services/fund-composition.service';
 import { FundPricesService } from '../../funds/services/fund-prices.service';
@@ -31,6 +32,7 @@ const fund = {
   },
   riskLevel: 4,
   score: 82,
+  catalogVisibility: 'visible' as const,
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   updatedAt: new Date('2024-02-01T00:00:00.000Z'),
 };
@@ -132,6 +134,11 @@ describe('FundDetailService', () => {
       providers: [
         FundDetailService,
         { provide: FundsRepository, useValue: fundsRepository },
+        {
+          provide: CatalogVisibilityService,
+          useFactory: () =>
+            new CatalogVisibilityService(fundsRepository as never),
+        },
         { provide: FundsService, useValue: fundsService },
         { provide: FundPricesService, useValue: fundPricesService },
         { provide: FundCompositionService, useValue: fundCompositionService },
@@ -158,6 +165,17 @@ describe('FundDetailService', () => {
 
   it('should return 404 when the persisted fund has a null ISIN', async () => {
     fundsRepository.findByIsin.mockResolvedValue({ ...fund, isin: null });
+
+    await expect(
+      service.getFundDetailByIsin('US78462F1030'),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('should return 404 when the fund is not publicly visible', async () => {
+    fundsRepository.findByIsin.mockResolvedValue({
+      ...fund,
+      catalogVisibility: 'quarantined',
+    });
 
     await expect(
       service.getFundDetailByIsin('US78462F1030'),

@@ -3,6 +3,8 @@ import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../shared/database/prisma.service';
 import {
   mapDomainFundProviderToPrisma,
+  mapDomainCatalogVisibilityToPrisma,
+  mapPrismaCatalogVisibility,
   mapPrismaFundToFund,
   mapUpsertFundInputToPrismaCreateData,
   mapUpsertFundInputToPrismaUpdateData,
@@ -13,6 +15,7 @@ import type {
   FundProvider,
   UpsertFundInput,
 } from '../entities/fund.schema';
+import type { CatalogVisibility } from '../entities/catalog-visibility.schema';
 
 /** Options for paginated fund list queries. */
 export interface FindManyFundsOptions {
@@ -20,6 +23,14 @@ export interface FindManyFundsOptions {
   orderBy: Prisma.FundOrderByWithRelationInput;
   skip: number;
   take: number;
+}
+
+/** Input for updating catalog visibility with audit logging. */
+export interface UpdateCatalogVisibilityRepositoryInput {
+  fundId: string;
+  catalogVisibility: CatalogVisibility;
+  reason: string;
+  actor: string;
 }
 
 /**
@@ -198,5 +209,80 @@ export class FundsRepository {
     });
 
     return mapPrismaFundToFund(record);
+  }
+
+  /**
+   * Updates catalog visibility and appends an audit row in a single transaction.
+   *
+   * @param input - Visibility change payload.
+   * @returns Updated fund entity.
+   */
+  async updateCatalogVisibility(
+    input: UpdateCatalogVisibilityRepositoryInput,
+  ): Promise<Fund> {
+    const record = await this.prisma.$transaction(async (tx) => {
+      const current = await tx.fund.findUnique({
+        where: { id: input.fundId },
+      });
+
+      if (current === null) {
+        throw new Error(`Fund ${input.fundId} was not found`);
+      }
+
+      const updated = await tx.fund.update({
+        where: { id: input.fundId },
+        data: {
+          catalogVisibility: mapDomainCatalogVisibilityToPrisma(
+            input.catalogVisibility,
+          ),
+        },
+      });
+
+      await tx.fundCatalogVisibilityAudit.create({
+        data: {
+          fundId: input.fundId,
+          previousState: current.catalogVisibility,
+          newState: updated.catalogVisibility,
+          reason: input.reason,
+          actor: input.actor,
+        },
+      });
+
+      return updated;
+    });
+
+    return mapPrismaFundToFund(record);
+  }
+
+  /**
+   * Returns catalog visibility audit rows for a fund ordered by newest first.
+   *
+   * @param fundId - Persisted fund identifier.
+   */
+  async findCatalogVisibilityAudits(fundId: string): Promise<
+    {
+      id: string;
+      fundId: string;
+      previousState: CatalogVisibility;
+      newState: CatalogVisibility;
+      reason: string;
+      actor: string;
+      createdAt: Date;
+    }[]
+  > {
+    const records = await this.prisma.fundCatalogVisibilityAudit.findMany({
+      where: { fundId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return records.map((record) => ({
+      id: record.id,
+      fundId: record.fundId,
+      previousState: mapPrismaCatalogVisibility(record.previousState),
+      newState: mapPrismaCatalogVisibility(record.newState),
+      reason: record.reason,
+      actor: record.actor,
+      createdAt: record.createdAt,
+    }));
   }
 }

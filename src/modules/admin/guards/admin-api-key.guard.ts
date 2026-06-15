@@ -22,7 +22,7 @@ export class AdminApiKeyGuard implements CanActivate {
    * @returns Whether the request may proceed.
    */
   canActivate(context: ExecutionContext): boolean {
-    if (!this.config.adminSyncEnabled) {
+    if (!this.config.adminApiEnabled) {
       throw new NotFoundException();
     }
 

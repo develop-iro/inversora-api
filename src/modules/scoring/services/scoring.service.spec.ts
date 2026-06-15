@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { CatalogVisibilityService } from '../../funds/services/catalog-visibility.service';
 import { FundsRepository } from '../../funds/repositories/funds.repository';
 import { FundCompositionService } from '../../funds/services/fund-composition.service';
 import { FundPricesService } from '../../funds/services/fund-prices.service';
@@ -25,6 +26,7 @@ const fund = {
   },
   riskLevel: 4,
   score: null,
+  catalogVisibility: 'visible' as const,
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   updatedAt: new Date('2024-02-01T00:00:00.000Z'),
 };
@@ -78,6 +80,12 @@ describe('ScoringService', () => {
           useValue: {
             getHoldings: jest.fn().mockResolvedValue(null),
             getAllocationsByCategory: jest.fn().mockResolvedValue(null),
+          },
+        },
+        {
+          provide: CatalogVisibilityService,
+          useValue: {
+            applyAutomaticVisibilityRules: jest.fn().mockResolvedValue(fund),
           },
         },
       ],

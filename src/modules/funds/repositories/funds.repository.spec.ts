@@ -1,4 +1,4 @@
-import { FundCategory, FundProvider } from '@prisma/client';
+import { CatalogVisibility, FundCategory, FundProvider } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../../shared/database/prisma.service';
@@ -22,6 +22,7 @@ const prismaFundRow = {
   trackingError: null,
   riskLevel: null,
   score: null,
+  catalogVisibility: CatalogVisibility.VISIBLE,
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   updatedAt: new Date('2024-02-01T00:00:00.000Z'),
 };
@@ -35,6 +36,10 @@ describe('FundsRepository', () => {
       upsert: jest.Mock;
       update: jest.Mock;
       count: jest.Mock;
+    };
+    fundCatalogVisibilityAudit: {
+      create: jest.Mock;
+      findMany: jest.Mock;
     };
     $transaction: jest.Mock;
   };
@@ -50,6 +55,10 @@ describe('FundsRepository', () => {
           score: new Decimal('87.00'),
         }),
         count: jest.fn().mockResolvedValue(0),
+      },
+      fundCatalogVisibilityAudit: {
+        create: jest.fn(),
+        findMany: jest.fn().mockResolvedValue([]),
       },
       $transaction: jest.fn(),
     };
@@ -264,5 +273,86 @@ describe('FundsRepository', () => {
     ).resolves.toMatchObject({
       created: false,
     });
+  });
+
+  it('should update catalog visibility and append an audit row', async () => {
+    prisma.$transaction.mockImplementation(
+      async (callback: (tx: typeof prisma) => Promise<unknown>) =>
+        callback({
+          fund: {
+            findUnique: jest.fn().mockResolvedValue(prismaFundRow),
+            update: jest.fn().mockResolvedValue({
+              ...prismaFundRow,
+              catalogVisibility: CatalogVisibility.QUARANTINED,
+            }),
+          },
+          fundCatalogVisibilityAudit: {
+            create: jest.fn().mockResolvedValue({}),
+          },
+        } as never),
+    );
+
+    await expect(
+      repository.updateCatalogVisibility({
+        fundId: prismaFundRow.id,
+        catalogVisibility: 'quarantined',
+        reason: 'Missing score',
+        actor: 'system',
+      }),
+    ).resolves.toMatchObject({
+      catalogVisibility: 'quarantined',
+    });
+  });
+
+  it('should fail catalog visibility updates when the fund does not exist', async () => {
+    prisma.$transaction.mockImplementation(
+      async (callback: (tx: typeof prisma) => Promise<unknown>) =>
+        callback({
+          fund: {
+            findUnique: jest.fn().mockResolvedValue(null),
+            update: jest.fn(),
+          },
+          fundCatalogVisibilityAudit: {
+            create: jest.fn(),
+          },
+        } as never),
+    );
+
+    await expect(
+      repository.updateCatalogVisibility({
+        fundId: prismaFundRow.id,
+        catalogVisibility: 'quarantined',
+        reason: 'Missing score',
+        actor: 'system',
+      }),
+    ).rejects.toThrow(`Fund ${prismaFundRow.id} was not found`);
+  });
+
+  it('should return catalog visibility audit rows', async () => {
+    prisma.fundCatalogVisibilityAudit.findMany.mockResolvedValueOnce([
+      {
+        id: 'audit-1',
+        fundId: prismaFundRow.id,
+        previousState: CatalogVisibility.VISIBLE,
+        newState: CatalogVisibility.QUARANTINED,
+        reason: 'Missing score',
+        actor: 'system',
+        createdAt: new Date('2024-03-01T00:00:00.000Z'),
+      },
+    ]);
+
+    await expect(
+      repository.findCatalogVisibilityAudits(prismaFundRow.id),
+    ).resolves.toEqual([
+      {
+        id: 'audit-1',
+        fundId: prismaFundRow.id,
+        previousState: 'visible',
+        newState: 'quarantined',
+        reason: 'Missing score',
+        actor: 'system',
+        createdAt: new Date('2024-03-01T00:00:00.000Z'),
+      },
+    ]);
   });
 });

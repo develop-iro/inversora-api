@@ -25,6 +25,7 @@ const fund: Fund = {
   },
   riskLevel: 4,
   score: 82,
+  catalogVisibility: 'visible',
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   updatedAt: new Date('2024-02-01T00:00:00.000Z'),
 };
@@ -111,6 +112,24 @@ describe('FeaturedFundsService', () => {
           {
             ...fund,
             isin: null,
+          },
+        ],
+      ]),
+    );
+
+    const response = await service.getFeaturedFunds({ quarter: '2026-Q2' });
+
+    expect(response.data).toEqual([]);
+  });
+
+  it('should skip non-visible catalog funds', async () => {
+    fundsRepository.findByIsins.mockResolvedValue(
+      new Map([
+        [
+          'US78462F1030',
+          {
+            ...fund,
+            catalogVisibility: 'quarantined' as const,
           },
         ],
       ]),

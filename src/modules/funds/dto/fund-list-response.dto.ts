@@ -59,6 +59,12 @@ export class FundListItemResponseDto {
   @ApiProperty({ type: Number, nullable: true, example: 82.5 })
   score!: number | null;
 
+  @ApiProperty({
+    enum: ['visible', 'quarantined', 'blocked'],
+    example: 'visible',
+  })
+  catalogVisibility!: 'visible' | 'quarantined' | 'blocked';
+
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt!: Date;
 

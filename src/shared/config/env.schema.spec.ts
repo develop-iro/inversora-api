@@ -34,6 +34,7 @@ describe('validateEnv', () => {
       SYNC_CRON_EXPRESSION: '0 6 * * *',
       SYNC_FUND_SYMBOLS: [],
       ADMIN_SYNC_ENABLED: false,
+      ADMIN_CATALOG_ENABLED: false,
       ADMIN_API_KEY: undefined,
     });
   });
@@ -68,6 +69,7 @@ describe('validateEnv', () => {
       SYNC_CRON_EXPRESSION: '0 6 * * *',
       SYNC_FUND_SYMBOLS: [],
       ADMIN_SYNC_ENABLED: false,
+      ADMIN_CATALOG_ENABLED: false,
       ADMIN_API_KEY: undefined,
     });
   });
@@ -100,11 +102,18 @@ describe('validateEnv', () => {
     });
   });
 
-  it('should require ADMIN_API_KEY when admin sync is enabled', () => {
+  it('should require ADMIN_API_KEY when any admin API feature is enabled', () => {
     expect(() =>
       validateEnv({
         ...validEnv,
         ADMIN_SYNC_ENABLED: 'true',
+      }),
+    ).toThrow('Environment validation failed');
+
+    expect(() =>
+      validateEnv({
+        ...validEnv,
+        ADMIN_CATALOG_ENABLED: 'true',
       }),
     ).toThrow('Environment validation failed');
   });
@@ -118,6 +127,20 @@ describe('validateEnv', () => {
       }),
     ).toMatchObject({
       ADMIN_SYNC_ENABLED: true,
+      ADMIN_CATALOG_ENABLED: false,
+      ADMIN_API_KEY: 'local-dev-admin-key',
+    });
+  });
+
+  it('should parse admin catalog configuration', () => {
+    expect(
+      validateEnv({
+        ...validEnv,
+        ADMIN_CATALOG_ENABLED: 'true',
+        ADMIN_API_KEY: 'local-dev-admin-key',
+      }),
+    ).toMatchObject({
+      ADMIN_CATALOG_ENABLED: true,
       ADMIN_API_KEY: 'local-dev-admin-key',
     });
   });

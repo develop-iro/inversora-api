@@ -17,6 +17,13 @@ enum FundCategory {
   INDEX @map("index")
 }
 
+/// Catalog visibility state controlling public API exposure (RN-05 / HU-37).
+enum CatalogVisibility {
+  VISIBLE     @map("visible")
+  QUARANTINED @map("quarantined")
+  BLOCKED     @map("blocked")
+}
+
 /// Exposure dimension used to group persisted allocation slices.
 enum FundAllocationCategory {
   SECTORIAL        @map("sectorial")
@@ -45,15 +52,33 @@ model Fund {
   dividendYield Decimal?     @db.Decimal(8, 4)
   trackingError Decimal?     @db.Decimal(8, 4)
   riskLevel     Int?
-  score         Decimal?     @db.Decimal(5, 2)
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  prices      FundPrice[]
-  holdings    FundHolding[]
-  allocations FundAllocation[]
+  score              Decimal?           @db.Decimal(5, 2)
+  catalogVisibility  CatalogVisibility  @default(VISIBLE)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  prices             FundPrice[]
+  holdings           FundHolding[]
+  allocations        FundAllocation[]
+  catalogVisibilityAudits FundCatalogVisibilityAudit[]
 
   @@unique([symbol, provider])
+  @@index([catalogVisibility])
   @@map("funds")
+}
+
+/// Audit trail for manual and automatic catalog visibility transitions.
+model FundCatalogVisibilityAudit {
+  id            String            @id @default(uuid())
+  fundId        String
+  previousState CatalogVisibility
+  newState      CatalogVisibility
+  reason        String
+  actor         String            @default("system")
+  createdAt     DateTime          @default(now())
+  fund          Fund              @relation(fields: [fundId], references: [id], onDelete: Cascade)
+
+  @@index([fundId, createdAt])
+  @@map("fund_catalog_visibility_audits")
 }
 
 /// Individual position within a fund portfolio snapshot.

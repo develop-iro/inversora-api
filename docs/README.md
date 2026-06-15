@@ -18,6 +18,7 @@
 | Contrato HTTP vivo (endpoints, DTOs) | Swagger en `http://localhost:3000/api/docs` |
 | **Contrato BFF** `GET /funds/:isin` → `FundDetail` (app) | [bff-fund-detail-contract.md](./bff-fund-detail-contract.md) |
 | **Destacados trimestre** `GET /featured` (dashboard) | [featured-funds-endpoint.md](./featured-funds-endpoint.md) |
+| **Visibilidad de catálogo** (`catalogVisibility`, admin) | [catalog-visibility.md](./catalog-visibility.md) |
 
 ## Jerarquía de fuentes de verdad
 
@@ -55,7 +56,7 @@ La app móvil/web vive en el repositorio hermano `invesora`. Documentación de p
 | `providers` | Integración con Financial Modeling Prep (FMP) |
 | `funds` | Catálogo, sync, precios, composición y exposición |
 | `scoring` | Cálculo y persistencia del Score Inversora |
-| `admin` | Sync manual para desarrollo y QA (`POST /admin/sync`, CLI `npm run sync:run`) |
+| `admin` | Sync manual y gestión de visibilidad (`POST /admin/sync`, `GET/PATCH /admin/funds/*`, CLI `npm run sync:run`) |
 | `shared` | Configuración, Prisma, cliente HTTP, Swagger |
 
 ## Mantenimiento
