@@ -1,5 +1,26 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+/** Swagger schema for fund editorial fields in list responses. */
+export class FundEditorialResponseDto {
+  @ApiProperty({
+    example: 'Ideal para empezar',
+    description: 'Product badge shown on fund cards (Spanish MVP copy).',
+  })
+  badge!: string;
+
+  @ApiProperty({
+    example: 'Multisector global',
+    description: 'Investment theme label for catalog cards.',
+  })
+  themeLabel!: string;
+
+  @ApiProperty({
+    example: true,
+    description: 'Editorial flag: fund is suitable for beginner investors.',
+  })
+  idealForBeginners!: boolean;
+}
+
 /** Swagger schema for persisted fund metrics in list responses. */
 export class FundMetricsResponseDto {
   @ApiProperty({ type: Number, nullable: true, example: 14.25 })
@@ -58,6 +79,9 @@ export class FundListItemResponseDto {
 
   @ApiProperty({ type: Number, nullable: true, example: 82.5 })
   score!: number | null;
+
+  @ApiProperty({ type: FundEditorialResponseDto })
+  editorial!: FundEditorialResponseDto;
 
   @ApiProperty({
     enum: ['visible', 'quarantined', 'blocked'],

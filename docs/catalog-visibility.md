@@ -42,6 +42,7 @@ Requires `ADMIN_CATALOG_ENABLED=true` and `ADMIN_API_KEY` (same authentication h
 |--------|------|---------|
 | `GET` | `/admin/funds` | Paginated listing across all visibility states. Optional `catalogVisibility` filter. |
 | `PATCH` | `/admin/funds/:id/catalog-visibility` | Manual state change with audit reason. |
+| `PATCH` | `/admin/funds/:id/editorial` | Update product copy (`badge`, `themeLabel`, `idealForBeginners`). |
 | `GET` | `/admin/funds/:id/catalog-visibility/audit` | Visibility change history. |
 
 Example:

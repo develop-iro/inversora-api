@@ -89,6 +89,19 @@ describe('fund-list.mapper', () => {
     ]);
   });
 
+  it('should filter by idealForBeginners when requested', () => {
+    expect(
+      buildFundListWhereInput({
+        idealForBeginnersOnly: true,
+      }),
+    ).toEqual({
+      AND: [
+        { catalogVisibility: { in: [CatalogVisibility.VISIBLE] } },
+        { idealForBeginners: true },
+      ],
+    });
+  });
+
   it('should map sort fields to Prisma order clauses', () => {
     expect(buildFundListOrderByInput('score', 'desc')).toEqual({
       score: 'desc',

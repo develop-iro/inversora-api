@@ -12,6 +12,11 @@ import type { FundPrice } from '../../funds/entities/fund-price.schema';
 import type { FundSectorExposureResponse } from '../../funds/entities/fund-sector-exposure.schema';
 import type { Fund } from '../../funds/entities/fund.schema';
 import {
+  mapRiskLevelToApp,
+  resolveEditorialLabels,
+  resolveIdealForBeginners,
+} from '../../funds/entities/fund-editorial.utils';
+import {
   computeTotalReturnPercent,
   findPriceAtLookback,
 } from '../../scoring/entities/fund-scoring-metrics.builder';
@@ -29,6 +34,8 @@ import {
   buildQuarterMetadata,
   resolveCurrentQuarterParts,
 } from './quarter-metadata.utils';
+
+export { mapRiskLevelToApp } from '../../funds/entities/fund-editorial.utils';
 
 const DATA_SOURCE_LABEL = 'Financial Modeling Prep';
 
@@ -75,29 +82,6 @@ export type FundDetailBuildInput = {
     >
   >;
 };
-
-/**
- * Maps a numeric backend risk level to the app risk label.
- *
- * @param riskLevel - Persisted risk level between 1 and 7.
- */
-export function mapRiskLevelToApp(
-  riskLevel: number | null,
-): 'low' | 'medium' | 'high' {
-  if (riskLevel === null) {
-    return 'medium';
-  }
-
-  if (riskLevel <= 2) {
-    return 'low';
-  }
-
-  if (riskLevel <= 5) {
-    return 'medium';
-  }
-
-  return 'high';
-}
 
 /**
  * Maps backend score breakdown to the six app criteria rows.
@@ -554,6 +538,7 @@ export function buildFundDetailResponse(
   const quarter = buildCurrentQuarterMetadata();
   const terPercent = fund.metrics.ter ?? 0;
   const riskLevel = mapRiskLevelToApp(fund.riskLevel);
+  const { badge, themeLabel } = resolveEditorialLabels(fund);
   const profileAsOf =
     input.holdings.asOf ??
     input.sectors.asOf ??
@@ -643,10 +628,9 @@ export function buildFundDetailResponse(
       isin: fund.isin,
       name: fund.name,
       categoryLabel: buildCategoryLabel(fund),
-      themeLabel: '',
-      badge: '',
-      idealForBeginners:
-        inversoraScore >= 70 && riskLevel !== 'high' && terPercent <= 0.5,
+      themeLabel,
+      badge,
+      idealForBeginners: resolveIdealForBeginners(fund),
       efficiencyScore: inversoraScore,
       terPercent,
       riskLevel,

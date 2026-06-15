@@ -48,6 +48,10 @@ export const fundListQuerySchema = z.object({
   maxScore: z.coerce.number().min(0).max(100).optional(),
   minTer: z.coerce.number().nonnegative().optional(),
   maxTer: z.coerce.number().nonnegative().optional(),
+  idealForBeginnersOnly: z
+    .enum(['true', 'false'])
+    .optional()
+    .transform((value) => (value === undefined ? undefined : value === 'true')),
 });
 
 /** Parsed query type for `GET /funds`. */

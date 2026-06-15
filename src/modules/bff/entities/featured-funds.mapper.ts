@@ -1,4 +1,5 @@
 import type { Fund } from '../../funds/entities/fund.schema';
+import { resolveIdealForBeginners } from '../../funds/entities/fund-editorial.utils';
 import {
   buildCategoryLabel,
   mapRiskLevelToApp,
@@ -38,10 +39,9 @@ export function mapFundToFeaturedFund(
     isin: fund.isin ?? editorial.isin,
     name: fund.name,
     categoryLabel: buildCategoryLabel(fund),
-    themeLabel: editorial.themeLabel,
-    badge: editorial.badge,
-    idealForBeginners:
-      efficiencyScore >= 70 && riskLevel !== 'high' && terPercent <= 0.5,
+    themeLabel: editorial.themeLabel || fund.editorial.themeLabel,
+    badge: editorial.badge || fund.editorial.badge,
+    idealForBeginners: resolveIdealForBeginners(fund),
     efficiencyScore,
     terPercent,
     riskLevel,

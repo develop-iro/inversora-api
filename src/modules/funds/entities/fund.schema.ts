@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { catalogVisibilitySchema } from './catalog-visibility.schema';
+import { fundEditorialSchema } from './fund-editorial.schema';
 
 /** Supported external providers for persisted fund records. */
 export const fundProviderSchema = z.enum(['financial-modeling-prep']);
@@ -46,6 +47,7 @@ export const fundSchema = z.object({
   metrics: fundMetricsSchema,
   riskLevel: z.number().int().min(1).max(7).nullable(),
   score: z.number().min(0).max(100).nullable(),
+  editorial: fundEditorialSchema,
   catalogVisibility: catalogVisibilitySchema,
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
@@ -75,6 +77,7 @@ export const createFundInputSchema = fundSchema
     metrics: fundMetricsSchema.partial().optional(),
     riskLevel: fundSchema.shape.riskLevel.optional(),
     score: fundSchema.shape.score.optional(),
+    editorial: fundEditorialSchema.partial().optional(),
     catalogVisibility: fundSchema.shape.catalogVisibility.optional(),
   });
 

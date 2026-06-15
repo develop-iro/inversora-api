@@ -31,6 +31,37 @@ export type AdminUpdateCatalogVisibilityRequest = z.infer<
   typeof adminUpdateCatalogVisibilitySchema
 >;
 
+/** Request body schema for admin editorial updates. */
+export const adminUpdateFundEditorialSchema = z
+  .object({
+    badge: z.string().max(120).optional(),
+    themeLabel: z.string().max(120).optional(),
+    idealForBeginners: z.boolean().optional(),
+  })
+  .refine(
+    (value) =>
+      value.badge !== undefined ||
+      value.themeLabel !== undefined ||
+      value.idealForBeginners !== undefined,
+    { message: 'At least one editorial field is required' },
+  );
+
+/** Parsed admin editorial update payload. */
+export type AdminUpdateFundEditorialRequest = z.infer<
+  typeof adminUpdateFundEditorialSchema
+>;
+
+/**
+ * Parses an admin editorial update request body.
+ *
+ * @param body - Raw request body from Nest.
+ */
+export function parseAdminUpdateFundEditorialRequest(
+  body: unknown,
+): AdminUpdateFundEditorialRequest {
+  return adminUpdateFundEditorialSchema.parse(body);
+}
+
 /** Audit row schema returned by admin visibility history endpoints. */
 export const catalogVisibilityAuditSchema = z.object({
   id: z.uuid(),

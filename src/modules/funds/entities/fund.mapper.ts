@@ -15,7 +15,12 @@ import type {
   FundProvider,
   UpsertFundInput,
 } from './fund.schema';
+import type { UpdateFundEditorialInput } from './fund-editorial.schema';
 import type { CatalogVisibility } from './catalog-visibility.schema';
+import {
+  DEFAULT_FUND_EDITORIAL,
+  type FundEditorial,
+} from './fund-editorial.schema';
 
 const ISO_4217_CURRENCY_PATTERN = /^[A-Z]{3}$/;
 const ISO_6166_ISIN_PATTERN = /^[A-Z]{2}[A-Z0-9]{9}[0-9]$/;
@@ -131,6 +136,19 @@ export function mapPrismaFundMetrics(record: PrismaFund): FundMetrics {
 }
 
 /**
+ * Maps persisted editorial columns to the domain editorial object.
+ *
+ * @param record - Persisted Prisma fund row.
+ */
+export function mapPrismaFundEditorial(record: PrismaFund): FundEditorial {
+  return {
+    badge: record.badge,
+    themeLabel: record.themeLabel,
+    idealForBeginners: record.idealForBeginners,
+  };
+}
+
+/**
  * Maps a Prisma fund record to the Invesora domain entity.
  *
  * @param record - Persisted Prisma fund row.
@@ -149,6 +167,7 @@ export function mapPrismaFundToFund(record: PrismaFund): Fund {
     metrics: mapPrismaFundMetrics(record),
     riskLevel: record.riskLevel,
     score: mapNullableDecimal(record.score),
+    editorial: mapPrismaFundEditorial(record),
     catalogVisibility: mapPrismaCatalogVisibility(record.catalogVisibility),
     createdAt: record.createdAt,
     updatedAt: record.updatedAt,
@@ -312,6 +331,12 @@ export function mapUpsertFundInputToPrismaCreateData(
     ...mapFundMetricsToPrismaFields(input.metrics ?? {}),
     riskLevel: input.riskLevel ?? null,
     score: input.score ?? null,
+    badge: input.editorial?.badge ?? DEFAULT_FUND_EDITORIAL.badge,
+    themeLabel:
+      input.editorial?.themeLabel ?? DEFAULT_FUND_EDITORIAL.themeLabel,
+    idealForBeginners:
+      input.editorial?.idealForBeginners ??
+      DEFAULT_FUND_EDITORIAL.idealForBeginners,
     catalogVisibility:
       input.catalogVisibility === undefined
         ? PrismaCatalogVisibility.VISIBLE
@@ -337,5 +362,25 @@ export function mapUpsertFundInputToPrismaUpdateData(
     ...mapFundMetricsToPrismaFields(input.metrics ?? {}),
     riskLevel: input.riskLevel ?? null,
     score: input.score ?? null,
+  };
+}
+
+/**
+ * Maps a partial editorial update to Prisma update columns.
+ *
+ * @param input - Partial editorial fields from admin API.
+ */
+export function mapUpdateFundEditorialInputToPrismaData(
+  input: UpdateFundEditorialInput,
+): Pick<
+  Prisma.FundUncheckedUpdateInput,
+  'badge' | 'themeLabel' | 'idealForBeginners'
+> {
+  return {
+    ...(input.badge !== undefined ? { badge: input.badge } : {}),
+    ...(input.themeLabel !== undefined ? { themeLabel: input.themeLabel } : {}),
+    ...(input.idealForBeginners !== undefined
+      ? { idealForBeginners: input.idealForBeginners }
+      : {}),
   };
 }

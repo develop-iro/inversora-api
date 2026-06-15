@@ -13,6 +13,7 @@
 | Integración FMP: endpoints, composición y fixtures | [fmp-provider.md](./fmp-provider.md) |
 | Score Inversora MVP (RN-04, spec de producción) | [scoring-rn-04.md](./scoring-rn-04.md) |
 | Decisión RN-04 vs mvp-1 | [architecture/adr-002-scoring-mvp-version.md](./architecture/adr-002-scoring-mvp-version.md) |
+| Campos editoriales (`badge`, `themeLabel`, `idealForBeginners`) | [fund-editorial-content.md](./fund-editorial-content.md) · [ADR-003](./architecture/adr-003-fund-editorial-fields.md) |
 | Algoritmo legado en código (`mvp-1`) | [scoring-algorithm.md](./scoring-algorithm.md) |
 | Arranque rápido local (instalación, scripts, health check) | [README.md](../README.md) |
 | Contrato HTTP vivo (endpoints, DTOs) | Swagger en `http://localhost:3000/api/docs` |
@@ -67,6 +68,7 @@ Actualiza la documentación en el mismo PR o issue cuando:
 |--------|----------------------|
 | Nuevo módulo o endpoint público | `roles-and-responsibilities.md`, Swagger, `development-guide.md` si aplica |
 | Contrato BFF fund detail | `bff-fund-detail-contract.md`, schema Zod en app y API |
+| Campos editoriales de fondos | `fund-editorial-content.md`, ADR-003 |
 | Nueva variable de entorno | `.env.example`, `infrastructure-phases.md` |
 | Cambio de fase de despliegue o CI | `infrastructure-phases.md` |
 | Cambio de pesos o versión del scoring | `scoring-rn-04.md`, ADR-002, `invesora/docs/product/scoring.md` |
