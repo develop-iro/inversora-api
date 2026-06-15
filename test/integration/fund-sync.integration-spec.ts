@@ -114,8 +114,8 @@ describe('Fund sync pipeline (integration)', () => {
 
     await fundSyncService.syncFromFmp(INTEGRATION_FUND_SYMBOL, {
       includePrices: true,
-      historyFrom: '2024-01-01',
-      historyTo: '2024-01-31',
+      historyFrom: '2019-01-01',
+      historyTo: '2026-12-31',
       incrementalPrices: false,
     });
 
@@ -128,6 +128,34 @@ describe('Fund sync pipeline (integration)', () => {
 
     expect(secondSync.upToDate).toBe(true);
     expect(secondSync.pricesSynced).toBe(0);
+  });
+
+  it('should fetch newer prices on incremental sync when fixture data extends beyond the persisted range', async () => {
+    if (skipSuite) {
+      return;
+    }
+
+    const initialSync = await fundSyncService.syncFromFmp(
+      INTEGRATION_FUND_SYMBOL,
+      {
+        includePrices: true,
+        historyFrom: '2024-01-01',
+        historyTo: '2024-01-31',
+        incrementalPrices: false,
+      },
+    );
+
+    expect(initialSync.pricesSynced).toBeGreaterThan(0);
+
+    const secondSync = await fundPriceSyncService.syncFromFmp(
+      INTEGRATION_FUND_SYMBOL,
+      {
+        incremental: true,
+      },
+    );
+
+    expect(secondSync.upToDate).toBe(false);
+    expect(secondSync.pricesSynced).toBeGreaterThan(0);
   });
 
   it('should sync fund composition and expose holdings and exposure endpoints', async () => {
