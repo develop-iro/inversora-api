@@ -58,4 +58,23 @@ describe('parseApiResponse', () => {
       expect.stringContaining('Response validation failed for rankings'),
     );
   });
+
+  it('should serialize circular payloads without throwing during logging', () => {
+    const schema = z.object({ id: z.uuid() });
+    const circular: { self?: unknown } = {};
+    circular.self = circular;
+
+    expect(() =>
+      parseApiResponse(schema, circular, 'circular-response'),
+    ).toThrow(UnprocessableEntityException);
+  });
+
+  it('should truncate oversized invalid payloads in logs', () => {
+    const schema = z.object({ id: z.uuid() });
+    const oversized = { id: 'x'.repeat(3_000) };
+
+    expect(() =>
+      parseApiResponse(schema, oversized, 'oversized-response'),
+    ).toThrow(UnprocessableEntityException);
+  });
 });

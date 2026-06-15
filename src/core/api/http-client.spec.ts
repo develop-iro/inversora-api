@@ -85,4 +85,43 @@ describe('CoreApiHttpClient', () => {
       client.get('https://api.example.com/data'),
     ).rejects.toBeInstanceOf(BadGatewayException);
   });
+
+  it('should send POST requests through the shared HTTP client', async () => {
+    httpClient.request.mockResolvedValue({
+      data: { created: true },
+      status: 201,
+      headers: {},
+    });
+
+    await expect(
+      client.post<{ created: boolean }>(
+        'https://api.example.com/data',
+        { name: 'fund' },
+        { provider: 'example' },
+      ),
+    ).resolves.toEqual({
+      data: { created: true },
+      status: 201,
+      headers: {},
+    });
+
+    expect(httpClient.request).toHaveBeenCalledWith(
+      'POST',
+      'https://api.example.com/data',
+      { name: 'fund' },
+      { provider: 'example' },
+    );
+  });
+
+  it('should map non-error failures to InternalServerErrorException', async () => {
+    httpClient.request.mockRejectedValue('unexpected');
+
+    await expect(
+      client.get('https://api.example.com/data'),
+    ).rejects.toMatchObject({
+      response: {
+        message: 'Unexpected outbound HTTP client failure',
+      },
+    });
+  });
 });
