@@ -45,6 +45,16 @@ describe('fundListQuerySchema', () => {
       maxTer: 0.2,
     });
   });
+
+  it('should parse idealForBeginnersOnly as a boolean filter', () => {
+    expect(
+      fundListQuerySchema.parse({ idealForBeginnersOnly: 'true' }),
+    ).toMatchObject({ idealForBeginnersOnly: true });
+
+    expect(
+      fundListQuerySchema.parse({ idealForBeginnersOnly: 'false' }),
+    ).toMatchObject({ idealForBeginnersOnly: false });
+  });
 });
 
 describe('buildFundListWhereInput', () => {

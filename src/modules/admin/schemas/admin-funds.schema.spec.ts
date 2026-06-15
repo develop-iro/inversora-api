@@ -2,6 +2,7 @@ import {
   adminFundListQuerySchema,
   parseAdminFundListQuery,
   parseAdminUpdateCatalogVisibilityRequest,
+  parseAdminUpdateFundEditorialRequest,
 } from './admin-funds.schema';
 
 describe('admin-funds.schema', () => {
@@ -39,5 +40,26 @@ describe('admin-funds.schema', () => {
       reason: 'Reviewed and approved for public catalog',
       actor: 'ops@inversora.dev',
     });
+  });
+
+  it('should validate admin editorial updates', () => {
+    expect(
+      parseAdminUpdateFundEditorialRequest({ badge: 'Ideal para empezar' }),
+    ).toEqual({
+      badge: 'Ideal para empezar',
+    });
+    expect(
+      parseAdminUpdateFundEditorialRequest({
+        themeLabel: 'Multisector global',
+      }),
+    ).toEqual({
+      themeLabel: 'Multisector global',
+    });
+    expect(
+      parseAdminUpdateFundEditorialRequest({ idealForBeginners: false }),
+    ).toEqual({
+      idealForBeginners: false,
+    });
+    expect(() => parseAdminUpdateFundEditorialRequest({})).toThrow();
   });
 });

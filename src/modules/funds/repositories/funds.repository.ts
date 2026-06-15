@@ -6,6 +6,7 @@ import {
   mapDomainCatalogVisibilityToPrisma,
   mapPrismaCatalogVisibility,
   mapPrismaFundToFund,
+  mapUpdateFundEditorialInputToPrismaData,
   mapUpsertFundInputToPrismaCreateData,
   mapUpsertFundInputToPrismaUpdateData,
 } from '../entities/fund.mapper';
@@ -15,6 +16,7 @@ import type {
   FundProvider,
   UpsertFundInput,
 } from '../entities/fund.schema';
+import type { UpdateFundEditorialInput } from '../entities/fund-editorial.schema';
 import type { CatalogVisibility } from '../entities/catalog-visibility.schema';
 
 /** Options for paginated fund list queries. */
@@ -249,6 +251,27 @@ export class FundsRepository {
       });
 
       return updated;
+    });
+
+    return mapPrismaFundToFund(record);
+  }
+
+  /**
+   * Updates editorial product fields for a fund.
+   *
+   * FMP sync does not overwrite these columns; only admin API updates them.
+   *
+   * @param fundId - Persisted fund identifier.
+   * @param input - Partial editorial fields to persist.
+   * @returns Updated fund entity.
+   */
+  async updateEditorial(
+    fundId: string,
+    input: UpdateFundEditorialInput,
+  ): Promise<Fund> {
+    const record = await this.prisma.fund.update({
+      where: { id: fundId },
+      data: mapUpdateFundEditorialInputToPrismaData(input),
     });
 
     return mapPrismaFundToFund(record);

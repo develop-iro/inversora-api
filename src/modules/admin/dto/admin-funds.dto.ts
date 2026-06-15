@@ -5,6 +5,27 @@ import {
   FundListResponseDto,
 } from '../../funds/dto/fund-list-response.dto';
 
+/** Swagger schema for admin editorial update requests. */
+export class AdminUpdateFundEditorialRequestDto {
+  @ApiPropertyOptional({
+    example: 'Ideal para empezar',
+    description: 'Product badge shown on fund cards.',
+  })
+  badge?: string;
+
+  @ApiPropertyOptional({
+    example: 'Multisector global',
+    description: 'Investment theme label for catalog cards.',
+  })
+  themeLabel?: string;
+
+  @ApiPropertyOptional({
+    example: true,
+    description: 'Whether the fund is editorially marked for beginners.',
+  })
+  idealForBeginners?: boolean;
+}
+
 /** Swagger schema for admin catalog visibility update requests. */
 export class AdminUpdateCatalogVisibilityRequestDto {
   @ApiProperty({

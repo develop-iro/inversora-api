@@ -23,6 +23,9 @@ const prismaFundRow = {
   riskLevel: null,
   score: null,
   catalogVisibility: CatalogVisibility.VISIBLE,
+  badge: '',
+  themeLabel: '',
+  idealForBeginners: false,
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   updatedAt: new Date('2024-02-01T00:00:00.000Z'),
 };
@@ -212,6 +215,14 @@ describe('FundsRepository', () => {
     });
   });
 
+  it('should return null when a fund id is not found', async () => {
+    prisma.fund.findUnique.mockResolvedValueOnce(null);
+
+    await expect(
+      repository.findById('00000000-0000-0000-0000-000000000000'),
+    ).resolves.toBeNull();
+  });
+
   it('should upsert a fund and report when a new row is created', async () => {
     const result = await repository.upsert({
       symbol: 'SPY',
@@ -354,5 +365,28 @@ describe('FundsRepository', () => {
         createdAt: new Date('2024-03-01T00:00:00.000Z'),
       },
     ]);
+  });
+
+  it('should update editorial fields', async () => {
+    prisma.fund.update.mockResolvedValueOnce({
+      ...prismaFundRow,
+      badge: 'Ideal para empezar',
+      themeLabel: 'Multisector global',
+      idealForBeginners: true,
+    });
+
+    await expect(
+      repository.updateEditorial(prismaFundRow.id, {
+        badge: 'Ideal para empezar',
+        themeLabel: 'Multisector global',
+        idealForBeginners: true,
+      }),
+    ).resolves.toMatchObject({
+      editorial: {
+        badge: 'Ideal para empezar',
+        themeLabel: 'Multisector global',
+        idealForBeginners: true,
+      },
+    });
   });
 });

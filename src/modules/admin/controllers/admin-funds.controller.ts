@@ -33,6 +33,7 @@ import { CatalogVisibilityService } from '../../funds/services/catalog-visibilit
 import {
   AdminFundListResponseDto,
   AdminUpdateCatalogVisibilityRequestDto,
+  AdminUpdateFundEditorialRequestDto,
   CatalogVisibilityAuditListResponseDto,
 } from '../dto/admin-funds.dto';
 import { AdminApiKeyGuard } from '../guards/admin-api-key.guard';
@@ -41,8 +42,10 @@ import {
   adminFundListQuerySchema,
   catalogVisibilityAuditListResponseSchema,
   parseAdminUpdateCatalogVisibilityRequest,
+  parseAdminUpdateFundEditorialRequest,
   type AdminFundListQuery,
 } from '../schemas/admin-funds.schema';
+import { FundEditorialService } from '../../funds/services/fund-editorial.service';
 
 @ApiTags('admin')
 @ApiSecurity('admin-api-key')
@@ -52,6 +55,7 @@ export class AdminFundsController {
   constructor(
     private readonly fundsRepository: FundsRepository,
     private readonly catalogVisibilityService: CatalogVisibilityService,
+    private readonly fundEditorialService: FundEditorialService,
   ) {}
 
   @Get()
@@ -105,6 +109,33 @@ export class AdminFundsController {
           meta: buildFundListMeta(parsedQuery.page, parsedQuery.limit, total),
         }),
       );
+  }
+
+  @Patch(':id/editorial')
+  @ApiOperation({ summary: 'Update editorial product copy for a fund' })
+  @ApiParam({
+    name: 'id',
+    description: 'Fund UUID',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @ApiOkResponse({
+    description: 'Updated fund with new editorial fields.',
+    type: AdminFundListResponseDto,
+  })
+  @ApiBadRequestResponse({ description: 'Invalid request body or fund id.' })
+  @ApiNotFoundResponse({ description: 'Fund not found or admin API disabled.' })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid admin API key.' })
+  updateEditorial(
+    @Param('id') id: string,
+    @Body() body: AdminUpdateFundEditorialRequestDto,
+  ) {
+    const fundId = this.parseFundId(id);
+    const editorial = parseAdminUpdateFundEditorialRequest(body);
+
+    return this.fundEditorialService.updateEditorial({
+      fundId,
+      editorial,
+    });
   }
 
   @Patch(':id/catalog-visibility')

@@ -8,9 +8,10 @@ Exposes manually curated featured funds for the home dashboard carousel and widg
 
 Featured funds combine:
 
-1. **Manual curation** — Product defines ISINs and editorial copy per quarter in `src/modules/bff/config/featured-funds-selection.config.ts`.
-2. **Live hydration** — Each ISIN is loaded from PostgreSQL (name, score, TER, risk). Funds not yet synced are skipped silently.
-3. **In-memory cache** — Responses are cached for five minutes per `(quarter, benchmark, mercado, limit)` key.
+1. **Manual curation** — Product defines ISINs and quarter-specific copy in `src/modules/bff/config/featured-funds-selection.config.ts`.
+2. **Per-fund editorial (DB)** — `badge`, `themeLabel`, and `idealForBeginners` persist on each `funds` row. See [fund-editorial-content.md](./fund-editorial-content.md).
+3. **Live hydration** — Each ISIN is loaded from PostgreSQL (name, score, TER, risk, editorial). Funds not yet synced are skipped silently.
+4. **In-memory cache** — Responses are cached for five minutes per `(quarter, benchmark, mercado, limit)` key.
 
 Future phases may move selections to CMS or admin tooling without changing the HTTP contract.
 

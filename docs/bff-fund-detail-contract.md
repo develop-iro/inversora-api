@@ -279,16 +279,17 @@ GET /funds/:isin  (BFF)
 | Salida | Entrada | Regla |
 |--------|---------|-------|
 | `fund.diversification` | holdings count, top10 weight, sector concentration | Umbrales alineados con factor diversificación del scoring |
-| `fund.idealForBeginners` | score ≥ umbral, `riskLevel` ≤ medium, TER ≤ umbral | Reglas RN de producto (documentar umbrales en `invesora/docs/product/scoring.md`) |
+| `fund.idealForBeginners` | `funds.idealForBeginners` o reglas RN si copy vacío | Ver [fund-editorial-content.md](./fund-editorial-content.md) |
 | `market.stabilityLabel` | `metrics.volatility` | Bandas: baja / media / alta volatilidad |
 | `profile.returnsByPeriod` | serie de precios | Rentabilidades compuestas; `null` si fondo más joven que el horizonte |
 | `profile.ratiosByHorizon` | volatility, drawdown, sharpe-like | Strings ya formateados (`"12,4 %"`, `"0,85"`) |
 
 ### Campos sin fuente en core (MVP)
 
-| Campo | Propuesta MVP |
-|-------|----------------|
-| `themeLabel`, `badge`, `benefitSummary`, `featuredReason`, `quarterTag`, `periodStart`, `periodEnd`, `isFeatured` | Config estática por ISIN, CMS futuro, o defaults vacíos / genéricos hasta acuerdo de producto |
+| Campo | Fuente MVP |
+|-------|------------|
+| `themeLabel`, `badge`, `idealForBeginners` | PostgreSQL `funds` (`editorial` en listados) — ver [fund-editorial-content.md](./fund-editorial-content.md) |
+| `benefitSummary`, `featuredReason`, `quarterTag`, `periodStart`, `periodEnd`, `isFeatured` | Config trimestral en `featured-funds-selection.config.ts` |
 | `profile.manager`, `profile.description` | FMP metadata cuando esté sincronizada; placeholder educativo mientras tanto |
 | `profile.documents` | `[{ status: "coming_soon", … }]` hasta integrar documentación regulatoria |
 | `profile.distributors` | `[]` o lista curada estática (no enlaces de compra) |
@@ -605,9 +606,9 @@ URL: `http://localhost:3000/api/docs` → sección **bff**.
 - [x] Aprobado formato JSON raíz `FundDetail` (sin wrapper `{ data: … }`)
 - [x] Acordado `fund.id` = UUID backend (vs slug de mocks)
 - [x] Decisión desglose score: mapeo transitorio **A** (implementado)
-- [x] Origen de campos de producto (`themeLabel`, `badge`, destacados trimestre) — ver [featured-funds-endpoint.md](./featured-funds-endpoint.md)
+- [x] Origen de campos de producto (`themeLabel`, `badge`, `idealForBeginners`) — ver [fund-editorial-content.md](./fund-editorial-content.md) y [featured-funds-endpoint.md](./featured-funds-endpoint.md)
 - [x] Comportamiento 404 para fondos no encontrados / sin ISIN
-- [ ] Umbrales `idealForBeginners` y `diversification`
+- [x] Umbrales `idealForBeginners` (fallback métrico documentado en ADR-003)
 - [ ] Idioma de `categoryLabel` y labels de exposición (ES fijo vs i18n futuro)
 - [ ] Estrategia de caché y TTL del agregador BFF
 - [x] Fixtures JSON y tests de integración en backend

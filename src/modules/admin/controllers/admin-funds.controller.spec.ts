@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FundsRepository } from '../../funds/repositories/funds.repository';
 import { CatalogVisibilityService } from '../../funds/services/catalog-visibility.service';
+import { FundEditorialService } from '../../funds/services/fund-editorial.service';
 import { AdminApiKeyGuard } from '../guards/admin-api-key.guard';
 import { AdminCatalogEnabledGuard } from '../guards/admin-catalog-enabled.guard';
 import { AdminFundsController } from './admin-funds.controller';
@@ -27,6 +28,7 @@ const fund = {
   riskLevel: 4,
   score: 82.5,
   catalogVisibility: 'visible' as const,
+  editorial: { badge: '', themeLabel: '', idealForBeginners: false },
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   updatedAt: new Date('2024-02-01T00:00:00.000Z'),
 };
@@ -38,6 +40,7 @@ describe('AdminFundsController', () => {
     updateCatalogVisibility: jest.Mock;
     listVisibilityAudits: jest.Mock;
   };
+  let fundEditorialService: { updateEditorial: jest.Mock };
 
   beforeEach(async () => {
     fundsRepository = {
@@ -46,6 +49,9 @@ describe('AdminFundsController', () => {
     catalogVisibilityService = {
       updateCatalogVisibility: jest.fn().mockResolvedValue(fund),
       listVisibilityAudits: jest.fn().mockResolvedValue([]),
+    };
+    fundEditorialService = {
+      updateEditorial: jest.fn().mockResolvedValue(fund),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -56,6 +62,7 @@ describe('AdminFundsController', () => {
           provide: CatalogVisibilityService,
           useValue: catalogVisibilityService,
         },
+        { provide: FundEditorialService, useValue: fundEditorialService },
       ],
     })
       .overrideGuard(AdminApiKeyGuard)
@@ -94,6 +101,23 @@ describe('AdminFundsController', () => {
     await expect(
       controller.listCatalogVisibilityAudit(fund.id),
     ).resolves.toEqual({ data: [] });
+  });
+
+  it('should update editorial fields', async () => {
+    await controller.updateEditorial(fund.id, {
+      badge: 'Ideal para empezar',
+      themeLabel: 'Multisector global',
+      idealForBeginners: true,
+    });
+
+    expect(fundEditorialService.updateEditorial).toHaveBeenCalledWith({
+      fundId: fund.id,
+      editorial: {
+        badge: 'Ideal para empezar',
+        themeLabel: 'Multisector global',
+        idealForBeginners: true,
+      },
+    });
   });
 
   it('should reject invalid admin list queries', () => {

@@ -53,6 +53,12 @@ model Fund {
   trackingError Decimal?     @db.Decimal(8, 4)
   riskLevel     Int?
   score              Decimal?           @db.Decimal(5, 2)
+  /// Product badge shown on fund cards (Spanish MVP copy; not sourced from FMP).
+  badge              String             @default("")
+  /// Investment theme label for catalog cards (Spanish MVP copy).
+  themeLabel         String             @default("")
+  /// Editorial flag: fund is suitable for beginner investors.
+  idealForBeginners  Boolean            @default(false)
   catalogVisibility  CatalogVisibility  @default(VISIBLE)
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
@@ -63,6 +69,7 @@ model Fund {
 
   @@unique([symbol, provider])
   @@index([catalogVisibility])
+  @@index([idealForBeginners])
   @@map("funds")
 }
 

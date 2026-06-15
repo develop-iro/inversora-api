@@ -107,6 +107,12 @@ export function buildFundListWhereInput(
     });
   }
 
+  if (query.idealForBeginnersOnly !== undefined) {
+    conditions.push({
+      idealForBeginners: query.idealForBeginnersOnly,
+    });
+  }
+
   return conditions.length > 0 ? { AND: conditions } : {};
 }
 

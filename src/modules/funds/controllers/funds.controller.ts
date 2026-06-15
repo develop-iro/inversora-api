@@ -75,6 +75,13 @@ export class FundsController {
   @ApiQuery({ name: 'maxScore', required: false, type: Number, example: 100 })
   @ApiQuery({ name: 'minTer', required: false, type: Number, example: 0.05 })
   @ApiQuery({ name: 'maxTer', required: false, type: Number, example: 0.5 })
+  @ApiQuery({
+    name: 'idealForBeginnersOnly',
+    required: false,
+    enum: ['true', 'false'],
+    description:
+      'When `true`, returns only funds with persisted idealForBeginners=true.',
+  })
   listFunds(
     @Query() query: Record<string, unknown>,
   ): Promise<FundListResponse> {

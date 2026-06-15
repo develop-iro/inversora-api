@@ -16,6 +16,7 @@ import {
   mapPrismaFundMetrics,
   mapPrismaFundProvider,
   mapPrismaFundToFund,
+  mapUpdateFundEditorialInputToPrismaData,
   mapUpsertFundInputToPrismaCreateData,
   mapUpsertFundInputToPrismaUpdateData,
   normalizeOptionalFundIsin,
@@ -41,6 +42,9 @@ const prismaFundRow = {
   riskLevel: 4,
   score: new Decimal('82.50'),
   catalogVisibility: PrismaCatalogVisibility.VISIBLE,
+  badge: 'Núcleo USA',
+  themeLabel: 'Referencia S&P 500',
+  idealForBeginners: true,
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   updatedAt: new Date('2024-02-01T00:00:00.000Z'),
 };
@@ -106,6 +110,11 @@ describe('mapPrismaFundToFund', () => {
       },
       riskLevel: 4,
       score: 82.5,
+      editorial: {
+        badge: 'Núcleo USA',
+        themeLabel: 'Referencia S&P 500',
+        idealForBeginners: true,
+      },
       catalogVisibility: 'visible',
       createdAt,
       updatedAt,
@@ -281,6 +290,9 @@ describe('mapUpsertFundInputToPrismaCreateData', () => {
       currency: 'USD',
       benchmark: 'S&P 500',
       catalogVisibility: PrismaCatalogVisibility.VISIBLE,
+      badge: '',
+      themeLabel: '',
+      idealForBeginners: false,
       ter: 0.0945,
       aum: 520_000_000_000,
       volatility: null,
@@ -339,6 +351,24 @@ describe('mapUpsertFundInputToPrismaUpdateData', () => {
       trackingError: null,
       riskLevel: 3,
       score: 75,
+    });
+  });
+});
+
+describe('mapUpdateFundEditorialInputToPrismaData', () => {
+  it('should map only provided editorial fields', () => {
+    expect(mapUpdateFundEditorialInputToPrismaData({ badge: 'Test' })).toEqual({
+      badge: 'Test',
+    });
+    expect(
+      mapUpdateFundEditorialInputToPrismaData({ themeLabel: 'Global' }),
+    ).toEqual({
+      themeLabel: 'Global',
+    });
+    expect(
+      mapUpdateFundEditorialInputToPrismaData({ idealForBeginners: true }),
+    ).toEqual({
+      idealForBeginners: true,
     });
   });
 });
