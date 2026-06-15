@@ -1,9 +1,11 @@
 import type { Fund } from '../../funds/entities/fund.schema';
+import { DEFAULT_FUND_EDITORIAL } from '../../funds/entities/fund-editorial.schema';
 
 const baseTimestamps = {
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   updatedAt: new Date('2024-02-01T00:00:00.000Z'),
   catalogVisibility: 'visible' as const,
+  editorial: DEFAULT_FUND_EDITORIAL,
 };
 
 const baseMetrics = {
