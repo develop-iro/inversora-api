@@ -2,6 +2,7 @@ import {
   buildIndexFundDetail,
   buildIndexFundPriceSummary,
   buildIndexFundComposition,
+  detectWeightScale,
   normalizeIndexFundCountryWeightings,
   resolveIndexFundCompositionAsOf,
   normalizeIndexFundHistoricalPrices,
@@ -195,6 +196,78 @@ describe('FinancialModelingPrep normalizers', () => {
       {
         country: 'Ireland',
         weightPercentage: 1.2,
+      },
+    ]);
+
+    expect(
+      normalizeIndexFundCountryWeightings([
+        {
+          country: 'United States',
+          weightPercentage: 97.5,
+        },
+        {
+          country: 'Ireland',
+          weightPercentage: 1.2,
+        },
+        {
+          country: 'United Kingdom',
+          weightPercentage: 0.8,
+        },
+      ]),
+    ).toEqual([
+      {
+        country: 'United States',
+        weightPercentage: 97.5,
+      },
+      {
+        country: 'Ireland',
+        weightPercentage: 1.2,
+      },
+      {
+        country: 'United Kingdom',
+        weightPercentage: 0.8,
+      },
+    ]);
+  });
+
+  it('should detect weight scale and normalize weight-only fraction batches', () => {
+    expect(detectWeightScale([])).toBe('percent');
+    expect(detectWeightScale([0.975, 0.012, 0.008])).toBe('fraction');
+    expect(detectWeightScale([97.5, 1.2])).toBe('percent');
+
+    expect(
+      normalizeIndexFundSectorWeightings([
+        {
+          sector: 'Technology',
+          weight: 0.315,
+        },
+        {
+          sector: 'Healthcare',
+          weight: 0.685,
+        },
+      ]),
+    ).toEqual([
+      {
+        sector: 'Healthcare',
+        weightPercentage: 68.5,
+      },
+      {
+        sector: 'Technology',
+        weightPercentage: 31.5,
+      },
+    ]);
+
+    expect(
+      normalizeIndexFundSectorWeightings([
+        {
+          sector: 'Healthcare',
+          weight: 31.5,
+        },
+      ]),
+    ).toEqual([
+      {
+        sector: 'Healthcare',
+        weightPercentage: 31.5,
       },
     ]);
   });

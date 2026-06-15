@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { resolveCorsOrigins } from '../http/cors.config';
 import type { Env } from './env.schema';
 
 /**
@@ -126,5 +127,18 @@ export class AppConfigService {
   /** Shared secret for authenticating manual admin requests. */
   get adminApiKey(): string | undefined {
     return this.configService.get('ADMIN_API_KEY', { infer: true });
+  }
+
+  /** Allowed browser origins for cross-origin API access. */
+  get corsOrigins(): readonly string[] {
+    return resolveCorsOrigins(
+      this.configService.get('CORS_ORIGINS', { infer: true }),
+      this.nodeEnv,
+    );
+  }
+
+  /** Whether CORS should be enabled for incoming browser requests. */
+  get corsEnabled(): boolean {
+    return this.corsOrigins.length > 0;
   }
 }
