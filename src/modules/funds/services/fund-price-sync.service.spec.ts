@@ -1,6 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FinancialModelingPrepProvider } from '../../providers/financial-modeling-prep/financial-modeling-prep.provider';
+import { getTodayIsoDate } from '../entities/fund-price.mapper';
 import { FundsRepository } from '../repositories/funds.repository';
 import { FundPriceSyncService } from './fund-price-sync.service';
 import { FundPricesService } from './fund-prices.service';
@@ -167,10 +168,52 @@ describe('FundPriceSyncService', () => {
       symbol: 'SPY',
       pricesSynced: 0,
       from: undefined,
-      to: undefined,
+      to: getTodayIsoDate(),
       upToDate: true,
     });
 
     expect(fundPricesService.saveProviderPrices).not.toHaveBeenCalled();
+  });
+
+  it('should ignore already persisted rows during incremental syncs', async () => {
+    fundPricesService.getLatestDate.mockResolvedValueOnce('2024-02-02');
+    fmpProvider.getFundHistory.mockResolvedValueOnce([
+      {
+        date: '2024-02-01',
+        open: 483,
+        high: 484,
+        low: 482,
+        close: 483.5,
+      },
+      {
+        date: '2024-02-02',
+        open: 484.9,
+        high: 487.5,
+        low: 484.2,
+        close: 486.75,
+      },
+      {
+        date: '2024-02-03',
+        open: 487,
+        high: 488,
+        low: 486,
+        close: 487.5,
+      },
+    ]);
+    fundPricesService.saveProviderPrices.mockResolvedValueOnce(1);
+
+    await expect(service.syncFromFmp('SPY')).resolves.toEqual({
+      fundId: persistedFund.id,
+      symbol: 'SPY',
+      pricesSynced: 1,
+      from: '2024-02-03',
+      to: getTodayIsoDate(),
+      upToDate: false,
+    });
+
+    expect(fundPricesService.saveProviderPrices).toHaveBeenCalledWith(
+      persistedFund.id,
+      [expect.objectContaining({ date: '2024-02-03' })],
+    );
   });
 });

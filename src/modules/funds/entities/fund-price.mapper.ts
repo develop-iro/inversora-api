@@ -25,6 +25,15 @@ export function formatFundPriceDate(date: Date): string {
 }
 
 /**
+ * Returns the current UTC calendar date as an ISO date-only string.
+ *
+ * @returns Today's date in `YYYY-MM-DD` format.
+ */
+export function getTodayIsoDate(): string {
+  return formatFundPriceDate(new Date());
+}
+
+/**
  * Adds calendar days to an ISO date-only string.
  *
  * @param date - ISO date string (`YYYY-MM-DD`).

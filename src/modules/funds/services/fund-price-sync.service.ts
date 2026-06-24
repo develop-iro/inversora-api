@@ -1,8 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { FinancialModelingPrepProvider } from '../../providers/financial-modeling-prep/financial-modeling-prep.provider';
+import type { ProviderFundHistoricalPrice } from '../../providers/financial-modeling-prep/financial-modeling-prep.domain.schemas';
 import {
   addDaysToIsoDate,
   compareIsoDates,
+  getTodayIsoDate,
 } from '../entities/fund-price.mapper';
 import { FundsRepository } from '../repositories/funds.repository';
 import { FundPricesService } from './fund-prices.service';
@@ -50,7 +52,10 @@ export class FundPriceSyncService {
     }
 
     const incremental = options.incremental ?? true;
-    const range = await this.resolveSyncRange(fund.id, options, incremental);
+    const latestDate = incremental
+      ? await this.fundPricesService.getLatestDate(fund.id)
+      : null;
+    const range = this.resolveSyncRange(options, incremental, latestDate);
 
     if (range.upToDate) {
       return {
@@ -63,10 +68,14 @@ export class FundPriceSyncService {
       };
     }
 
-    const history = await this.fmpProvider.getFundHistory(normalizedSymbol, {
-      from: range.from,
-      to: range.to,
-    });
+    const history = this.filterNewProviderPrices(
+      await this.fmpProvider.getFundHistory(normalizedSymbol, {
+        from: range.from,
+        to: range.to,
+      }),
+      incremental,
+      latestDate,
+    );
 
     if (history.length === 0) {
       return {
@@ -90,24 +99,46 @@ export class FundPriceSyncService {
       pricesSynced,
       from: range.from,
       to: range.to,
-      upToDate: false,
+      upToDate: incremental && pricesSynced === 0,
     };
   }
 
-  private async resolveSyncRange(
-    fundId: string,
+  /**
+   * Drops provider rows that are already persisted when resuming incrementally.
+   *
+   * @param history - Normalized provider price history.
+   * @param incremental - Whether the sync resumes from the latest stored date.
+   * @param latestDate - Latest persisted ISO date, if any.
+   * @returns Provider rows that still need to be upserted.
+   */
+  private filterNewProviderPrices(
+    history: readonly ProviderFundHistoricalPrice[],
+    incremental: boolean,
+    latestDate: string | null,
+  ): ProviderFundHistoricalPrice[] {
+    if (!incremental || latestDate === null) {
+      return [...history];
+    }
+
+    return history.filter(
+      (price) => compareIsoDates(price.date, latestDate) > 0,
+    );
+  }
+
+  private resolveSyncRange(
     options: FundPriceSyncOptions,
     incremental: boolean,
-  ): Promise<{ from?: string; to?: string; upToDate: boolean }> {
+    latestDate: string | null,
+  ): { from?: string; to?: string; upToDate: boolean } {
     let from = options.from;
-    const to = options.to;
+    let to = options.to;
 
-    if (incremental && from === undefined) {
-      const latestDate = await this.fundPricesService.getLatestDate(fundId);
+    if (incremental && to === undefined) {
+      to = getTodayIsoDate();
+    }
 
-      if (latestDate !== null) {
-        from = addDaysToIsoDate(latestDate, 1);
-      }
+    if (incremental && from === undefined && latestDate !== null) {
+      from = addDaysToIsoDate(latestDate, 1);
     }
 
     if (
