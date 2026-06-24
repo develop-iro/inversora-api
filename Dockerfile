@@ -2,6 +2,9 @@
 
 FROM node:20-alpine AS builder
 
+# Husky is dev-only; skip git hooks during Docker installs (npm "prepare" script).
+ENV HUSKY=0
+
 WORKDIR /app
 
 COPY package.json package-lock.json ./
@@ -18,6 +21,7 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV HUSKY=0
 
 COPY package.json package-lock.json ./
 COPY prisma ./prisma/
