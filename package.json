@@ -2,9 +2,9 @@
   "name": "inversora-api",
   "version": "0.0.1",
   "description": "",
-  "author": "",
+  "author": "Ivan Romero",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "SEE LICENSE IN LICENSE",
   "scripts": {
     "build": "prisma generate && nest build",
     "postinstall": "prisma generate",
