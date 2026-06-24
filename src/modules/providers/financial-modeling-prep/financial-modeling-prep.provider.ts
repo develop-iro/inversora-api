@@ -161,6 +161,19 @@ export class FinancialModelingPrepProvider {
    * @param options - Optional date filters and history inclusion flag.
    * @returns Provider fund detail aggregate.
    */
+  /**
+   * Returns normalized fund profile metadata without historical prices.
+   *
+   * Use this for catalog metadata sync when EOD history is unavailable on the
+   * current FMP plan (for example non-US listings on Starter).
+   *
+   * @param symbol - Fund ticker symbol.
+   * @returns Normalized provider fund profile.
+   */
+  async getFundProfile(symbol: string): Promise<ProviderFundProfile> {
+    return this.resolveProviderFundProfile(symbol.trim().toUpperCase());
+  }
+
   async getFundDetail(
     symbol: string,
     options?: ProviderFundDetailOptions,

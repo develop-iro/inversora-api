@@ -39,3 +39,7 @@ lerna-debug.log*
 .env
 .env.local
 .env.*.local
+
+# local MCP client configs may contain API keys
+.mcp.json
+mcp.json

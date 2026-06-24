@@ -6,6 +6,9 @@ import type { FeaturedQuarterSelection } from '../entities/featured-funds.schema
  * Product curates ISINs and editorial copy per quarter. Runtime hydrates each
  * entry from PostgreSQL (name, score, TER, risk) and skips funds that are not
  * synced yet. Future phases may move this to CMS or admin tooling.
+ *
+ * ISINs must match funds already synced in staging/production. UCITS entries
+ * remain aspirational until non-US EOD is available on the active FMP plan.
  */
 export const FEATURED_FUNDS_SELECTIONS: readonly FeaturedQuarterSelection[] = [
   {
@@ -16,36 +19,36 @@ export const FEATURED_FUNDS_SELECTIONS: readonly FeaturedQuarterSelection[] = [
         themeLabel: 'Multisector global',
         badge: 'Ideal para empezar',
         benefitSummary:
-          'Invierte en más de 1.500 empresas globales en una sola posición.',
+          'UCITS que replica el MSCI World con amplia diversificación en mercados desarrollados.',
         featuredReason: 'Bajo coste + alta diversificación',
         marketTag: 'global',
       },
       {
         isin: 'IE00B5BMR087',
-        themeLabel: 'Tecnología y mega caps',
+        themeLabel: 'Gran capitalización USA',
         badge: 'Núcleo de cartera',
         benefitSummary:
-          'Ideal para diversificación a largo plazo con sesgo a grandes empresas de EE. UU.',
+          'UCITS sobre el S&P 500, habitual en brokers europeos para exposición USA.',
         featuredReason: 'Comisión mínima + referencia global',
         marketTag: 'usa',
       },
       {
-        isin: 'LU1781541179',
-        themeLabel: 'Renovables y ESG',
-        badge: 'Filtro calidad ESG',
+        isin: 'US9220428588',
+        themeLabel: 'Mercados emergentes',
+        badge: 'Diversificación geográfica',
         benefitSummary:
-          'Exposición a empresas europeas consolidadas con criterios de sostenibilidad.',
-        featuredReason: 'Calidad empresarial + enfoque responsable',
-        marketTag: 'europa',
+          'Exposición a economías emergentes para complementar una base global o USA.',
+        featuredReason: 'Amplitud geográfica + coste contenido',
+        marketTag: 'global',
       },
       {
-        isin: 'IE00BYVJRP78',
-        themeLabel: 'Multiactivo equilibrado',
-        badge: 'Volatilidad contenida',
+        isin: 'US9229087690',
+        themeLabel: 'Mercado total USA',
+        badge: 'Amplia cobertura',
         benefitSummary:
-          'Combina renta fija y variable para suavizar oscilaciones del mercado.',
-        featuredReason: 'Estabilidad relativa + diversificación multiactivo',
-        marketTag: 'global',
+          'Incluye desde grandes empresas hasta small caps del mercado estadounidense.',
+        featuredReason: 'Máxima diversificación USA en un solo ETF',
+        marketTag: 'usa',
       },
     ],
   },
@@ -66,8 +69,17 @@ export const FEATURED_FUNDS_SELECTIONS: readonly FeaturedQuarterSelection[] = [
         themeLabel: 'Multisector global',
         badge: 'Ideal para empezar',
         benefitSummary:
-          'Invierte en más de 1.500 empresas globales en una sola posición.',
+          'UCITS que replica el MSCI World con amplia diversificación en mercados desarrollados.',
         featuredReason: 'Bajo coste + alta diversificación',
+        marketTag: 'global',
+      },
+      {
+        isin: 'IE00BK5BQT80',
+        themeLabel: 'Mundo acumulación',
+        badge: 'Todo en uno',
+        benefitSummary:
+          'UCITS FTSE All-World que combina desarrollados y emergentes en una sola posición.',
+        featuredReason: 'Máxima diversificación global en un solo fondo',
         marketTag: 'global',
       },
     ],

@@ -30,12 +30,8 @@ export class FundSyncService {
     options: FundSyncOptions = {},
   ): Promise<FundSyncResult> {
     const normalizedSymbol = symbol.trim().toUpperCase();
-    const detail = await this.fmpProvider.getFundDetail(normalizedSymbol, {
-      from: options.historyFrom,
-      to: options.historyTo,
-      includeHistory: false,
-    });
-    const upsertInput = mapProviderFundProfileToUpsertFundInput(detail);
+    const profile = await this.fmpProvider.getFundProfile(normalizedSymbol);
+    const upsertInput = mapProviderFundProfileToUpsertFundInput(profile);
     const { fund, created } = await this.fundsRepository.upsert(upsertInput);
 
     if (!options.includePrices) {

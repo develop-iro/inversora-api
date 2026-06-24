@@ -83,8 +83,8 @@ npm run prisma:validate
    POSTGRES_HOST=ep-xxxx.us-east-1.aws.neon.tech
    POSTGRES_PORT=5432
 
-   FMP_API_KEY=mock-staging-key
-   FMP_DATA_SOURCE=mock
+   FMP_API_KEY=tu-clave-starter
+   FMP_DATA_SOURCE=live
    FMP_SAVE_FIXTURES=false
 
    SYNC_SCHEDULER_ENABLED=true
@@ -99,7 +99,8 @@ npm run prisma:validate
    ```
 
    Notas:
-   - `FMP_DATA_SOURCE=mock` evita gastar cuota FMP en staging.
+   - Con **FMP Starter**, usa `FMP_DATA_SOURCE=live` y la API key real. El histórico EOD es **solo US**; UCITS entran con metadata (`--no-prices`) y sync sin composición (`--no-composition`). Ver [fmp-capabilities-roadmap.md](./fmp-capabilities-roadmap.md).
+   - Para CI y entornos sin cuota FMP, mantén `FMP_DATA_SOURCE=mock`.
    - `CORS_ORIGINS` es obligatorio en `NODE_ENV=production` para Expo web.
    - React Native en dispositivo **no** depende de CORS.
    - Detalle: [cors-and-expo-client.md](./cors-and-expo-client.md).

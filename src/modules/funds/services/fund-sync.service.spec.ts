@@ -6,7 +6,7 @@ import { FundSyncService } from './fund-sync.service';
 
 describe('FundSyncService', () => {
   let service: FundSyncService;
-  let fmpProvider: { getFundDetail: jest.Mock };
+  let fmpProvider: { getFundProfile: jest.Mock };
   let fundsRepository: { upsert: jest.Mock };
   let fundPriceSyncService: { syncFromFmp: jest.Mock };
 
@@ -39,7 +39,7 @@ describe('FundSyncService', () => {
 
   beforeEach(async () => {
     fmpProvider = {
-      getFundDetail: jest.fn().mockResolvedValue({
+      getFundProfile: jest.fn().mockResolvedValue({
         symbol: 'SPY',
         name: 'State Street SPDR S&P 500 ETF Trust',
         isin: 'US78462F1030',
@@ -48,15 +48,6 @@ describe('FundSyncService', () => {
         currency: 'USD',
         vehicle: 'etf',
         benchmark: 'S&P 500',
-        priceSummary: {
-          latestDate: '2024-01-31',
-          latestClose: 482.88,
-          periodStartDate: '2024-01-02',
-          periodStartClose: 472.65,
-          periodReturnPercent: 2.16,
-          periodHigh: 489.08,
-          periodLow: 470.49,
-        },
       }),
     };
     fundsRepository = {
@@ -103,11 +94,7 @@ describe('FundSyncService', () => {
       created: true,
     });
 
-    expect(fmpProvider.getFundDetail).toHaveBeenCalledWith('SPY', {
-      from: undefined,
-      to: undefined,
-      includeHistory: false,
-    });
+    expect(fmpProvider.getFundProfile).toHaveBeenCalledWith('SPY');
     expect(fundsRepository.upsert).toHaveBeenCalledTimes(1);
     expect(fundsRepository.upsert).toHaveBeenCalledWith(expect.any(Object));
 

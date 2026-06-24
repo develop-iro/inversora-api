@@ -40,7 +40,7 @@ Todos los endpoints usan la base `FMP_BASE_URL` (por defecto `https://financialm
 | **Pesos sectoriales** | `fetchEtfSectorWeightings` | `GET /stable/etf/sector-weightings` | `etf-sector-weightings.symbol-spy.json` |
 | **Pesos geográficos** | `fetchEtfCountryWeightings` | `GET /stable/etf/country-weightings` | `etf-country-weightings.symbol-spy.json` |
 
-Los endpoints de composición (holdings y weightings) están disponibles en el tier gratuito de FMP al momento de implementar esta capa. El endpoint `etf/info` puede requerir plan de pago; el provider hace fallback a metadata de búsqueda cuando recibe `402` o `403`.
+Los endpoints de composición requieren un plan FMP superior a Starter: en Starter, `etf/holdings` devuelve **402** y el sync debe ejecutarse con `--no-composition`. Los weightings sectoriales/geográficos pueden estar disponibles en parte de los símbolos, pero no son fiables como bloque único en todos los tickers. El endpoint `etf/info` está disponible en Starter; si devuelve `402` o `403`, el provider hace fallback a metadata de búsqueda.
 
 ## API del provider (dominio)
 
@@ -98,7 +98,8 @@ Agrega holdings, pesos sectoriales y pesos por país en una sola llamada al prov
 |--------|-------------|
 | `searchIndexedProducts(query, options?)` | Descubrimiento de ETFs y fondos indexados |
 | `getFundHistory(symbol, options?)` | Serie de precios EOD normalizada |
-| `getFundDetail(symbol, options?)` | Perfil + estadísticas derivadas del histórico |
+| `getFundProfile(symbol)` | Solo metadata de perfil (sin EOD); usar en sync de catálogo cuando el histórico no está en el plan |
+| `getFundDetail(symbol, options?)` | Perfil + estadísticas derivadas del histórico (requiere EOD en el plan) |
 
 ## Ejemplos de respuesta FMP (raw)
 
@@ -212,6 +213,7 @@ npm run test:integration
 
 ## Ver también
 
+- [fmp-capabilities-roadmap.md](./fmp-capabilities-roadmap.md) — capacidades FMP que podrían nutrir el MVP y backlog backend para explotarlas
 - [roles-and-responsibilities.md](./roles-and-responsibilities.md) — pipeline diario y endpoints públicos
 - [development-guide.md](./development-guide.md) — patrón para integrar proveedores externos
 - [infrastructure-phases.md](./infrastructure-phases.md) — variables de entorno FMP
