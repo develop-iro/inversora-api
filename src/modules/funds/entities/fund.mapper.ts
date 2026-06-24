@@ -2,17 +2,19 @@ import {
   CatalogVisibility as PrismaCatalogVisibility,
   FundCategory as PrismaFundCategory,
   FundProvider as PrismaFundProvider,
+  FundVehicleType as PrismaFundVehicleType,
   type Fund as PrismaFund,
   type Prisma,
 } from '@prisma/client';
 import type { Decimal } from '@prisma/client/runtime/library';
-import type { IndexFundProfile } from '../../providers/financial-modeling-prep/financial-modeling-prep.domain.schemas';
+import type { ProviderFundProfile } from '../../providers/financial-modeling-prep/financial-modeling-prep.domain.schemas';
 import { fundSchema, upsertFundInputSchema } from './fund.schema';
 import type {
   Fund,
   FundCategory,
   FundMetrics,
   FundProvider,
+  FundVehicleType,
   UpsertFundInput,
 } from './fund.schema';
 import type { UpdateFundEditorialInput } from './fund-editorial.schema';
@@ -108,6 +110,26 @@ export function mapPrismaFundCategory(
 }
 
 /**
+ * Maps a Prisma fund vehicle enum to the domain vehicle value.
+ *
+ * @param vehicle - Prisma fund vehicle enum.
+ */
+export function mapPrismaFundVehicle(
+  vehicle: PrismaFundVehicleType,
+): FundVehicleType {
+  switch (vehicle) {
+    case PrismaFundVehicleType.ETF:
+      return 'etf';
+    case PrismaFundVehicleType.MUTUAL_FUND:
+      return 'mutual-fund';
+    default: {
+      const exhaustiveCheck: never = vehicle;
+      return exhaustiveCheck;
+    }
+  }
+}
+
+/**
  * Maps a nullable Prisma decimal to a domain number.
  *
  * @param value - Nullable Prisma decimal column.
@@ -162,6 +184,7 @@ export function mapPrismaFundToFund(record: PrismaFund): Fund {
     name: record.name,
     provider: mapPrismaFundProvider(record.provider),
     category: mapPrismaFundCategory(record.category),
+    vehicle: mapPrismaFundVehicle(record.vehicle),
     currency: record.currency,
     benchmark: record.benchmark,
     metrics: mapPrismaFundMetrics(record),
@@ -213,13 +236,33 @@ export function mapDomainFundCategoryToPrisma(
 }
 
 /**
- * Resolves the ISO 4217 currency code for a normalized index fund profile.
+ * Maps a domain fund vehicle to the Prisma enum value.
  *
- * @param profile - Normalized index fund profile.
+ * @param vehicle - Domain vehicle value.
+ */
+export function mapDomainFundVehicleToPrisma(
+  vehicle: FundVehicleType,
+): PrismaFundVehicleType {
+  switch (vehicle) {
+    case 'etf':
+      return PrismaFundVehicleType.ETF;
+    case 'mutual-fund':
+      return PrismaFundVehicleType.MUTUAL_FUND;
+    default: {
+      const exhaustiveCheck: never = vehicle;
+      return exhaustiveCheck;
+    }
+  }
+}
+
+/**
+ * Resolves the ISO 4217 currency code for a normalized provider fund profile.
+ *
+ * @param profile - Normalized provider fund profile.
  * @returns Uppercase 3-letter currency code.
  */
 export function resolveFundCurrencyFromProfile(
-  profile: IndexFundProfile,
+  profile: ProviderFundProfile,
 ): string {
   const rawCurrency = profile.currency ?? profile.navCurrency ?? 'USD';
   const normalizedCurrency = rawCurrency.trim().toUpperCase();
@@ -256,11 +299,11 @@ export function normalizeOptionalFundIsin(
 /**
  * Maps a normalized provider profile to a fund upsert input.
  *
- * @param profile - Normalized index fund profile from FMP.
+ * @param profile - Normalized provider fund profile from FMP.
  * @returns Validated upsert input for PostgreSQL persistence.
  */
-export function mapIndexFundProfileToUpsertFundInput(
-  profile: IndexFundProfile,
+export function mapProviderFundProfileToUpsertFundInput(
+  profile: ProviderFundProfile,
 ): UpsertFundInput {
   return upsertFundInputSchema.parse({
     symbol: profile.symbol.trim().toUpperCase(),
@@ -268,6 +311,7 @@ export function mapIndexFundProfileToUpsertFundInput(
     name: profile.name,
     provider: 'financial-modeling-prep',
     category: 'index',
+    vehicle: profile.vehicle,
     currency: resolveFundCurrencyFromProfile(profile),
     benchmark: profile.benchmark ?? null,
     metrics: {
@@ -326,6 +370,7 @@ export function mapUpsertFundInputToPrismaCreateData(
     name: input.name,
     provider: mapDomainFundProviderToPrisma(input.provider),
     category: mapDomainFundCategoryToPrisma(input.category),
+    vehicle: mapDomainFundVehicleToPrisma(input.vehicle),
     currency: input.currency,
     benchmark: input.benchmark ?? null,
     ...mapFundMetricsToPrismaFields(input.metrics ?? {}),
@@ -357,6 +402,7 @@ export function mapUpsertFundInputToPrismaUpdateData(
     isin: input.isin ?? null,
     name: input.name,
     category: mapDomainFundCategoryToPrisma(input.category),
+    vehicle: mapDomainFundVehicleToPrisma(input.vehicle),
     currency: input.currency,
     benchmark: input.benchmark ?? null,
     ...mapFundMetricsToPrismaFields(input.metrics ?? {}),

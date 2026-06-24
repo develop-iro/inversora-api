@@ -28,9 +28,12 @@ describe('Financial Modeling Prep (integration)', () => {
   });
 
   it('should search index funds from fixture data', async () => {
-    const results = await provider.searchIndexFunds(INTEGRATION_FUND_SYMBOL, {
-      limit: 5,
-    });
+    const results = await provider.searchIndexedProducts(
+      INTEGRATION_FUND_SYMBOL,
+      {
+        limit: 5,
+      },
+    );
 
     expect(results.length).toBeGreaterThan(0);
     expect(results[0]?.symbol).toBe(INTEGRATION_FUND_SYMBOL);
@@ -38,7 +41,7 @@ describe('Financial Modeling Prep (integration)', () => {
   });
 
   it('should resolve index fund detail from fixtures', async () => {
-    const detail = await provider.getIndexFundDetail(INTEGRATION_FUND_SYMBOL, {
+    const detail = await provider.getFundDetail(INTEGRATION_FUND_SYMBOL, {
       from: '2024-01-01',
       to: '2024-01-31',
       includeHistory: false,
@@ -52,13 +55,10 @@ describe('Financial Modeling Prep (integration)', () => {
   });
 
   it('should load historical prices from fixtures', async () => {
-    const history = await provider.getIndexFundHistory(
-      INTEGRATION_FUND_SYMBOL,
-      {
-        from: '2024-01-01',
-        to: '2024-01-31',
-      },
-    );
+    const history = await provider.getFundHistory(INTEGRATION_FUND_SYMBOL, {
+      from: '2024-01-01',
+      to: '2024-01-31',
+    });
 
     expect(history.length).toBeGreaterThan(0);
     expect(history[0]?.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);

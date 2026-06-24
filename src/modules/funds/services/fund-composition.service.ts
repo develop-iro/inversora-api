@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import type { IndexFundHolding } from '../../providers/financial-modeling-prep/financial-modeling-prep.domain.schemas';
-import { mapIndexFundHoldingsToUpsertInputs } from '../entities/fund-composition.mapper';
+import type { ProviderFundHolding } from '../../providers/financial-modeling-prep/financial-modeling-prep.domain.schemas';
+import { mapProviderFundHoldingsToUpsertInputs } from '../entities/fund-composition.mapper';
 import type {
   FundAllocation,
   FundAllocationCategory,
@@ -56,12 +56,12 @@ export class FundCompositionService {
   async saveProviderComposition(
     fundId: string,
     asOf: string,
-    holdings: readonly IndexFundHolding[],
+    holdings: readonly ProviderFundHolding[],
     allocations: readonly UpsertFundAllocationInput[] = [],
   ): Promise<{ holdings: number; allocations: number }> {
     return this.saveSnapshot(fundId, {
       asOf,
-      holdings: mapIndexFundHoldingsToUpsertInputs(holdings).map((holding) =>
+      holdings: mapProviderFundHoldingsToUpsertInputs(holdings).map((holding) =>
         upsertFundHoldingInputSchema.parse(holding),
       ),
       allocations: allocations.map((allocation) =>

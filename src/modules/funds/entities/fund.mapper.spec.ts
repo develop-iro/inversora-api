@@ -2,12 +2,13 @@ import {
   CatalogVisibility as PrismaCatalogVisibility,
   FundCategory as PrismaFundCategory,
   FundProvider as PrismaFundProvider,
+  FundVehicleType as PrismaFundVehicleType,
 } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import type { FundCategory, FundProvider } from './fund.schema';
 import {
   mapFundMetricsToPrismaFields,
-  mapIndexFundProfileToUpsertFundInput,
+  mapProviderFundProfileToUpsertFundInput,
   mapDomainFundCategoryToPrisma,
   mapDomainFundProviderToPrisma,
   mapDomainCatalogVisibilityToPrisma,
@@ -30,6 +31,7 @@ const prismaFundRow = {
   name: 'State Street SPDR S&P 500 ETF Trust',
   provider: PrismaFundProvider.FINANCIAL_MODELING_PREP,
   category: PrismaFundCategory.INDEX,
+  vehicle: PrismaFundVehicleType.ETF,
   currency: 'USD',
   benchmark: 'S&P 500',
   volatility: new Decimal('14.2500'),
@@ -97,6 +99,7 @@ describe('mapPrismaFundToFund', () => {
       name: 'State Street SPDR S&P 500 ETF Trust',
       provider: 'financial-modeling-prep',
       category: 'index',
+      vehicle: 'etf',
       currency: 'USD',
       benchmark: 'S&P 500',
       metrics: {
@@ -192,12 +195,13 @@ describe('normalizeOptionalFundIsin', () => {
   });
 });
 
-describe('mapIndexFundProfileToUpsertFundInput', () => {
+describe('mapProviderFundProfileToUpsertFundInput', () => {
   it('should map a normalized provider profile into an upsert input', () => {
     expect(
-      mapIndexFundProfileToUpsertFundInput({
+      mapProviderFundProfileToUpsertFundInput({
         symbol: 'spy',
         name: 'State Street SPDR S&P 500 ETF Trust',
+        vehicle: 'etf',
         isin: 'US78462F1030',
         expenseRatio: 0.0945,
         assetsUnderManagement: 520_000_000_000,
@@ -210,6 +214,7 @@ describe('mapIndexFundProfileToUpsertFundInput', () => {
       name: 'State Street SPDR S&P 500 ETF Trust',
       provider: 'financial-modeling-prep',
       category: 'index',
+      vehicle: 'etf',
       currency: 'USD',
       benchmark: 'S&P 500',
       metrics: {
@@ -226,9 +231,10 @@ describe('mapIndexFundProfileToUpsertFundInput', () => {
 
   it('should map omitted optional profile fields to null metrics and benchmark', () => {
     expect(
-      mapIndexFundProfileToUpsertFundInput({
+      mapProviderFundProfileToUpsertFundInput({
         symbol: 'qqq',
         name: 'Invesco QQQ Trust',
+        vehicle: 'etf',
       }),
     ).toEqual({
       symbol: 'QQQ',
@@ -236,6 +242,7 @@ describe('mapIndexFundProfileToUpsertFundInput', () => {
       name: 'Invesco QQQ Trust',
       provider: 'financial-modeling-prep',
       category: 'index',
+      vehicle: 'etf',
       currency: 'USD',
       benchmark: null,
       metrics: {
@@ -274,6 +281,7 @@ describe('mapUpsertFundInputToPrismaCreateData', () => {
         name: 'State Street SPDR S&P 500 ETF Trust',
         provider: 'financial-modeling-prep',
         category: 'index',
+        vehicle: 'etf',
         currency: 'USD',
         benchmark: 'S&P 500',
         metrics: {
@@ -287,6 +295,7 @@ describe('mapUpsertFundInputToPrismaCreateData', () => {
       name: 'State Street SPDR S&P 500 ETF Trust',
       provider: PrismaFundProvider.FINANCIAL_MODELING_PREP,
       category: PrismaFundCategory.INDEX,
+      vehicle: PrismaFundVehicleType.ETF,
       currency: 'USD',
       benchmark: 'S&P 500',
       catalogVisibility: PrismaCatalogVisibility.VISIBLE,
@@ -312,6 +321,7 @@ describe('mapUpsertFundInputToPrismaCreateData', () => {
         name: 'State Street SPDR S&P 500 ETF Trust',
         provider: 'financial-modeling-prep',
         category: 'index',
+        vehicle: 'etf',
         currency: 'USD',
         catalogVisibility: 'blocked',
       }).catalogVisibility,
@@ -328,6 +338,7 @@ describe('mapUpsertFundInputToPrismaUpdateData', () => {
         name: 'Updated Fund Name',
         provider: 'financial-modeling-prep',
         category: 'index',
+        vehicle: 'etf',
         currency: 'USD',
         benchmark: null,
         metrics: {
@@ -340,6 +351,7 @@ describe('mapUpsertFundInputToPrismaUpdateData', () => {
       isin: null,
       name: 'Updated Fund Name',
       category: PrismaFundCategory.INDEX,
+      vehicle: PrismaFundVehicleType.ETF,
       currency: 'USD',
       benchmark: null,
       ter: 0.1,

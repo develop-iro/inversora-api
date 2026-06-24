@@ -1,6 +1,6 @@
 import type { FundPrice as PrismaFundPrice, Prisma } from '@prisma/client';
 import type { Decimal } from '@prisma/client/runtime/library';
-import type { IndexFundHistoricalPrice } from '../../providers/financial-modeling-prep/financial-modeling-prep.domain.schemas';
+import type { ProviderFundHistoricalPrice } from '../../providers/financial-modeling-prep/financial-modeling-prep.domain.schemas';
 import { fundPriceSchema } from './fund-price.schema';
 import type { FundPrice, UpsertFundPriceInput } from './fund-price.schema';
 
@@ -22,6 +22,15 @@ export function parseFundPriceDate(date: string): Date {
  */
 export function formatFundPriceDate(date: Date): string {
   return date.toISOString().slice(0, 10);
+}
+
+/**
+ * Returns the current UTC calendar date as an ISO date-only string.
+ *
+ * @returns Today's date in `YYYY-MM-DD` format.
+ */
+export function getTodayIsoDate(): string {
+  return formatFundPriceDate(new Date());
 }
 
 /**
@@ -101,8 +110,8 @@ export function mapPrismaFundPriceToFundPrice(
  * @param price - Normalized provider historical price.
  * @returns Upsert input for persistence.
  */
-export function mapIndexFundHistoricalPriceToUpsertInput(
-  price: IndexFundHistoricalPrice,
+export function mapProviderFundHistoricalPriceToUpsertInput(
+  price: ProviderFundHistoricalPrice,
 ): UpsertFundPriceInput {
   return {
     date: price.date,

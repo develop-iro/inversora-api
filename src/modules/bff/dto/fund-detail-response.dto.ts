@@ -28,8 +28,11 @@ export class FeaturedFundDto {
   @ApiProperty({ example: 'S&P 500 Acc' })
   name!: string;
 
-  @ApiProperty({ example: 'Índice S&P 500' })
+  @ApiProperty({ example: 'ETF · S&P 500' })
   categoryLabel!: string;
+
+  @ApiProperty({ enum: ['etf', 'mutual-fund'], example: 'etf' })
+  vehicleType!: string;
 
   @ApiProperty({ example: '' })
   themeLabel!: string;
@@ -61,7 +64,7 @@ export class FeaturedFundDto {
   @ApiProperty({ example: '2026-06-30' })
   periodEnd!: string;
 
-  @ApiProperty({ example: 'Fondo indexado con referencia S&P 500.' })
+  @ApiProperty({ example: 'ETF con referencia S&P 500.' })
   benefitSummary!: string;
 
   @ApiProperty({ example: '' })
@@ -173,7 +176,7 @@ export class FundDetailProfileDto {
   sourceLabel!: string;
 
   @ApiProperty({
-    example: 'Replica el índice S&P 500 con acumulación de dividendos.',
+    example: 'ETF que replica el índice S&P 500 con acumulación de dividendos.',
   })
   description!: string;
 
@@ -183,8 +186,15 @@ export class FundDetailProfileDto {
   @ApiProperty({ example: 'S&P 500' })
   benchmark!: string;
 
-  @ApiProperty({ example: true })
-  isIndexed!: boolean;
+  @ApiProperty({ enum: ['etf', 'mutual-fund'], example: 'etf' })
+  vehicleType!: string;
+
+  @ApiProperty({
+    example: true,
+    description:
+      'Whether the product tracks a market index (investment strategy).',
+  })
+  tracksIndex!: boolean;
 
   @ApiProperty({ example: '12.400 BUSD' })
   fundAum!: string;

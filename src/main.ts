@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { AppConfigService } from './shared/config/config.service';
+import { buildNestCorsOptions } from './shared/http/cors.config';
 import { setupSwagger } from './shared/http/swagger.config';
 
 async function bootstrap() {
@@ -8,11 +9,7 @@ async function bootstrap() {
   const config = app.get(AppConfigService);
 
   if (config.corsEnabled) {
-    app.enableCors({
-      origin: [...config.corsOrigins],
-      methods: ['GET', 'HEAD', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Accept'],
-    });
+    app.enableCors(buildNestCorsOptions(config.corsOrigins));
   }
 
   setupSwagger(app);

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { fundVehicleTypeSchema } from '../../../modules/funds/entities/fund.schema';
 
 /** App-aligned risk level labels. */
 export const fundDetailRiskLevelSchema = z.enum(['low', 'medium', 'high']);
@@ -53,6 +54,7 @@ export const featuredFundSchema = z.object({
   id: z.uuid(),
   isin: z.string().regex(/^[A-Z]{2}[A-Z0-9]{9}[0-9]$/),
   name: z.string().min(1),
+  vehicleType: fundVehicleTypeSchema,
   categoryLabel: z.string(),
   themeLabel: z.string(),
   badge: z.string(),
@@ -169,7 +171,8 @@ export const fundDetailProfileSchema = z.object({
   description: z.string(),
   manager: z.string(),
   benchmark: z.string(),
-  isIndexed: z.boolean(),
+  vehicleType: fundVehicleTypeSchema,
+  tracksIndex: z.boolean(),
   fundAum: z.string(),
   classAum: z.string().optional(),
   inceptionDate: z.string(),

@@ -1,4 +1,9 @@
-import { CatalogVisibility, FundCategory, FundProvider } from '@prisma/client';
+import {
+  CatalogVisibility,
+  FundCategory,
+  FundProvider,
+  FundVehicleType,
+} from '@prisma/client';
 import {
   buildFundListMeta,
   buildFundListOrderByInput,
@@ -38,6 +43,7 @@ describe('fund-list.mapper', () => {
       buildFundListWhereInput({
         q: 'spy',
         category: 'index',
+        vehicle: 'etf',
         currency: 'USD',
         provider: 'financial-modeling-prep',
         benchmark: 'S&P 500',
@@ -59,6 +65,7 @@ describe('fund-list.mapper', () => {
           ],
         },
         { category: FundCategory.INDEX },
+        { vehicle: FundVehicleType.ETF },
         { currency: 'USD' },
         { provider: FundProvider.FINANCIAL_MODELING_PREP },
         { benchmark: { contains: 'S&P 500', mode: 'insensitive' } },

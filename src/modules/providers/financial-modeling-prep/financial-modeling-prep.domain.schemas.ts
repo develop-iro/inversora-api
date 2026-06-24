@@ -1,21 +1,26 @@
 import { z } from 'zod';
+import { fundVehicleTypeSchema } from '../../funds/entities/fund.schema';
 
-/** Zod schema for a normalized index fund search result. */
-export const indexFundSearchResultSchema = z.object({
+/** Zod schema for a normalized provider fund search result. */
+export const providerFundSearchResultSchema = z.object({
   symbol: z.string(),
   name: z.string(),
+  vehicle: fundVehicleTypeSchema,
   currency: z.string().optional(),
   exchange: z.string().optional(),
   exchangeFullName: z.string().optional(),
 });
 
-/** Inferred type for a normalized index fund search result. */
-export type IndexFundSearchResult = z.infer<typeof indexFundSearchResultSchema>;
+/** Inferred type for a normalized provider fund search result. */
+export type ProviderFundSearchResult = z.infer<
+  typeof providerFundSearchResultSchema
+>;
 
-/** Zod schema for a normalized index fund profile. */
-export const indexFundProfileSchema = z.object({
+/** Zod schema for a normalized provider fund profile. */
+export const providerFundProfileSchema = z.object({
   symbol: z.string(),
   name: z.string(),
+  vehicle: fundVehicleTypeSchema,
   isin: z.string().optional(),
   description: z.string().optional(),
   expenseRatio: z.number().optional(),
@@ -33,11 +38,11 @@ export const indexFundProfileSchema = z.object({
   benchmark: z.string().optional(),
 });
 
-/** Inferred type for a normalized index fund profile. */
-export type IndexFundProfile = z.infer<typeof indexFundProfileSchema>;
+/** Inferred type for a normalized provider fund profile. */
+export type ProviderFundProfile = z.infer<typeof providerFundProfileSchema>;
 
 /** Zod schema for a normalized historical price point. */
-export const indexFundHistoricalPriceSchema = z.object({
+export const providerFundHistoricalPriceSchema = z.object({
   date: z.string(),
   open: z.number(),
   high: z.number(),
@@ -50,12 +55,12 @@ export const indexFundHistoricalPriceSchema = z.object({
 });
 
 /** Inferred type for a normalized historical price point. */
-export type IndexFundHistoricalPrice = z.infer<
-  typeof indexFundHistoricalPriceSchema
+export type ProviderFundHistoricalPrice = z.infer<
+  typeof providerFundHistoricalPriceSchema
 >;
 
 /** Zod schema for derived price statistics over a historical window. */
-export const indexFundPriceSummarySchema = z.object({
+export const providerFundPriceSummarySchema = z.object({
   latestDate: z.string(),
   latestClose: z.number(),
   periodStartDate: z.string(),
@@ -67,19 +72,21 @@ export const indexFundPriceSummarySchema = z.object({
 });
 
 /** Inferred type for derived price statistics. */
-export type IndexFundPriceSummary = z.infer<typeof indexFundPriceSummarySchema>;
+export type ProviderFundPriceSummary = z.infer<
+  typeof providerFundPriceSummarySchema
+>;
 
-/** Zod schema for an index fund detail aggregate. */
-export const indexFundDetailSchema = indexFundProfileSchema.extend({
-  priceSummary: indexFundPriceSummarySchema,
-  history: z.array(indexFundHistoricalPriceSchema).optional(),
+/** Zod schema for a provider fund detail aggregate. */
+export const providerFundDetailSchema = providerFundProfileSchema.extend({
+  priceSummary: providerFundPriceSummarySchema,
+  history: z.array(providerFundHistoricalPriceSchema).optional(),
 });
 
-/** Inferred type for an index fund detail aggregate. */
-export type IndexFundDetail = z.infer<typeof indexFundDetailSchema>;
+/** Inferred type for a provider fund detail aggregate. */
+export type ProviderFundDetail = z.infer<typeof providerFundDetailSchema>;
 
-/** Zod schema for a normalized index fund holding. */
-export const indexFundHoldingSchema = z.object({
+/** Zod schema for a normalized fund holding row from the provider. */
+export const providerFundHoldingSchema = z.object({
   asset: z.string().optional(),
   name: z.string().min(1),
   isin: z.string().optional(),
@@ -88,38 +95,40 @@ export const indexFundHoldingSchema = z.object({
   sharesNumber: z.number().nonnegative().optional(),
 });
 
-/** Inferred type for a normalized index fund holding. */
-export type IndexFundHolding = z.infer<typeof indexFundHoldingSchema>;
+/** Inferred type for a normalized fund holding row from the provider. */
+export type ProviderFundHolding = z.infer<typeof providerFundHoldingSchema>;
 
-/** Zod schema for a normalized ETF sector weighting. */
-export const indexFundSectorWeightingSchema = z.object({
+/** Zod schema for a normalized sector weighting row from the provider. */
+export const providerFundSectorWeightingSchema = z.object({
   sector: z.string().min(1),
   weightPercentage: z.number().nonnegative(),
 });
 
-/** Inferred type for a normalized ETF sector weighting. */
-export type IndexFundSectorWeighting = z.infer<
-  typeof indexFundSectorWeightingSchema
+/** Inferred type for a normalized sector weighting row from the provider. */
+export type ProviderFundSectorWeighting = z.infer<
+  typeof providerFundSectorWeightingSchema
 >;
 
-/** Zod schema for a normalized ETF country weighting. */
-export const indexFundCountryWeightingSchema = z.object({
+/** Zod schema for a normalized country weighting row from the provider. */
+export const providerFundCountryWeightingSchema = z.object({
   country: z.string().min(1),
   weightPercentage: z.number().nonnegative(),
 });
 
-/** Inferred type for a normalized ETF country weighting. */
-export type IndexFundCountryWeighting = z.infer<
-  typeof indexFundCountryWeightingSchema
+/** Inferred type for a normalized country weighting row from the provider. */
+export type ProviderFundCountryWeighting = z.infer<
+  typeof providerFundCountryWeightingSchema
 >;
 
-/** Zod schema for a normalized index fund composition snapshot. */
-export const indexFundCompositionSchema = z.object({
+/** Zod schema for a normalized provider fund composition snapshot. */
+export const providerFundCompositionSchema = z.object({
   asOf: z.string(),
-  holdings: z.array(indexFundHoldingSchema),
-  sectorWeightings: z.array(indexFundSectorWeightingSchema),
-  countryWeightings: z.array(indexFundCountryWeightingSchema),
+  holdings: z.array(providerFundHoldingSchema),
+  sectorWeightings: z.array(providerFundSectorWeightingSchema),
+  countryWeightings: z.array(providerFundCountryWeightingSchema),
 });
 
-/** Inferred type for a normalized index fund composition snapshot. */
-export type IndexFundComposition = z.infer<typeof indexFundCompositionSchema>;
+/** Inferred type for a normalized provider fund composition snapshot. */
+export type ProviderFundComposition = z.infer<
+  typeof providerFundCompositionSchema
+>;

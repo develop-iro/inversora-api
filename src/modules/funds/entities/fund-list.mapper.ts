@@ -2,6 +2,7 @@ import type { Prisma } from '@prisma/client';
 import {
   mapDomainFundCategoryToPrisma,
   mapDomainFundProviderToPrisma,
+  mapDomainFundVehicleToPrisma,
   mapDomainCatalogVisibilityToPrisma,
 } from './fund.mapper';
 import { CatalogVisibility as PrismaCatalogVisibility } from '@prisma/client';
@@ -66,6 +67,12 @@ export function buildFundListWhereInput(
   if (query.category !== undefined) {
     conditions.push({
       category: mapDomainFundCategoryToPrisma(query.category),
+    });
+  }
+
+  if (query.vehicle !== undefined) {
+    conditions.push({
+      vehicle: mapDomainFundVehicleToPrisma(query.vehicle),
     });
   }
 

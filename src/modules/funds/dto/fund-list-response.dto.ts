@@ -65,6 +65,9 @@ export class FundListItemResponseDto {
   @ApiProperty({ example: 'index' })
   category!: string;
 
+  @ApiProperty({ enum: ['etf', 'mutual-fund'], example: 'etf' })
+  vehicle!: string;
+
   @ApiProperty({ example: 'USD' })
   currency!: string;
 

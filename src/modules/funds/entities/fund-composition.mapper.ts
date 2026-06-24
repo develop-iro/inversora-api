@@ -5,15 +5,15 @@ import {
   type Prisma,
 } from '@prisma/client';
 import type { Decimal } from '@prisma/client/runtime/library';
-import type { IndexFundHolding } from '../../providers/financial-modeling-prep/financial-modeling-prep.domain.schemas';
+import type { ProviderFundHolding } from '../../providers/financial-modeling-prep/financial-modeling-prep.domain.schemas';
 import { formatFundPriceDate, parseFundPriceDate } from './fund-price.mapper';
 import {
   fundAllocationSchema,
   fundHoldingSchema,
 } from './fund-composition.schema';
 import type {
-  IndexFundCountryWeighting,
-  IndexFundSectorWeighting,
+  ProviderFundCountryWeighting,
+  ProviderFundSectorWeighting,
 } from '../../providers/financial-modeling-prep/financial-modeling-prep.domain.schemas';
 import type {
   FundAllocation,
@@ -145,7 +145,7 @@ export function mapPrismaFundAllocationToFundAllocation(
  * @returns Allocation upsert inputs for sector exposure.
  */
 export function mapSectorWeightingsToUpsertInputs(
-  weightings: readonly IndexFundSectorWeighting[],
+  weightings: readonly ProviderFundSectorWeighting[],
 ): UpsertFundAllocationInput[] {
   return [...weightings].map((weighting, index) => ({
     category: 'sectorial',
@@ -162,7 +162,7 @@ export function mapSectorWeightingsToUpsertInputs(
  * @returns Allocation upsert inputs for country exposure.
  */
 export function mapCountryWeightingsToUpsertInputs(
-  weightings: readonly IndexFundCountryWeighting[],
+  weightings: readonly ProviderFundCountryWeighting[],
 ): UpsertFundAllocationInput[] {
   return [...weightings].map((weighting, index) => ({
     category: 'countries',
@@ -178,8 +178,8 @@ export function mapCountryWeightingsToUpsertInputs(
  * @param holdings - Normalized provider holdings sorted by weight descending.
  * @returns Upsert inputs with sequential ranks.
  */
-export function mapIndexFundHoldingsToUpsertInputs(
-  holdings: readonly IndexFundHolding[],
+export function mapProviderFundHoldingsToUpsertInputs(
+  holdings: readonly ProviderFundHolding[],
 ): UpsertFundHoldingInput[] {
   return [...holdings]
     .sort((left, right) => right.weightPercentage - left.weightPercentage)

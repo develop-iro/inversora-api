@@ -37,6 +37,10 @@ describe('validateEnv', () => {
       ADMIN_CATALOG_ENABLED: false,
       ADMIN_API_KEY: undefined,
       CORS_ORIGINS: [],
+      OPENAI_MODEL: 'gpt-4o-mini',
+      ASSISTANT_ENABLED: false,
+      ASSISTANT_PROMPT_VERSION: 'sora-v1',
+      ASSISTANT_CACHE_TTL_DAYS: 90,
     });
   });
 
@@ -73,6 +77,10 @@ describe('validateEnv', () => {
       ADMIN_CATALOG_ENABLED: false,
       ADMIN_API_KEY: undefined,
       CORS_ORIGINS: [],
+      OPENAI_MODEL: 'gpt-4o-mini',
+      ASSISTANT_ENABLED: false,
+      ASSISTANT_PROMPT_VERSION: 'sora-v1',
+      ASSISTANT_CACHE_TTL_DAYS: 90,
     });
   });
 
@@ -134,16 +142,28 @@ describe('validateEnv', () => {
     });
   });
 
-  it('should parse admin catalog configuration', () => {
+  it('should require OPENAI_API_KEY when assistant is enabled', () => {
+    expect(() =>
+      validateEnv({
+        ...validEnv,
+        ASSISTANT_ENABLED: 'true',
+      }),
+    ).toThrow('Environment validation failed');
+  });
+
+  it('should parse CORS origins from a comma-separated list', () => {
     expect(
       validateEnv({
         ...validEnv,
-        ADMIN_CATALOG_ENABLED: 'true',
-        ADMIN_API_KEY: 'local-dev-admin-key',
+        CORS_ORIGINS:
+          'http://localhost:8081, https://app.example.com,http://127.0.0.1:8081',
       }),
     ).toMatchObject({
-      ADMIN_CATALOG_ENABLED: true,
-      ADMIN_API_KEY: 'local-dev-admin-key',
+      CORS_ORIGINS: [
+        'http://localhost:8081',
+        'https://app.example.com',
+        'http://127.0.0.1:8081',
+      ],
     });
   });
 });

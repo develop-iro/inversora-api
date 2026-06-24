@@ -114,4 +114,33 @@ describe('AppConfigService', () => {
     service = module.get(AppConfigService);
     expect(service.isProduction).toBe(true);
   });
+
+  it('should expose assistant configuration when enabled', async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        ConfigModule.forRoot({
+          isGlobal: true,
+          ignoreEnvFile: true,
+          load: [
+            () =>
+              validateEnv({
+                ...validEnv,
+                ASSISTANT_ENABLED: 'true',
+                OPENAI_API_KEY: 'test-openai-key',
+                ASSISTANT_PROMPT_VERSION: 'sora-v2',
+                ASSISTANT_CACHE_TTL_DAYS: '30',
+              }),
+          ],
+        }),
+      ],
+      providers: [AppConfigService],
+    }).compile();
+
+    service = module.get(AppConfigService);
+    expect(service.assistantEnabled).toBe(true);
+    expect(service.openAiApiKey).toBe('test-openai-key');
+    expect(service.openAiModel).toBe('gpt-4o-mini');
+    expect(service.assistantPromptVersion).toBe('sora-v2');
+    expect(service.assistantCacheTtlDays).toBe(30);
+  });
 });

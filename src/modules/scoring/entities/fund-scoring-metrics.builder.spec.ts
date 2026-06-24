@@ -137,12 +137,14 @@ describe('fund-scoring-metrics.builder', () => {
       resolveScoringPeerGroupKey({
         benchmark: 'MSCI World',
         category: 'index',
+        vehicle: 'etf',
       } as never),
     ).toBe('msci world');
     expect(
       resolveScoringPeerGroupKey({
         benchmark: null,
         category: 'index',
+        vehicle: 'etf',
       } as never),
     ).toBe('index');
   });

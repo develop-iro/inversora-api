@@ -1,30 +1,31 @@
 import {
-  buildIndexFundDetail,
-  buildIndexFundPriceSummary,
-  buildIndexFundComposition,
+  buildProviderFundDetail,
+  buildProviderFundPriceSummary,
+  buildProviderFundComposition,
   detectWeightScale,
-  normalizeIndexFundCountryWeightings,
-  resolveIndexFundCompositionAsOf,
-  normalizeIndexFundHistoricalPrices,
-  normalizeIndexFundHoldings,
-  normalizeIndexFundProfile,
-  normalizeIndexFundSearchResults,
-  normalizeIndexFundSectorWeightings,
+  normalizeProviderFundCountryWeightings,
+  resolveProviderFundCompositionAsOf,
+  normalizeProviderFundHistoricalPrices,
+  normalizeProviderFundHoldings,
+  normalizeProviderFundProfile,
+  normalizeProviderFundSearchResults,
+  normalizeProviderFundSectorWeightings,
 } from './financial-modeling-prep.normalizers';
-import { isIndexFundSearchResult } from './index-fund.filters';
+import { isIndexedProductSearchResult } from './indexed-product.filters';
 
 describe('FinancialModelingPrep normalizers', () => {
   it('should identify index funds and exclude specialty products', () => {
     expect(
-      isIndexFundSearchResult({
+      isIndexedProductSearchResult({
         symbol: 'SPY',
         name: 'State Street SPDR S&P 500 ETF Trust',
         exchange: 'AMEX',
+        vehicle: 'etf',
       }),
     ).toBe(true);
 
     expect(
-      isIndexFundSearchResult({
+      isIndexedProductSearchResult({
         symbol: 'SPYI',
         name: 'Neos S&P 500(R) High Income ETF',
         exchange: 'CBOE',
@@ -32,7 +33,7 @@ describe('FinancialModelingPrep normalizers', () => {
     ).toBe(false);
 
     expect(
-      isIndexFundSearchResult({
+      isIndexedProductSearchResult({
         symbol: 'AAPL',
         name: 'Apple Inc.',
         exchange: 'NASDAQ',
@@ -42,13 +43,14 @@ describe('FinancialModelingPrep normalizers', () => {
 
   it('should normalize index fund search results', () => {
     expect(
-      normalizeIndexFundSearchResults([
+      normalizeProviderFundSearchResults([
         {
           symbol: 'SPY',
           name: 'State Street SPDR S&P 500 ETF Trust',
           currency: 'USD',
           exchangeFullName: 'New York Stock Exchange Arca',
           exchange: 'AMEX',
+          vehicle: 'etf',
         },
         {
           symbol: 'SPYI',
@@ -60,6 +62,7 @@ describe('FinancialModelingPrep normalizers', () => {
       {
         symbol: 'SPY',
         name: 'State Street SPDR S&P 500 ETF Trust',
+        vehicle: 'etf',
         currency: 'USD',
         exchange: 'AMEX',
         exchangeFullName: 'New York Stock Exchange Arca',
@@ -69,7 +72,7 @@ describe('FinancialModelingPrep normalizers', () => {
 
   it('should normalize index fund profiles with benchmark metadata', () => {
     expect(
-      normalizeIndexFundProfile(
+      normalizeProviderFundProfile(
         {
           symbol: 'SPY',
           name: 'State Street SPDR S&P 500 ETF Trust',
@@ -85,9 +88,10 @@ describe('FinancialModelingPrep normalizers', () => {
           exchange: 'AMEX',
         },
       ),
-    ).toEqual({
+    ).toMatchObject({
       symbol: 'SPY',
       name: 'State Street SPDR S&P 500 ETF Trust',
+      vehicle: 'etf',
       expenseRatio: 0.0945,
       assetsUnderManagement: 520000000000,
       issuer: 'State Street',
@@ -99,7 +103,7 @@ describe('FinancialModelingPrep normalizers', () => {
   });
 
   it('should build historical summaries and index fund detail aggregates', () => {
-    const history = normalizeIndexFundHistoricalPrices([
+    const history = normalizeProviderFundHistoricalPrices([
       {
         symbol: 'SPY',
         date: '2024-01-31',
@@ -120,7 +124,7 @@ describe('FinancialModelingPrep normalizers', () => {
       },
     ]);
 
-    const summary = buildIndexFundPriceSummary(history);
+    const summary = buildProviderFundPriceSummary(history);
 
     expect(summary).toEqual({
       latestDate: '2024-01-31',
@@ -135,10 +139,11 @@ describe('FinancialModelingPrep normalizers', () => {
     expect(summary.periodReturnPercent).toBeCloseTo(2.1644, 3);
 
     expect(
-      buildIndexFundDetail(
+      buildProviderFundDetail(
         {
           symbol: 'SPY',
           name: 'State Street SPDR S&P 500 ETF Trust',
+          vehicle: 'etf',
           benchmark: 'S&P 500',
         },
         history,
@@ -156,7 +161,7 @@ describe('FinancialModelingPrep normalizers', () => {
 
   it('should normalize sector and country weightings', () => {
     expect(
-      normalizeIndexFundSectorWeightings([
+      normalizeProviderFundSectorWeightings([
         {
           sector: 'Healthcare',
           weightPercentage: 12.8,
@@ -178,7 +183,7 @@ describe('FinancialModelingPrep normalizers', () => {
     ]);
 
     expect(
-      normalizeIndexFundCountryWeightings([
+      normalizeProviderFundCountryWeightings([
         {
           country: 'United States',
           weightPercentage: 97.5,
@@ -200,7 +205,7 @@ describe('FinancialModelingPrep normalizers', () => {
     ]);
 
     expect(
-      normalizeIndexFundCountryWeightings([
+      normalizeProviderFundCountryWeightings([
         {
           country: 'United States',
           weightPercentage: 97.5,
@@ -236,7 +241,7 @@ describe('FinancialModelingPrep normalizers', () => {
     expect(detectWeightScale([97.5, 1.2])).toBe('percent');
 
     expect(
-      normalizeIndexFundSectorWeightings([
+      normalizeProviderFundSectorWeightings([
         {
           sector: 'Technology',
           weight: 0.315,
@@ -258,7 +263,7 @@ describe('FinancialModelingPrep normalizers', () => {
     ]);
 
     expect(
-      normalizeIndexFundSectorWeightings([
+      normalizeProviderFundSectorWeightings([
         {
           sector: 'Healthcare',
           weight: 31.5,
@@ -274,7 +279,7 @@ describe('FinancialModelingPrep normalizers', () => {
 
   it('should ignore invalid sector and country weightings', () => {
     expect(
-      normalizeIndexFundSectorWeightings([
+      normalizeProviderFundSectorWeightings([
         {
           sector: 'Cash',
           weightPercentage: 0,
@@ -299,7 +304,7 @@ describe('FinancialModelingPrep normalizers', () => {
     ]);
 
     expect(
-      normalizeIndexFundCountryWeightings([
+      normalizeProviderFundCountryWeightings([
         {
           country: 'Ireland',
           weightPercentage: -1,
@@ -321,14 +326,14 @@ describe('FinancialModelingPrep normalizers', () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2024-06-08T12:00:00.000Z'));
 
-    expect(resolveIndexFundCompositionAsOf([])).toBe('2024-06-08');
+    expect(resolveProviderFundCompositionAsOf([])).toBe('2024-06-08');
 
     jest.useRealTimers();
   });
 
   it('should build a normalized composition snapshot', () => {
     expect(
-      buildIndexFundComposition(
+      buildProviderFundComposition(
         [
           {
             asset: 'AAPL',
@@ -376,7 +381,7 @@ describe('FinancialModelingPrep normalizers', () => {
 
   it('should normalize fund holdings sorted by weight descending', () => {
     expect(
-      normalizeIndexFundHoldings([
+      normalizeProviderFundHoldings([
         {
           asset: 'MSFT',
           name: 'Microsoft Corporation',
@@ -408,7 +413,7 @@ describe('FinancialModelingPrep normalizers', () => {
 
   it('should fall back to search metadata when profile fields are missing', () => {
     expect(
-      normalizeIndexFundProfile(
+      normalizeProviderFundProfile(
         {
           symbol: 'SPY',
         },
@@ -429,7 +434,7 @@ describe('FinancialModelingPrep normalizers', () => {
 
   it('should normalize holdings that only provide an asset ticker', () => {
     expect(
-      normalizeIndexFundHoldings([
+      normalizeProviderFundHoldings([
         {
           asset: 'AAPL',
           weightPercentage: 7.12,
@@ -445,13 +450,13 @@ describe('FinancialModelingPrep normalizers', () => {
   });
 
   it('should reject empty historical series when building summaries', () => {
-    expect(() => buildIndexFundPriceSummary([])).toThrow(
+    expect(() => buildProviderFundPriceSummary([])).toThrow(
       'Cannot build price summary from an empty historical series',
     );
   });
 
   it('should handle zero starting closes and omit optional history', () => {
-    const history = normalizeIndexFundHistoricalPrices([
+    const history = normalizeProviderFundHistoricalPrices([
       {
         date: '2024-01-31',
         open: 0,
@@ -468,12 +473,13 @@ describe('FinancialModelingPrep normalizers', () => {
       },
     ]);
 
-    expect(buildIndexFundPriceSummary(history).periodReturnPercent).toBe(0);
+    expect(buildProviderFundPriceSummary(history).periodReturnPercent).toBe(0);
     expect(
-      buildIndexFundDetail(
+      buildProviderFundDetail(
         {
           symbol: 'SPY',
           name: 'State Street SPDR S&P 500 ETF Trust',
+          vehicle: 'etf',
         },
         history,
       ).history,

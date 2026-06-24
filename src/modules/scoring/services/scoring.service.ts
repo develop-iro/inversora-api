@@ -17,12 +17,10 @@ import {
 } from '../entities/invesora-score.schema';
 import {
   scoreAge,
-  scoreCost,
-  scoreDiversification,
-  scoreFundSize,
-  scoreRisk,
-  scoreRiskAdjustedReturn,
-} from '../entities/score-factor.calculators';
+  scoreAum,
+  scoreTer,
+  scoreTrackingError,
+} from '../entities/rn04-score-factor.calculators';
 import {
   buildScoreSummary,
   buildScoreWarnings,
@@ -38,18 +36,16 @@ import type {
 } from './scoring-sync.types';
 
 const FACTOR_LABELS = {
-  riskAdjustedReturn: 'Rentabilidad ajustada al riesgo',
-  risk: 'Riesgo',
-  cost: 'Comisión anual',
-  diversification: 'Diversificación',
-  fundSize: 'Tamaño del fondo',
-  age: 'Antigüedad',
+  ter: 'Comisión (TER)',
+  tracking: 'Tracking error',
+  aum: 'Patrimonio (AUM)',
+  age: 'Antigüedad del fondo',
 } as const;
 
 /**
  * Domain service that computes the Invesora Score for index funds and ETFs.
  *
- * @see docs/scoring-algorithm.md
+ * @see docs/scoring-rn-04.md
  */
 @Injectable()
 export class ScoringService {
@@ -65,7 +61,7 @@ export class ScoringService {
    *
    * @param fund - Persisted fund entity.
    * @param metrics - Extended scoring metrics derived from prices and composition.
-   * @param context - Optional peer group for category-relative scoring.
+   * @param context - Optional peer group for benchmark-relative scoring.
    */
   calculateFundScore(
     _fund: Fund,
@@ -74,43 +70,29 @@ export class ScoringService {
   ): InvesoraScore {
     const peers = context.peers;
 
-    const riskAdjustedReturn = scoreRiskAdjustedReturn(metrics, peers);
-    const risk = scoreRisk(metrics, peers);
-    const cost = scoreCost(metrics, peers);
-    const diversification = scoreDiversification(metrics, peers);
-    const fundSize = scoreFundSize(metrics, peers);
-    const age = scoreAge(metrics);
+    const ter = scoreTer(metrics, peers);
+    const tracking = scoreTrackingError(metrics, peers);
+    const aum = scoreAum(metrics, peers);
+    const age = scoreAge(metrics, peers);
 
     const breakdown = {
-      riskAdjustedReturn: {
-        points: riskAdjustedReturn.points,
-        maxPoints: SCORE_MAX_POINTS.riskAdjustedReturn,
-        label: FACTOR_LABELS.riskAdjustedReturn,
-        incomplete: riskAdjustedReturn.incomplete,
+      ter: {
+        points: ter.points,
+        maxPoints: SCORE_MAX_POINTS.ter,
+        label: FACTOR_LABELS.ter,
+        incomplete: ter.incomplete,
       },
-      risk: {
-        points: risk.points,
-        maxPoints: SCORE_MAX_POINTS.risk,
-        label: FACTOR_LABELS.risk,
-        incomplete: risk.incomplete,
+      tracking: {
+        points: tracking.points,
+        maxPoints: SCORE_MAX_POINTS.tracking,
+        label: FACTOR_LABELS.tracking,
+        incomplete: tracking.incomplete,
       },
-      cost: {
-        points: cost.points,
-        maxPoints: SCORE_MAX_POINTS.cost,
-        label: FACTOR_LABELS.cost,
-        incomplete: cost.incomplete,
-      },
-      diversification: {
-        points: diversification.points,
-        maxPoints: SCORE_MAX_POINTS.diversification,
-        label: FACTOR_LABELS.diversification,
-        incomplete: diversification.incomplete,
-      },
-      fundSize: {
-        points: fundSize.points,
-        maxPoints: SCORE_MAX_POINTS.fundSize,
-        label: FACTOR_LABELS.fundSize,
-        incomplete: fundSize.incomplete,
+      aum: {
+        points: aum.points,
+        maxPoints: SCORE_MAX_POINTS.aum,
+        label: FACTOR_LABELS.aum,
+        incomplete: aum.incomplete,
       },
       age: {
         points: age.points,
@@ -121,11 +103,9 @@ export class ScoringService {
     };
 
     const totalScore = clampScore(
-      breakdown.riskAdjustedReturn.points +
-        breakdown.risk.points +
-        breakdown.cost.points +
-        breakdown.diversification.points +
-        breakdown.fundSize.points +
+      breakdown.ter.points +
+        breakdown.tracking.points +
+        breakdown.aum.points +
         breakdown.age.points,
     );
 

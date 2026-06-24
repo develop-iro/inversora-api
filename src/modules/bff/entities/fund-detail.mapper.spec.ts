@@ -31,6 +31,7 @@ const fund: Fund = {
   name: 'State Street SPDR S&P 500 ETF Trust',
   provider: 'financial-modeling-prep',
   category: 'index',
+  vehicle: 'etf',
   currency: 'USD',
   benchmark: 'S&P 500',
   metrics: {
@@ -52,34 +53,32 @@ const fund: Fund = {
 
 const score: InvesoraScore = {
   score: 82,
-  version: 'mvp-1',
+  version: 'rn-04',
   breakdown: {
-    riskAdjustedReturn: {
+    ter: {
+      points: 32,
+      maxPoints: 40,
+      label: 'Comisión (TER)',
+      incomplete: false,
+    },
+    tracking: {
       points: 30,
       maxPoints: 40,
-      label: 'Rentabilidad ajustada al riesgo',
+      label: 'Tracking error',
       incomplete: false,
     },
-    risk: { points: 14, maxPoints: 20, label: 'Riesgo', incomplete: false },
-    cost: {
-      points: 12,
-      maxPoints: 15,
-      label: 'Comisión anual',
-      incomplete: false,
-    },
-    diversification: {
-      points: 8,
+    aum: {
+      points: 10,
       maxPoints: 10,
-      label: 'Diversificación',
-      incomplete: true,
-    },
-    fundSize: {
-      points: 9,
-      maxPoints: 10,
-      label: 'Tamaño del fondo',
+      label: 'Patrimonio (AUM)',
       incomplete: false,
     },
-    age: { points: 4, maxPoints: 5, label: 'Antigüedad', incomplete: false },
+    age: {
+      points: 10,
+      maxPoints: 10,
+      label: 'Antigüedad del fondo',
+      incomplete: false,
+    },
   },
   summary: 'Score sólido.',
   warnings: ['La rentabilidad pasada no garantiza resultados futuros.'],
@@ -106,24 +105,10 @@ describe('fund-detail.mapper', () => {
     expect(mapRiskLevelToApp(null)).toBe('medium');
   });
 
-  it('should map backend score breakdown to six app criteria', () => {
+  it('should map RN-04 score breakdown to six app criteria', () => {
     const breakdown = mapScoreBreakdownToApp(score);
-    const adjustedBreakdown = mapScoreBreakdownToApp({
-      ...score,
-      score: 91,
-      breakdown: {
-        ...score.breakdown,
-        riskAdjustedReturn: {
-          ...score.breakdown.riskAdjustedReturn,
-          points: 38,
-        },
-      },
-    });
 
     expect(breakdown).toHaveLength(6);
-    expect(
-      adjustedBreakdown.find((item) => item.id === 'consistency')?.points,
-    ).toBeDefined();
     expect(breakdown.map((item) => item.id)).toEqual([
       'ter',
       'tracking',
@@ -132,24 +117,41 @@ describe('fund-detail.mapper', () => {
       'consistency',
       'dataQuality',
     ]);
-    expect(
-      breakdown.reduce((sum, item) => sum + item.points, 0),
-    ).toBeGreaterThanOrEqual(score.score - 1);
+    expect(breakdown.find((item) => item.id === 'ter')).toEqual({
+      id: 'ter',
+      label: 'Comisión (TER)',
+      points: 32,
+      maxPoints: 40,
+    });
+    expect(breakdown.find((item) => item.id === 'consistency')).toEqual({
+      id: 'consistency',
+      label: 'Consistencia histórica',
+      points: 0,
+      maxPoints: 1,
+    });
+    expect(breakdown.reduce((sum, item) => sum + item.points, 0)).toBe(
+      score.score,
+    );
   });
 
   it('should mark warning status when factors are incomplete', () => {
-    expect(resolveScoringStatus(score)).toBe('warning');
     expect(
       resolveScoringStatus({
         ...score,
         warnings: [],
         breakdown: {
           ...score.breakdown,
-          diversification: {
-            ...score.breakdown.diversification,
-            incomplete: false,
+          tracking: {
+            ...score.breakdown.tracking,
+            incomplete: true,
           },
         },
+      }),
+    ).toBe('warning');
+    expect(
+      resolveScoringStatus({
+        ...score,
+        warnings: [],
       }),
     ).toBe('ok');
   });
@@ -258,9 +260,8 @@ describe('fund-detail.mapper', () => {
   });
 
   it('should format labels, AUM, and stability helpers', () => {
-    expect(buildCategoryLabel({ ...fund, benchmark: null })).toBe(
-      'Fondo indexado',
-    );
+    expect(buildCategoryLabel({ ...fund, benchmark: null })).toBe('ETF');
+    expect(buildCategoryLabel(fund)).toBe('ETF · S&P 500');
     expect(formatFundAum(null, 'USD')).toBe('—');
     expect(formatFundAum(2_500_000_000, 'USD')).toBe('2.5 BUSD');
     expect(formatFundAum(850_000_000, 'USD')).toBe('850 MUSD');

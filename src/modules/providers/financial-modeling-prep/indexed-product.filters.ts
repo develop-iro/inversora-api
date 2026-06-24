@@ -1,11 +1,11 @@
 import type { FmpSearchResult } from './financial-modeling-prep.raw.schemas';
 
-/** Name pattern that identifies broad or benchmark-tracking index funds. */
-const INDEX_FUND_NAME_PATTERN =
+/** Name pattern that identifies broad or benchmark-tracking indexed products. */
+const INDEXED_PRODUCT_NAME_PATTERN =
   /\b(index|indx|s&p|sp\s*500|msci|russell|nasdaq\s*100|ftse|crsp|wilshire|total stock market|total bond|total market|broad market|all[\s-]country|world stock|ucits etf)\b/i;
 
-/** Specialty products excluded from index-fund discovery. */
-const NON_INDEX_FUND_NAME_PATTERN =
+/** Specialty products excluded from indexed-product discovery. */
+const NON_INDEXED_PRODUCT_NAME_PATTERN =
   /\b(leveraged|inverse|hedged|high income|convexity|fossil fuel|2x|3x|-1x|-2x|-3x)\b/i;
 
 /** Fund-like name pattern used when filtering search results. */
@@ -33,19 +33,19 @@ export function isLikelyFundSearchResult(result: FmpSearchResult): boolean {
 }
 
 /**
- * Determines whether a raw FMP search row likely represents an index fund.
+ * Determines whether a raw FMP search row likely represents an index-tracking product.
  *
  * @param result - Raw FMP search result.
  * @returns `true` when the row looks like an indexed ETF or mutual fund.
  */
-export function isIndexFundSearchResult(result: FmpSearchResult): boolean {
+export function isIndexedProductSearchResult(result: FmpSearchResult): boolean {
   if (!isLikelyFundSearchResult(result)) {
     return false;
   }
 
-  if (NON_INDEX_FUND_NAME_PATTERN.test(result.name)) {
+  if (NON_INDEXED_PRODUCT_NAME_PATTERN.test(result.name)) {
     return false;
   }
 
-  return INDEX_FUND_NAME_PATTERN.test(result.name);
+  return INDEXED_PRODUCT_NAME_PATTERN.test(result.name);
 }

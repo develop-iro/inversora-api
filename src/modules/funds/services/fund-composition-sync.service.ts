@@ -43,7 +43,7 @@ export class FundCompositionSyncService {
     }
 
     const composition =
-      await this.fmpProvider.getIndexFundComposition(normalizedSymbol);
+      await this.fmpProvider.getFundComposition(normalizedSymbol);
     const allocations = [
       ...mapSectorWeightingsToUpsertInputs(composition.sectorWeightings),
       ...mapCountryWeightingsToUpsertInputs(composition.countryWeightings),

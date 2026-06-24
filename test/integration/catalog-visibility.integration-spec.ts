@@ -1,6 +1,11 @@
 import { NotFoundException } from '@nestjs/common';
 import type { TestingModule } from '@nestjs/testing';
-import { CatalogVisibility, FundCategory, FundProvider } from '@prisma/client';
+import {
+  CatalogVisibility,
+  FundCategory,
+  FundProvider,
+  FundVehicleType,
+} from '@prisma/client';
 import { FundsService } from '../../src/modules/funds/services/funds.service';
 import { CatalogVisibilityService } from '../../src/modules/funds/services/catalog-visibility.service';
 import { buildFundListWhereInput } from '../../src/modules/funds/entities/fund-list.mapper';
@@ -18,6 +23,7 @@ const visibilityQaFundData = {
   name: 'Visibility QA Fund',
   provider: FundProvider.FINANCIAL_MODELING_PREP,
   category: FundCategory.INDEX,
+  vehicle: FundVehicleType.ETF,
   currency: 'EUR',
   benchmark: 'MSCI World',
   ter: 0.2,

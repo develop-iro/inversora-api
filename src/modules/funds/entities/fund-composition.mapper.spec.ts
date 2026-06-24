@@ -4,7 +4,7 @@ import { parseFundPriceDate } from './fund-price.mapper';
 import {
   mapCountryWeightingsToUpsertInputs,
   mapFundAllocationCategoryToPrisma,
-  mapIndexFundHoldingsToUpsertInputs,
+  mapProviderFundHoldingsToUpsertInputs,
   mapSectorWeightingsToUpsertInputs,
   mapPrismaFundAllocationCategory,
   mapPrismaFundAllocationToFundAllocation,
@@ -50,7 +50,7 @@ describe('fund-composition.mapper', () => {
 
   it('should map provider holdings to ranked upsert inputs', () => {
     expect(
-      mapIndexFundHoldingsToUpsertInputs([
+      mapProviderFundHoldingsToUpsertInputs([
         {
           asset: 'MSFT',
           name: 'Microsoft Corporation',

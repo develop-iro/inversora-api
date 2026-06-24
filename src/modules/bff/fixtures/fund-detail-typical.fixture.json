@@ -3,7 +3,8 @@
     "id": "550e8400-e29b-41d4-a716-446655440000",
     "isin": "US78462F1030",
     "name": "State Street SPDR S&P 500 ETF Trust",
-    "categoryLabel": "Índice S&P 500",
+    "vehicleType": "etf",
+    "categoryLabel": "ETF · S&P 500",
     "themeLabel": "",
     "badge": "",
     "idealForBeginners": true,
@@ -14,7 +15,7 @@
     "quarterTag": "Q2 2026",
     "periodStart": "2026-04-01",
     "periodEnd": "2026-06-30",
-    "benefitSummary": "Fondo indexado con referencia S&P 500.",
+    "benefitSummary": "ETF con referencia S&P 500.",
     "featuredReason": "",
     "isFeatured": false
   },
@@ -86,10 +87,11 @@
   "profile": {
     "asOf": "2026-06-09T00:00:00.000Z",
     "sourceLabel": "Financial Modeling Prep",
-    "description": "Replica el índice S&P 500 con acumulación de dividendos.",
+    "description": "ETF que replica el índice S&P 500 con acumulación de dividendos.",
     "manager": "—",
     "benchmark": "S&P 500",
-    "isIndexed": true,
+    "vehicleType": "etf",
+    "tracksIndex": true,
     "fundAum": "520.0 BUSD",
     "inceptionDate": "02/01/2024",
     "summaryRows": [

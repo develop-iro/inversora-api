@@ -53,6 +53,14 @@ export const envSchema = z
       .string()
       .default('')
       .transform((value) => parseCommaSeparatedList(value)),
+    OPENAI_API_KEY: z.string().min(1).optional(),
+    OPENAI_MODEL: z.string().min(1).default('gpt-4o-mini'),
+    ASSISTANT_ENABLED: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((value) => value === 'true'),
+    ASSISTANT_PROMPT_VERSION: z.string().min(1).default('sora-v1'),
+    ASSISTANT_CACHE_TTL_DAYS: z.coerce.number().int().positive().default(90),
   })
   .superRefine((env, ctx) => {
     const adminApiEnabled = env.ADMIN_SYNC_ENABLED || env.ADMIN_CATALOG_ENABLED;
@@ -63,6 +71,14 @@ export const envSchema = z
         path: ['ADMIN_API_KEY'],
         message:
           'ADMIN_API_KEY is required when ADMIN_SYNC_ENABLED or ADMIN_CATALOG_ENABLED is true (minimum 8 characters)',
+      });
+    }
+
+    if (env.ASSISTANT_ENABLED && env.OPENAI_API_KEY === undefined) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['OPENAI_API_KEY'],
+        message: 'OPENAI_API_KEY is required when ASSISTANT_ENABLED is true',
       });
     }
   });

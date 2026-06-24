@@ -14,6 +14,12 @@ export const fundCategorySchema = z.enum(['index']);
 /** Inferred type for fund categories. */
 export type FundCategory = z.infer<typeof fundCategorySchema>;
 
+/** Supported fund vehicle types in Invesora. */
+export const fundVehicleTypeSchema = z.enum(['etf', 'mutual-fund']);
+
+/** Inferred type for fund vehicle types. */
+export type FundVehicleType = z.infer<typeof fundVehicleTypeSchema>;
+
 /** Zod schema for persisted calculated fund metrics. */
 export const fundMetricsSchema = z.object({
   volatility: z.number().nullable(),
@@ -39,6 +45,7 @@ export const fundSchema = z.object({
   name: z.string().min(1),
   provider: fundProviderSchema,
   category: fundCategorySchema,
+  vehicle: fundVehicleTypeSchema,
   currency: z
     .string()
     .length(3)

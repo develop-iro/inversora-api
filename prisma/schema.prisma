@@ -17,6 +17,12 @@ enum FundCategory {
   INDEX @map("index")
 }
 
+/// Legal and trading wrapper for a catalog product.
+enum FundVehicleType {
+  ETF         @map("etf")
+  MUTUAL_FUND @map("mutual-fund")
+}
+
 /// Catalog visibility state controlling public API exposure (RN-05 / HU-37).
 enum CatalogVisibility {
   VISIBLE     @map("visible")
@@ -34,15 +40,16 @@ enum FundAllocationCategory {
   PORTFOLIO        @map("portfolio")
 }
 
-/// Persisted index fund entity used as the main domain record in Invesora.
+/// Persisted catalog product used as the main domain record in Inversora.
 model Fund {
-  id           String       @id @default(uuid())
+  id           String          @id @default(uuid())
   symbol       String
-  isin         String?      @unique
+  isin         String?         @unique
   name         String
   provider     FundProvider
   category     FundCategory
-  currency     String       @db.Char(3)
+  vehicle      FundVehicleType
+  currency     String          @db.Char(3)
   benchmark     String?
   volatility    Decimal?     @db.Decimal(8, 4)
   drawdown      Decimal?     @db.Decimal(8, 4)
@@ -147,4 +154,23 @@ model FundPrice {
   @@unique([fundId, date])
   @@index([fundId, date])
   @@map("fund_prices")
+}
+
+/// Cached SORA assistant responses to reduce OpenAI usage (HU-24).
+model AssistantResponseCache {
+  id              String   @id @default(cuid())
+  cacheKey        String   @unique
+  intent          String
+  normalizedQuery String
+  fundIsin        String?
+  scoreVersion    String
+  promptVersion   String
+  locale          String   @default("es")
+  responseJson    Json
+  createdAt       DateTime @default(now())
+  expiresAt       DateTime
+
+  @@index([intent, normalizedQuery])
+  @@index([expiresAt])
+  @@map("assistant_response_cache")
 }

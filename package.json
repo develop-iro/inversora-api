@@ -2,9 +2,9 @@
   "name": "inversora-api",
   "version": "0.0.1",
   "description": "",
-  "author": "",
+  "author": "Ivan Romero",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "SEE LICENSE IN LICENSE.md",
   "scripts": {
     "build": "prisma generate && nest build",
     "postinstall": "prisma generate",
@@ -54,6 +54,7 @@
     "@nestjs/swagger": "^11.4.4",
     "@prisma/client": "^6.19.3",
     "axios": "^1.17.0",
+    "openai": "^6.44.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "zod": "^4.4.3"

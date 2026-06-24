@@ -10,12 +10,10 @@ const INCOMPLETE_DATA_WARNING =
   'Algunos datos del fondo están incompletos; el score usa una estimación conservadora.';
 
 const FACTOR_LABELS = {
-  riskAdjustedReturn: 'Rentabilidad ajustada al riesgo',
-  risk: 'Riesgo',
-  cost: 'Comisión anual',
-  diversification: 'Diversificación',
-  fundSize: 'Tamaño del fondo',
-  age: 'Antigüedad',
+  ter: 'Comisión (TER)',
+  tracking: 'Tracking error',
+  aum: 'Patrimonio (AUM)',
+  age: 'Antigüedad del fondo',
 } as const;
 
 function isStrongFactor(factor: ScoreFactorBreakdown): boolean {

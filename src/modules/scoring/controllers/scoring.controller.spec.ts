@@ -10,7 +10,7 @@ describe('ScoringController', () => {
   const fundId = '550e8400-e29b-41d4-a716-446655440000';
   const score = {
     score: 82,
-    version: 'mvp-1',
+    version: 'rn-04',
     breakdown: {},
     summary: 'Score summary',
     warnings: [],

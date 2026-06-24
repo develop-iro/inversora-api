@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import type { IndexFundHistoricalPrice } from '../../providers/financial-modeling-prep/financial-modeling-prep.domain.schemas';
-import { mapIndexFundHistoricalPriceToUpsertInput } from '../entities/fund-price.mapper';
+import type { ProviderFundHistoricalPrice } from '../../providers/financial-modeling-prep/financial-modeling-prep.domain.schemas';
+import { mapProviderFundHistoricalPriceToUpsertInput } from '../entities/fund-price.mapper';
 import type {
   FundPrice,
   FundPriceHistoryQuery,
@@ -25,11 +25,11 @@ export class FundPricesService {
    */
   async saveProviderPrices(
     fundId: string,
-    prices: readonly IndexFundHistoricalPrice[],
+    prices: readonly ProviderFundHistoricalPrice[],
   ): Promise<number> {
     const inputs = prices.map((price) =>
       upsertFundPriceInputSchema.parse(
-        mapIndexFundHistoricalPriceToUpsertInput(price),
+        mapProviderFundHistoricalPriceToUpsertInput(price),
       ),
     );
 

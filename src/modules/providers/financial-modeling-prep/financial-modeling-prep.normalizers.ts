@@ -1,26 +1,27 @@
 import {
-  indexFundCompositionSchema,
-  indexFundCountryWeightingSchema,
-  indexFundDetailSchema,
-  indexFundHistoricalPriceSchema,
-  indexFundHoldingSchema,
-  indexFundPriceSummarySchema,
-  indexFundProfileSchema,
-  indexFundSearchResultSchema,
-  indexFundSectorWeightingSchema,
+  providerFundCompositionSchema,
+  providerFundCountryWeightingSchema,
+  providerFundDetailSchema,
+  providerFundHistoricalPriceSchema,
+  providerFundHoldingSchema,
+  providerFundPriceSummarySchema,
+  providerFundProfileSchema,
+  providerFundSearchResultSchema,
+  providerFundSectorWeightingSchema,
 } from './financial-modeling-prep.domain.schemas';
 import type {
-  IndexFundComposition,
-  IndexFundCountryWeighting,
-  IndexFundDetail,
-  IndexFundHistoricalPrice,
-  IndexFundHolding,
-  IndexFundPriceSummary,
-  IndexFundProfile,
-  IndexFundSearchResult,
-  IndexFundSectorWeighting,
+  ProviderFundComposition,
+  ProviderFundCountryWeighting,
+  ProviderFundDetail,
+  ProviderFundHistoricalPrice,
+  ProviderFundHolding,
+  ProviderFundPriceSummary,
+  ProviderFundProfile,
+  ProviderFundSearchResult,
+  ProviderFundSectorWeighting,
 } from './financial-modeling-prep.domain.schemas';
-import { isIndexFundSearchResult } from './index-fund.filters';
+import { resolveFundVehicleFromFmpMetadata } from './fund-vehicle.resolver';
+import { isIndexedProductSearchResult } from './indexed-product.filters';
 import type {
   FmpCountryWeighting,
   FmpFundHolding,
@@ -31,7 +32,7 @@ import type {
 } from './financial-modeling-prep.raw.schemas';
 
 /**
- * Extracts a benchmark label from an index fund name when possible.
+ * Extracts a benchmark label from a fund name when possible.
  *
  * @param name - Fund display name.
  * @returns Benchmark label or `undefined`.
@@ -56,53 +57,64 @@ export function extractBenchmarkFromName(name: string): string | undefined {
 }
 
 /**
- * Maps a raw FMP search result to the normalized index fund search shape.
+ * Maps a raw FMP search result to the normalized provider fund search shape.
  *
  * @param result - Raw FMP search result.
- * @returns Normalized index fund search result.
+ * @returns Normalized provider fund search result.
  */
-export function normalizeIndexFundSearchResult(
+export function normalizeProviderFundSearchResult(
   result: FmpSearchResult,
-): IndexFundSearchResult {
-  return indexFundSearchResultSchema.parse({
+): ProviderFundSearchResult {
+  const exchange = result.exchangeShortName ?? result.exchange;
+
+  return providerFundSearchResultSchema.parse({
     symbol: result.symbol,
     name: result.name,
+    vehicle: resolveFundVehicleFromFmpMetadata({
+      name: result.name,
+      exchange,
+    }),
     currency: result.currency,
-    exchange: result.exchangeShortName ?? result.exchange,
+    exchange,
     exchangeFullName: result.exchangeFullName ?? result.stockExchange,
   });
 }
 
 /**
- * Maps raw FMP search results to normalized index fund search results.
+ * Maps raw FMP search results to normalized provider fund search results.
  *
  * @param results - Raw FMP search results.
- * @returns Normalized index fund search results.
+ * @returns Normalized provider fund search results.
  */
-export function normalizeIndexFundSearchResults(
+export function normalizeProviderFundSearchResults(
   results: readonly FmpSearchResult[],
-): IndexFundSearchResult[] {
+): ProviderFundSearchResult[] {
   return results
-    .filter(isIndexFundSearchResult)
-    .map((result) => normalizeIndexFundSearchResult(result));
+    .filter(isIndexedProductSearchResult)
+    .map((result) => normalizeProviderFundSearchResult(result));
 }
 
 /**
- * Maps a raw FMP fund profile to the normalized index fund profile shape.
+ * Maps a raw FMP fund profile to the normalized provider fund profile shape.
  *
  * @param profile - Raw FMP fund profile.
  * @param searchResult - Optional search metadata used to enrich the profile.
- * @returns Normalized index fund profile.
+ * @returns Normalized provider fund profile.
  */
-export function normalizeIndexFundProfile(
+export function normalizeProviderFundProfile(
   profile: FmpFundProfile,
   searchResult?: FmpSearchResult,
-): IndexFundProfile {
+): ProviderFundProfile {
   const name = profile.name ?? searchResult?.name ?? profile.symbol;
+  const exchange = searchResult?.exchangeShortName ?? searchResult?.exchange;
 
-  return indexFundProfileSchema.parse({
+  return providerFundProfileSchema.parse({
     symbol: profile.symbol,
     name,
+    vehicle: resolveFundVehicleFromFmpMetadata({
+      name,
+      exchange,
+    }),
     isin: profile.isin?.trim().toUpperCase(),
     description: profile.description,
     expenseRatio: profile.expenseRatio,
@@ -115,7 +127,7 @@ export function normalizeIndexFundProfile(
     assetClass: profile.assetClass,
     domicile: profile.domicile,
     currency: searchResult?.currency,
-    exchange: searchResult?.exchangeShortName ?? searchResult?.exchange,
+    exchange,
     exchangeFullName:
       searchResult?.exchangeFullName ?? searchResult?.stockExchange,
     benchmark: extractBenchmarkFromName(name),
@@ -123,19 +135,25 @@ export function normalizeIndexFundProfile(
 }
 
 /**
- * Builds a partial index fund profile from a search result.
+ * Builds a partial provider fund profile from a search result.
  *
  * @param searchResult - Raw FMP search result.
- * @returns Normalized index fund profile with search-derived fields only.
+ * @returns Normalized provider fund profile with search-derived fields only.
  */
-export function normalizeIndexFundProfileFromSearch(
+export function normalizeProviderFundProfileFromSearch(
   searchResult: FmpSearchResult,
-): IndexFundProfile {
-  return indexFundProfileSchema.parse({
+): ProviderFundProfile {
+  const exchange = searchResult.exchangeShortName ?? searchResult.exchange;
+
+  return providerFundProfileSchema.parse({
     symbol: searchResult.symbol,
     name: searchResult.name,
+    vehicle: resolveFundVehicleFromFmpMetadata({
+      name: searchResult.name,
+      exchange,
+    }),
     currency: searchResult.currency,
-    exchange: searchResult.exchangeShortName ?? searchResult.exchange,
+    exchange,
     exchangeFullName:
       searchResult.exchangeFullName ?? searchResult.stockExchange,
     benchmark: extractBenchmarkFromName(searchResult.name),
@@ -148,12 +166,12 @@ export function normalizeIndexFundProfileFromSearch(
  * @param prices - Raw FMP historical prices.
  * @returns Normalized historical prices sorted by date descending.
  */
-export function normalizeIndexFundHistoricalPrices(
+export function normalizeProviderFundHistoricalPrices(
   prices: readonly FmpHistoricalPrice[],
-): IndexFundHistoricalPrice[] {
+): ProviderFundHistoricalPrice[] {
   return prices
     .map((price) =>
-      indexFundHistoricalPriceSchema.parse({
+      providerFundHistoricalPriceSchema.parse({
         date: price.date,
         open: price.open,
         high: price.high,
@@ -174,7 +192,7 @@ export function normalizeIndexFundHistoricalPrices(
  * @param rawHoldings - Raw provider holdings used to detect provider update dates.
  * @returns ISO date string for the composition snapshot.
  */
-export function resolveIndexFundCompositionAsOf(
+export function resolveProviderFundCompositionAsOf(
   rawHoldings: readonly FmpFundHolding[],
 ): string {
   const updatedDates = rawHoldings
@@ -269,9 +287,9 @@ function normalizeWeightPercentage(
  * @param weightings - Raw FMP sector weightings.
  * @returns Normalized sector weightings sorted by weight descending.
  */
-export function normalizeIndexFundSectorWeightings(
+export function normalizeProviderFundSectorWeightings(
   weightings: readonly FmpSectorWeighting[],
-): IndexFundSectorWeighting[] {
+): ProviderFundSectorWeighting[] {
   const weightFieldScale = detectWeightScale(
     weightings
       .map((weighting) => weighting.weight)
@@ -289,13 +307,14 @@ export function normalizeIndexFundSectorWeightings(
         return null;
       }
 
-      return indexFundSectorWeightingSchema.parse({
+      return providerFundSectorWeightingSchema.parse({
         sector: weighting.sector.trim(),
         weightPercentage,
       });
     })
     .filter(
-      (weighting): weighting is IndexFundSectorWeighting => weighting !== null,
+      (weighting): weighting is ProviderFundSectorWeighting =>
+        weighting !== null,
     )
     .sort((left, right) => right.weightPercentage - left.weightPercentage);
 }
@@ -306,9 +325,9 @@ export function normalizeIndexFundSectorWeightings(
  * @param weightings - Raw FMP country weightings.
  * @returns Normalized country weightings sorted by weight descending.
  */
-export function normalizeIndexFundCountryWeightings(
+export function normalizeProviderFundCountryWeightings(
   weightings: readonly FmpCountryWeighting[],
-): IndexFundCountryWeighting[] {
+): ProviderFundCountryWeighting[] {
   const weightFieldScale = detectWeightScale(
     weightings
       .map((weighting) => weighting.weight)
@@ -326,13 +345,14 @@ export function normalizeIndexFundCountryWeightings(
         return null;
       }
 
-      return indexFundCountryWeightingSchema.parse({
+      return providerFundCountryWeightingSchema.parse({
         country: weighting.country.trim(),
         weightPercentage,
       });
     })
     .filter(
-      (weighting): weighting is IndexFundCountryWeighting => weighting !== null,
+      (weighting): weighting is ProviderFundCountryWeighting =>
+        weighting !== null,
     )
     .sort((left, right) => right.weightPercentage - left.weightPercentage);
 }
@@ -345,16 +365,17 @@ export function normalizeIndexFundCountryWeightings(
  * @param countryWeightings - Raw FMP country weightings.
  * @returns Normalized composition snapshot.
  */
-export function buildIndexFundComposition(
+export function buildProviderFundComposition(
   rawHoldings: readonly FmpFundHolding[],
   sectorWeightings: readonly FmpSectorWeighting[],
   countryWeightings: readonly FmpCountryWeighting[],
-): IndexFundComposition {
-  return indexFundCompositionSchema.parse({
-    asOf: resolveIndexFundCompositionAsOf(rawHoldings),
-    holdings: normalizeIndexFundHoldings(rawHoldings),
-    sectorWeightings: normalizeIndexFundSectorWeightings(sectorWeightings),
-    countryWeightings: normalizeIndexFundCountryWeightings(countryWeightings),
+): ProviderFundComposition {
+  return providerFundCompositionSchema.parse({
+    asOf: resolveProviderFundCompositionAsOf(rawHoldings),
+    holdings: normalizeProviderFundHoldings(rawHoldings),
+    sectorWeightings: normalizeProviderFundSectorWeightings(sectorWeightings),
+    countryWeightings:
+      normalizeProviderFundCountryWeightings(countryWeightings),
   });
 }
 
@@ -364,9 +385,9 @@ export function buildIndexFundComposition(
  * @param holdings - Raw FMP fund holdings.
  * @returns Normalized holdings sorted by weight descending.
  */
-export function normalizeIndexFundHoldings(
+export function normalizeProviderFundHoldings(
   holdings: readonly FmpFundHolding[],
-): IndexFundHolding[] {
+): ProviderFundHolding[] {
   return holdings
     .map((holding) => {
       const name = holding.name ?? holding.asset;
@@ -375,7 +396,7 @@ export function normalizeIndexFundHoldings(
         return null;
       }
 
-      return indexFundHoldingSchema.parse({
+      return providerFundHoldingSchema.parse({
         asset: holding.asset,
         name,
         isin: holding.isin,
@@ -384,7 +405,7 @@ export function normalizeIndexFundHoldings(
         sharesNumber: holding.sharesNumber,
       });
     })
-    .filter((holding): holding is IndexFundHolding => holding !== null)
+    .filter((holding): holding is ProviderFundHolding => holding !== null)
     .sort((left, right) => right.weightPercentage - left.weightPercentage);
 }
 
@@ -395,9 +416,9 @@ export function normalizeIndexFundHoldings(
  * @returns Derived price summary for the provided window.
  * @throws {Error} When the historical series is empty.
  */
-export function buildIndexFundPriceSummary(
-  prices: readonly IndexFundHistoricalPrice[],
-): IndexFundPriceSummary {
+export function buildProviderFundPriceSummary(
+  prices: readonly ProviderFundHistoricalPrice[],
+): ProviderFundPriceSummary {
   if (prices.length === 0) {
     throw new Error(
       'Cannot build price summary from an empty historical series',
@@ -420,7 +441,7 @@ export function buildIndexFundPriceSummary(
       ? 0
       : ((latest.close - oldest.close) / oldest.close) * 100;
 
-  return indexFundPriceSummarySchema.parse({
+  return providerFundPriceSummarySchema.parse({
     latestDate: latest.date,
     latestClose: latest.close,
     periodStartDate: oldest.date,
@@ -433,21 +454,21 @@ export function buildIndexFundPriceSummary(
 }
 
 /**
- * Builds the normalized index fund detail aggregate.
+ * Builds the normalized provider fund detail aggregate.
  *
- * @param profile - Normalized index fund profile.
+ * @param profile - Normalized provider fund profile.
  * @param prices - Normalized historical prices.
  * @param includeHistory - Whether to include the full historical series.
- * @returns Index fund detail aggregate.
+ * @returns Provider fund detail aggregate.
  */
-export function buildIndexFundDetail(
-  profile: IndexFundProfile,
-  prices: readonly IndexFundHistoricalPrice[],
+export function buildProviderFundDetail(
+  profile: ProviderFundProfile,
+  prices: readonly ProviderFundHistoricalPrice[],
   includeHistory = false,
-): IndexFundDetail {
-  return indexFundDetailSchema.parse({
+): ProviderFundDetail {
+  return providerFundDetailSchema.parse({
     ...profile,
-    priceSummary: buildIndexFundPriceSummary(prices),
+    priceSummary: buildProviderFundPriceSummary(prices),
     history: includeHistory ? [...prices] : undefined,
   });
 }
