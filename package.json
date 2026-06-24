@@ -4,7 +4,7 @@
   "description": "",
   "author": "Ivan Romero",
   "private": true,
-  "license": "SEE LICENSE IN LICENSE",
+  "license": "SEE LICENSE IN LICENSE.md",
   "scripts": {
     "build": "prisma generate && nest build",
     "postinstall": "prisma generate",

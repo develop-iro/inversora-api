@@ -146,4 +146,4 @@ Este repositorio no es software libre ni de código abierto. El uso, copia,
 modificación, distribución o reutilización del código por terceros no está
 permitido sin autorización escrita del titular de los derechos.
 
-Consulta [LICENSE](./LICENSE) para el texto legal completo.
+Consulta [LICENSE.md](./LICENSE.md) para el texto legal completo.
