@@ -1,0 +1,14 @@
+node_modules
+dist
+coverage
+.git
+.github
+.env
+.env.*
+!.env.example
+*.md
+!docs/staging-deploy.md
+test
+.cursor
+.husky
+terminals

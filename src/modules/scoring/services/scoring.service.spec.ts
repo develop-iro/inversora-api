@@ -13,6 +13,7 @@ const fund = {
   name: 'State Street SPDR S&P 500 ETF Trust',
   provider: 'financial-modeling-prep' as const,
   category: 'index' as const,
+  vehicle: 'etf' as const,
   currency: 'USD',
   benchmark: 'S&P 500',
   metrics: {
@@ -95,16 +96,22 @@ describe('ScoringService', () => {
     service = module.get(ScoringService);
   });
 
-  it('should return a score between 0 and 100 with factor breakdown', () => {
+  it('should return a score between 0 and 100 with RN-04 factor breakdown', () => {
     const result = service.calculateFundScore(fund, scoringMetrics);
 
     expect(result.score).toBeGreaterThanOrEqual(0);
     expect(result.score).toBeLessThanOrEqual(100);
-    expect(result.breakdown.riskAdjustedReturn.maxPoints).toBe(40);
-    expect(result.breakdown.cost.maxPoints).toBe(15);
-    expect(result.breakdown.riskAdjustedReturn.points).toBeGreaterThan(
-      result.breakdown.cost.points,
-    );
+    expect(result.version).toBe('rn-04');
+    expect(result.breakdown.ter.maxPoints).toBe(40);
+    expect(result.breakdown.tracking.maxPoints).toBe(40);
+    expect(result.breakdown.aum.maxPoints).toBe(10);
+    expect(result.breakdown.age.maxPoints).toBe(10);
+    expect(
+      result.breakdown.ter.points +
+        result.breakdown.tracking.points +
+        result.breakdown.aum.points +
+        result.breakdown.age.points,
+    ).toBe(result.score);
     expect(result.warnings).toContain(
       'La rentabilidad pasada no garantiza resultados futuros.',
     );
@@ -130,7 +137,8 @@ describe('ScoringService', () => {
 
     const result = service.calculateFundScore(fund, incompleteMetrics);
 
-    expect(result.breakdown.riskAdjustedReturn.incomplete).toBe(true);
+    expect(result.breakdown.ter.incomplete).toBe(true);
+    expect(result.breakdown.tracking.incomplete).toBe(true);
     expect(result.warnings).toContain(
       'Algunos datos del fondo están incompletos; el score usa una estimación conservadora.',
     );

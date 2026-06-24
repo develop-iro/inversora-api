@@ -17,6 +17,12 @@ import {
   resolveIdealForBeginners,
 } from '../../funds/entities/fund-editorial.utils';
 import {
+  buildBenefitSummary,
+  buildCategoryLabel,
+  buildProductDescription,
+  buildVehicleLabel,
+} from '../../funds/entities/fund-vehicle.utils';
+import {
   computeTotalReturnPercent,
   findPriceAtLookback,
 } from '../../scoring/entities/fund-scoring-metrics.builder';
@@ -36,6 +42,10 @@ import {
 } from './quarter-metadata.utils';
 
 export { mapRiskLevelToApp } from '../../funds/entities/fund-editorial.utils';
+export {
+  buildCategoryLabel,
+  buildVehicleLabel,
+} from '../../funds/entities/fund-vehicle.utils';
 
 const DATA_SOURCE_LABEL = 'Financial Modeling Prep';
 
@@ -44,12 +54,12 @@ const APP_SCORE_CRITERIA: readonly {
   label: string;
   maxPoints: number;
 }[] = [
-  { id: 'ter', label: 'Comisión (TER)', maxPoints: 30 },
-  { id: 'tracking', label: 'Tracking error', maxPoints: 20 },
-  { id: 'aum', label: 'Patrimonio (AUM)', maxPoints: 15 },
+  { id: 'ter', label: 'Comisión (TER)', maxPoints: 40 },
+  { id: 'tracking', label: 'Tracking error', maxPoints: 40 },
+  { id: 'aum', label: 'Patrimonio (AUM)', maxPoints: 10 },
   { id: 'age', label: 'Antigüedad del fondo', maxPoints: 10 },
-  { id: 'consistency', label: 'Consistencia histórica', maxPoints: 15 },
-  { id: 'dataQuality', label: 'Calidad de datos', maxPoints: 10 },
+  { id: 'consistency', label: 'Consistencia histórica', maxPoints: 1 },
+  { id: 'dataQuality', label: 'Calidad de datos', maxPoints: 1 },
 ];
 
 const SECTOR_ICON_BY_LABEL: Readonly<Record<string, string>> = {
@@ -84,78 +94,54 @@ export type FundDetailBuildInput = {
 };
 
 /**
- * Maps backend score breakdown to the six app criteria rows.
+ * Maps RN-04 score breakdown to the six app criteria rows.
+ *
+ * RN-04 contributes four scored factors; `consistency` and `dataQuality` are
+ * placeholders so the mobile client keeps a stable six-row layout.
  *
  * @param score - Computed Inversora Score payload.
  */
 export function mapScoreBreakdownToApp(
   score: InvesoraScore,
 ): ScoreCriterionResult[] {
-  const incompleteFactors = Object.values(score.breakdown).filter(
-    (factor) => factor.incomplete === true,
-  ).length;
-  const dataQualityPoints = Math.max(0, 10 - incompleteFactors * 2);
-  const riskAdjustedPoints = score.breakdown.riskAdjustedReturn.points;
-
-  const mapped: ScoreCriterionResult[] = [
+  return [
     {
       id: 'ter',
       label: APP_SCORE_CRITERIA[0].label,
-      points: Math.min(score.breakdown.cost.points * 2, 30),
-      maxPoints: 30,
+      points: score.breakdown.ter.points,
+      maxPoints: score.breakdown.ter.maxPoints,
     },
     {
       id: 'tracking',
       label: APP_SCORE_CRITERIA[1].label,
-      points: Math.min(Math.round(riskAdjustedPoints * 0.5), 20),
-      maxPoints: 20,
+      points: score.breakdown.tracking.points,
+      maxPoints: score.breakdown.tracking.maxPoints,
     },
     {
       id: 'aum',
       label: APP_SCORE_CRITERIA[2].label,
-      points: Math.min(score.breakdown.fundSize.points + 5, 15),
-      maxPoints: 15,
+      points: score.breakdown.aum.points,
+      maxPoints: score.breakdown.aum.maxPoints,
     },
     {
       id: 'age',
       label: APP_SCORE_CRITERIA[3].label,
-      points: Math.min(score.breakdown.age.points * 2, 10),
-      maxPoints: 10,
+      points: score.breakdown.age.points,
+      maxPoints: score.breakdown.age.maxPoints,
     },
     {
       id: 'consistency',
       label: APP_SCORE_CRITERIA[4].label,
-      points: Math.min(
-        Math.round(
-          riskAdjustedPoints * 0.375 + score.breakdown.risk.points * 0.25,
-        ),
-        15,
-      ),
-      maxPoints: 15,
+      points: 0,
+      maxPoints: APP_SCORE_CRITERIA[4].maxPoints,
     },
     {
       id: 'dataQuality',
       label: APP_SCORE_CRITERIA[5].label,
-      points: dataQualityPoints,
-      maxPoints: 10,
+      points: 0,
+      maxPoints: APP_SCORE_CRITERIA[5].maxPoints,
     },
   ];
-
-  const totalMapped = mapped.reduce((sum, item) => sum + item.points, 0);
-  const delta = score.score - totalMapped;
-
-  if (delta !== 0) {
-    const consistency = mapped.find((item) => item.id === 'consistency');
-
-    if (consistency) {
-      consistency.points = Math.max(
-        0,
-        Math.min(consistency.maxPoints, consistency.points + delta),
-      );
-    }
-  }
-
-  return mapped;
 }
 
 /**
@@ -175,19 +161,6 @@ export function resolveScoringStatus(
   }
 
   return 'ok';
-}
-
-/**
- * Builds a human-readable category label for the featured fund card.
- *
- * @param fund - Persisted fund entity.
- */
-export function buildCategoryLabel(fund: Fund): string {
-  if (fund.benchmark !== null) {
-    return `Índice ${fund.benchmark}`;
-  }
-
-  return 'Fondo indexado';
 }
 
 /**
@@ -549,13 +522,11 @@ export function buildFundDetailResponse(
   const profile: FundDetailProfile = {
     asOf: `${profileAsOf}T00:00:00.000Z`,
     sourceLabel: DATA_SOURCE_LABEL,
-    description:
-      fund.benchmark !== null
-        ? `Fondo indexado que replica ${fund.benchmark}.`
-        : 'Fondo indexado.',
+    description: buildProductDescription(fund),
     manager: '—',
     benchmark: fund.benchmark ?? '—',
-    isIndexed: true,
+    vehicleType: fund.vehicle,
+    tracksIndex: fund.category === 'index',
     fundAum: formatFundAum(fund.metrics.aum, fund.currency),
     inceptionDate:
       input.allPrices[0]?.date !== undefined
@@ -571,6 +542,11 @@ export function buildFundDetailResponse(
         id: 'currency',
         label: 'Divisa',
         value: fund.currency,
+      },
+      {
+        id: 'vehicle',
+        label: 'Tipo de producto',
+        value: buildVehicleLabel(fund.vehicle),
       },
       {
         id: 'category',
@@ -627,6 +603,7 @@ export function buildFundDetailResponse(
       id: fund.id,
       isin: fund.isin,
       name: fund.name,
+      vehicleType: fund.vehicle,
       categoryLabel: buildCategoryLabel(fund),
       themeLabel,
       badge,
@@ -638,10 +615,7 @@ export function buildFundDetailResponse(
       quarterTag: quarter.quarterTag,
       periodStart: quarter.periodStart,
       periodEnd: quarter.periodEnd,
-      benefitSummary:
-        fund.benchmark !== null
-          ? `Fondo indexado con referencia ${fund.benchmark}.`
-          : 'Fondo indexado.',
+      benefitSummary: buildBenefitSummary(fund),
       featuredReason: '',
       isFeatured: false,
     },

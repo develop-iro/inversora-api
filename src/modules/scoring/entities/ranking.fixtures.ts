@@ -6,6 +6,7 @@ const baseTimestamps = {
   updatedAt: new Date('2024-02-01T00:00:00.000Z'),
   catalogVisibility: 'visible' as const,
   editorial: DEFAULT_FUND_EDITORIAL,
+  vehicle: 'etf' as const,
 };
 
 const baseMetrics = {

@@ -7,13 +7,13 @@ import { FundCompositionSyncService } from './fund-composition-sync.service';
 
 describe('FundCompositionSyncService', () => {
   let service: FundCompositionSyncService;
-  let fmpProvider: { getIndexFundComposition: jest.Mock };
+  let fmpProvider: { getFundComposition: jest.Mock };
   let fundsRepository: { findBySymbolAndProvider: jest.Mock };
   let fundCompositionService: { saveProviderComposition: jest.Mock };
 
   beforeEach(async () => {
     fmpProvider = {
-      getIndexFundComposition: jest.fn().mockResolvedValue({
+      getFundComposition: jest.fn().mockResolvedValue({
         asOf: '2024-01-31',
         holdings: [
           {
@@ -85,7 +85,7 @@ describe('FundCompositionSyncService', () => {
       'SPY',
       'financial-modeling-prep',
     );
-    expect(fmpProvider.getIndexFundComposition).toHaveBeenCalledWith('SPY');
+    expect(fmpProvider.getFundComposition).toHaveBeenCalledWith('SPY');
     expect(fundCompositionService.saveProviderComposition).toHaveBeenCalledWith(
       '550e8400-e29b-41d4-a716-446655440000',
       '2024-01-31',

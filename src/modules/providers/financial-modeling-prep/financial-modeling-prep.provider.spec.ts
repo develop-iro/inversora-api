@@ -68,7 +68,7 @@ describe('FinancialModelingPrepProvider', () => {
   });
 
   it('should return an empty array for blank index fund searches', async () => {
-    await expect(provider.searchIndexFunds('   ')).resolves.toEqual([]);
+    await expect(provider.searchIndexedProducts('   ')).resolves.toEqual([]);
     expect(fixtures.readFixture).not.toHaveBeenCalled();
   });
 
@@ -78,6 +78,7 @@ describe('FinancialModelingPrepProvider', () => {
         symbol: 'SPY',
         name: 'State Street SPDR S&P 500 ETF Trust',
         exchange: 'AMEX',
+        vehicle: 'etf',
       },
       {
         symbol: 'SPYI',
@@ -88,12 +89,13 @@ describe('FinancialModelingPrepProvider', () => {
     fixtures.filterSearchFixture.mockImplementation((data: unknown[]) => data);
 
     await expect(
-      provider.searchIndexFunds('spy', { limit: 1 }),
+      provider.searchIndexedProducts('spy', { limit: 1 }),
     ).resolves.toEqual([
       {
         symbol: 'SPY',
         name: 'State Street SPDR S&P 500 ETF Trust',
         exchange: 'AMEX',
+        vehicle: 'etf',
       },
     ]);
 
@@ -129,11 +131,12 @@ describe('FinancialModelingPrepProvider', () => {
         symbol: 'SPY',
         name: 'State Street SPDR S&P 500 ETF Trust',
         exchange: 'AMEX',
+        vehicle: 'etf',
       },
     ]);
 
     await expect(
-      provider.getIndexFundHistory('spy', {
+      provider.getFundHistory('spy', {
         from: '2024-01-01',
         to: '2024-01-31',
       }),
@@ -204,7 +207,7 @@ describe('FinancialModelingPrepProvider', () => {
       },
     ]);
 
-    await expect(provider.getIndexFundDetail('spy')).resolves.toMatchObject({
+    await expect(provider.getFundDetail('spy')).resolves.toMatchObject({
       symbol: 'SPY',
       name: 'State Street SPDR S&P 500 ETF Trust',
       expenseRatio: 0.0945,
@@ -253,7 +256,7 @@ describe('FinancialModelingPrepProvider', () => {
       return Promise.resolve([]);
     });
 
-    await expect(provider.getIndexFundComposition('spy')).resolves.toEqual({
+    await expect(provider.getFundComposition('spy')).resolves.toEqual({
       asOf: '2024-01-31',
       holdings: [
         {
@@ -300,9 +303,7 @@ describe('FinancialModelingPrepProvider', () => {
       },
     ]);
 
-    await expect(
-      provider.getIndexFundComposition('spy'),
-    ).resolves.toMatchObject({
+    await expect(provider.getFundComposition('spy')).resolves.toMatchObject({
       asOf: '2024-01-31',
       holdings: [
         expect.objectContaining({
@@ -336,10 +337,11 @@ describe('FinancialModelingPrepProvider', () => {
         symbol: 'SPY',
         name: 'State Street SPDR S&P 500 ETF Trust',
         exchange: 'AMEX',
+        vehicle: 'etf',
       },
     ]);
 
-    await expect(provider.getIndexFundDetail('SPY')).rejects.toMatchObject({
+    await expect(provider.getFundDetail('SPY')).rejects.toMatchObject({
       name: 'ExternalHttpError',
       provider: FMP_PROVIDER_NAME,
       statusCode: 404,
@@ -353,14 +355,16 @@ describe('FinancialModelingPrepProvider', () => {
         symbol: 'SPY',
         name: 'State Street SPDR S&P 500 ETF Trust',
         exchange: 'AMEX',
+        vehicle: 'etf',
       },
     ]);
 
-    await expect(provider.searchIndexFunds('spy')).resolves.toEqual([
+    await expect(provider.searchIndexedProducts('spy')).resolves.toEqual([
       {
         symbol: 'SPY',
         name: 'State Street SPDR S&P 500 ETF Trust',
         exchange: 'AMEX',
+        vehicle: 'etf',
       },
     ]);
 
@@ -372,7 +376,7 @@ describe('FinancialModelingPrepProvider', () => {
     fixtures.readFixture.mockResolvedValue({ invalid: true });
     fixtures.filterSearchFixture.mockReturnValue({ invalid: true });
 
-    await expect(provider.searchIndexFunds('SPY')).rejects.toBeInstanceOf(
+    await expect(provider.searchIndexedProducts('SPY')).rejects.toBeInstanceOf(
       ExternalHttpError,
     );
   });
@@ -383,15 +387,19 @@ describe('FinancialModelingPrepProvider', () => {
         symbol: 'VTI',
         name: 'Vanguard Total Stock Market ETF',
         exchange: 'AMEX',
+        vehicle: 'etf',
       },
     ]);
     fixtures.filterSearchFixture.mockImplementation((data: unknown[]) => data);
 
-    await expect(provider.searchIndexFunds('Vanguard Total')).resolves.toEqual([
+    await expect(
+      provider.searchIndexedProducts('Vanguard Total'),
+    ).resolves.toEqual([
       {
         symbol: 'VTI',
         name: 'Vanguard Total Stock Market ETF',
         exchange: 'AMEX',
+        vehicle: 'etf',
       },
     ]);
   });
@@ -403,6 +411,7 @@ describe('FinancialModelingPrepProvider', () => {
         symbol: 'SPY',
         name: 'State Street SPDR S&P 500 ETF Trust',
         exchange: 'AMEX',
+        vehicle: 'etf',
       },
     ]);
     client.fetchFundProfile.mockResolvedValue([
@@ -422,7 +431,7 @@ describe('FinancialModelingPrepProvider', () => {
       },
     ]);
 
-    await expect(provider.getIndexFundDetail('SPY')).resolves.toMatchObject({
+    await expect(provider.getFundDetail('SPY')).resolves.toMatchObject({
       symbol: 'SPY',
       expenseRatio: 0.0945,
     });
@@ -458,7 +467,7 @@ describe('FinancialModelingPrepProvider', () => {
       },
     ]);
 
-    await expect(provider.getIndexFundDetail('SPY')).resolves.toMatchObject({
+    await expect(provider.getFundDetail('SPY')).resolves.toMatchObject({
       symbol: 'SPY',
       name: 'State Street SPDR S&P 500 ETF Trust',
       currency: 'USD',
@@ -474,6 +483,7 @@ describe('FinancialModelingPrepProvider', () => {
         symbol: 'SPY',
         name: 'State Street SPDR S&P 500 ETF Trust',
         exchange: 'AMEX',
+        vehicle: 'etf',
       },
     ]);
     client.fetchFundProfile.mockRejectedValue(
@@ -484,7 +494,7 @@ describe('FinancialModelingPrepProvider', () => {
       }),
     );
 
-    await expect(provider.getIndexFundDetail('SPY')).rejects.toMatchObject({
+    await expect(provider.getFundDetail('SPY')).rejects.toMatchObject({
       statusCode: 500,
     });
 
@@ -498,14 +508,18 @@ describe('FinancialModelingPrepProvider', () => {
         symbol: 'VTI',
         name: 'Vanguard Total Stock Market ETF',
         exchange: 'AMEX',
+        vehicle: 'etf',
       },
     ]);
 
-    await expect(provider.searchIndexFunds('Vanguard Total')).resolves.toEqual([
+    await expect(
+      provider.searchIndexedProducts('Vanguard Total'),
+    ).resolves.toEqual([
       {
         symbol: 'VTI',
         name: 'Vanguard Total Stock Market ETF',
         exchange: 'AMEX',
+        vehicle: 'etf',
       },
     ]);
 

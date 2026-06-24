@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | **Versión del modelo** | `rn-04` |
-| **Estado** | Especificación aprobada (ADR-002); **pendiente de implementación** en backend |
+| **Estado** | Implementado en backend (`ScoringService`, `rn-04`) |
 | **Regla de negocio** | RN-04 del documento oficial Inversora |
 
 ---
@@ -140,15 +140,15 @@ Decisión formal: [architecture/adr-002-scoring-mvp-version.md](./architecture/a
 
 ---
 
-## Implementación pendiente
+## Implementación
 
-Al implementar en `ScoringService`:
+Implementado en `ScoringService` con calculadores en `rn04-score-factor.calculators.ts`:
 
-1. Sustituir calculadores de `mvp-1` por cuatro calculadores RN-04.
-2. Actualizar `invesoraScoreSchema.breakdown` a cuatro claves.
-3. Fijar `SCORING_ALGORITHM_VERSION = 'rn-04'`.
-4. Agrupar peers por `benchmark` antes de normalizar.
-5. Añadir tests con fixtures de peer groups conocidos.
+1. Cuatro calculadores RN-04 (`ter`, `tracking`, `aum`, `age`).
+2. `invesoraScoreSchema.breakdown` con cuatro claves alineadas al producto.
+3. `SCORING_ALGORITHM_VERSION = 'rn-04'`.
+4. Peers agrupados por `benchmark` antes de normalizar.
+5. Tests en `rn04-score-factor.calculators.spec.ts` y `scoring.service.spec.ts`.
 
 ---
 

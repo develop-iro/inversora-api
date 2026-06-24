@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { FinancialModelingPrepProvider } from '../../providers/financial-modeling-prep/financial-modeling-prep.provider';
-import { mapIndexFundProfileToUpsertFundInput } from '../entities/fund.mapper';
+import { mapProviderFundProfileToUpsertFundInput } from '../entities/fund.mapper';
 import { FundsRepository } from '../repositories/funds.repository';
 import { FundPriceSyncService } from './fund-price-sync.service';
 import type { FundSyncOptions, FundSyncResult } from './fund-sync.types';
@@ -30,12 +30,12 @@ export class FundSyncService {
     options: FundSyncOptions = {},
   ): Promise<FundSyncResult> {
     const normalizedSymbol = symbol.trim().toUpperCase();
-    const detail = await this.fmpProvider.getIndexFundDetail(normalizedSymbol, {
+    const detail = await this.fmpProvider.getFundDetail(normalizedSymbol, {
       from: options.historyFrom,
       to: options.historyTo,
       includeHistory: false,
     });
-    const upsertInput = mapIndexFundProfileToUpsertFundInput(detail);
+    const upsertInput = mapProviderFundProfileToUpsertFundInput(detail);
     const { fund, created } = await this.fundsRepository.upsert(upsertInput);
 
     if (!options.includePrices) {

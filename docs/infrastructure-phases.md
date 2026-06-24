@@ -81,7 +81,7 @@ La app Inversora deja de usar mocks locales y consume la API en un entorno stagi
 
 - [ ] Al menos un fondo sincronizado con metadata, precios y score en staging.
 - [ ] La app consume `GET /funds` y `GET /funds/:id` sin mocks.
-- [ ] CORS configurado para el origen de desarrollo de Expo.
+- [ ] CORS configurado para el origen de desarrollo de Expo — ver [cors-and-expo-client.md](./cors-and-expo-client.md).
 - [ ] Variables de entorno de staging documentadas y separadas de producción.
 
 ### Variables de entorno (fase 1)
@@ -135,11 +135,13 @@ NestJS ejecuta el servicio HTTP. La base de datos puede ser cualquier PostgreSQL
 
 ---
 
-## Fase 3 — Asistente y observabilidad (planificado)
+## Fase 3 — Asistente y observabilidad (en progreso)
 
 ### Objetivo
 
 Añadir el Asistente Inversora (IA explicativa) y visibilidad operativa del sync y la API.
+
+**Estado MVP (Fase 1):** módulo `assistant` en `inversora-api` con `POST /assistant/explain`, glosario estático, cache PostgreSQL y OpenAI (`gpt-4o-mini`). App Expo integrada en buscador home, catálogo y ficha.
 
 ### Componentes adicionales
 

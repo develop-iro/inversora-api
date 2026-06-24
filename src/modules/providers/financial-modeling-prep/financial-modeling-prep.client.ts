@@ -28,7 +28,7 @@ import type {
   FmpSearchResult,
   FmpSectorWeighting,
 } from './financial-modeling-prep.raw.schemas';
-import type { IndexFundHistoryOptions } from './financial-modeling-prep.types';
+import type { ProviderFundHistoryOptions } from './financial-modeling-prep.types';
 
 /**
  * Low-level HTTP client for live Financial Modeling Prep requests.
@@ -150,7 +150,7 @@ export class FinancialModelingPrepClient {
    */
   async fetchHistoricalData(
     symbol: string,
-    options?: IndexFundHistoryOptions,
+    options?: ProviderFundHistoryOptions,
   ): Promise<FmpHistoricalPrice[]> {
     const params: Record<string, HttpQueryParamValue> = { symbol };
 

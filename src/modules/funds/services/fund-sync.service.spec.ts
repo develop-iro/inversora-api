@@ -6,7 +6,7 @@ import { FundSyncService } from './fund-sync.service';
 
 describe('FundSyncService', () => {
   let service: FundSyncService;
-  let fmpProvider: { getIndexFundDetail: jest.Mock };
+  let fmpProvider: { getFundDetail: jest.Mock };
   let fundsRepository: { upsert: jest.Mock };
   let fundPriceSyncService: { syncFromFmp: jest.Mock };
 
@@ -17,6 +17,7 @@ describe('FundSyncService', () => {
     name: 'State Street SPDR S&P 500 ETF Trust',
     provider: 'financial-modeling-prep',
     category: 'index',
+    vehicle: 'etf',
     currency: 'USD',
     benchmark: 'S&P 500',
     metrics: {
@@ -38,13 +39,14 @@ describe('FundSyncService', () => {
 
   beforeEach(async () => {
     fmpProvider = {
-      getIndexFundDetail: jest.fn().mockResolvedValue({
+      getFundDetail: jest.fn().mockResolvedValue({
         symbol: 'SPY',
         name: 'State Street SPDR S&P 500 ETF Trust',
         isin: 'US78462F1030',
         expenseRatio: 0.0945,
         assetsUnderManagement: 520_000_000_000,
         currency: 'USD',
+        vehicle: 'etf',
         benchmark: 'S&P 500',
         priceSummary: {
           latestDate: '2024-01-31',
@@ -101,7 +103,7 @@ describe('FundSyncService', () => {
       created: true,
     });
 
-    expect(fmpProvider.getIndexFundDetail).toHaveBeenCalledWith('SPY', {
+    expect(fmpProvider.getFundDetail).toHaveBeenCalledWith('SPY', {
       from: undefined,
       to: undefined,
       includeHistory: false,
@@ -130,6 +132,7 @@ describe('FundSyncService', () => {
       symbol: 'SPY',
       provider: 'financial-modeling-prep',
       category: 'index',
+      vehicle: 'etf',
       currency: 'USD',
       benchmark: 'S&P 500',
       metrics: {

@@ -1,5 +1,5 @@
 import type { FundScoringMetrics } from './invesora-score.schema';
-import { SCORE_MAX_POINTS } from './score-weights';
+import { LEGACY_SCORE_MAX_POINTS as SCORE_MAX_POINTS } from './score-weights-legacy';
 import {
   blendAnnualizedReturn,
   clampScore,

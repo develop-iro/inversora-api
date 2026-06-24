@@ -2,7 +2,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 import {
   addDaysToIsoDate,
   formatFundPriceDate,
-  mapIndexFundHistoricalPriceToUpsertInput,
+  mapProviderFundHistoricalPriceToUpsertInput,
   mapPrismaFundPriceToFundPrice,
   mapUpsertFundPriceInputToPrismaData,
   parseFundPriceDate,
@@ -31,7 +31,7 @@ describe('fund-price.mapper', () => {
 
   it('should map provider prices and Prisma rows to domain entities', () => {
     expect(
-      mapIndexFundHistoricalPriceToUpsertInput({
+      mapProviderFundHistoricalPriceToUpsertInput({
         date: '2024-01-31',
         open: 488.62,
         high: 489.08,

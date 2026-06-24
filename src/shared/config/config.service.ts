@@ -141,4 +141,29 @@ export class AppConfigService {
   get corsEnabled(): boolean {
     return this.corsOrigins.length > 0;
   }
+
+  /** OpenAI API key for the SORA assistant (server-side only). */
+  get openAiApiKey(): string | undefined {
+    return this.configService.get('OPENAI_API_KEY', { infer: true });
+  }
+
+  /** OpenAI model identifier for assistant completions. */
+  get openAiModel(): string {
+    return this.configService.get('OPENAI_MODEL', { infer: true });
+  }
+
+  /** Whether the SORA assistant endpoint is active. */
+  get assistantEnabled(): boolean {
+    return this.configService.get('ASSISTANT_ENABLED', { infer: true });
+  }
+
+  /** Version tag for assistant system prompts (cache invalidation). */
+  get assistantPromptVersion(): string {
+    return this.configService.get('ASSISTANT_PROMPT_VERSION', { infer: true });
+  }
+
+  /** TTL in days for persisted assistant response cache entries. */
+  get assistantCacheTtlDays(): number {
+    return this.configService.get('ASSISTANT_CACHE_TTL_DAYS', { infer: true });
+  }
 }

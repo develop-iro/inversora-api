@@ -1,6 +1,6 @@
 import type { FundPrice as PrismaFundPrice, Prisma } from '@prisma/client';
 import type { Decimal } from '@prisma/client/runtime/library';
-import type { IndexFundHistoricalPrice } from '../../providers/financial-modeling-prep/financial-modeling-prep.domain.schemas';
+import type { ProviderFundHistoricalPrice } from '../../providers/financial-modeling-prep/financial-modeling-prep.domain.schemas';
 import { fundPriceSchema } from './fund-price.schema';
 import type { FundPrice, UpsertFundPriceInput } from './fund-price.schema';
 
@@ -101,8 +101,8 @@ export function mapPrismaFundPriceToFundPrice(
  * @param price - Normalized provider historical price.
  * @returns Upsert input for persistence.
  */
-export function mapIndexFundHistoricalPriceToUpsertInput(
-  price: IndexFundHistoricalPrice,
+export function mapProviderFundHistoricalPriceToUpsertInput(
+  price: ProviderFundHistoricalPrice,
 ): UpsertFundPriceInput {
   return {
     date: price.date,

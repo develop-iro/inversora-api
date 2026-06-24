@@ -63,13 +63,10 @@ export class FundPriceSyncService {
       };
     }
 
-    const history = await this.fmpProvider.getIndexFundHistory(
-      normalizedSymbol,
-      {
-        from: range.from,
-        to: range.to,
-      },
-    );
+    const history = await this.fmpProvider.getFundHistory(normalizedSymbol, {
+      from: range.from,
+      to: range.to,
+    });
 
     if (history.length === 0) {
       return {

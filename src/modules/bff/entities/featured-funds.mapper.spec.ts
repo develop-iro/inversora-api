@@ -20,6 +20,7 @@ const fund: Fund = {
   name: 'State Street SPDR S&P 500 ETF Trust',
   provider: 'financial-modeling-prep',
   category: 'index',
+  vehicle: 'etf',
   currency: 'USD',
   benchmark: 'S&P 500',
   metrics: {

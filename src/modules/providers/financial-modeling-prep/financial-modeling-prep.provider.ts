@@ -3,11 +3,11 @@ import { z } from 'zod';
 import { AppConfigService } from '../../../shared/config/config.service';
 import { ExternalHttpError } from '../../../shared/http/external-http.error';
 import type {
-  IndexFundComposition,
-  IndexFundDetail,
-  IndexFundHistoricalPrice,
-  IndexFundProfile,
-  IndexFundSearchResult,
+  ProviderFundComposition,
+  ProviderFundDetail,
+  ProviderFundHistoricalPrice,
+  ProviderFundProfile,
+  ProviderFundSearchResult,
 } from './financial-modeling-prep.domain.schemas';
 import { FinancialModelingPrepClient } from './financial-modeling-prep.client';
 import { FMP_PROVIDER_NAME } from './financial-modeling-prep.constants';
@@ -16,12 +16,12 @@ import {
   FinancialModelingPrepFixtureService,
 } from './financial-modeling-prep.fixture.service';
 import {
-  buildIndexFundComposition,
-  buildIndexFundDetail,
-  normalizeIndexFundHistoricalPrices,
-  normalizeIndexFundProfile,
-  normalizeIndexFundProfileFromSearch,
-  normalizeIndexFundSearchResults,
+  buildProviderFundComposition,
+  buildProviderFundDetail,
+  normalizeProviderFundHistoricalPrices,
+  normalizeProviderFundProfile,
+  normalizeProviderFundProfileFromSearch,
+  normalizeProviderFundSearchResults,
 } from './financial-modeling-prep.normalizers';
 import {
   fmpCountryWeightingSchema,
@@ -36,13 +36,13 @@ import type {
   FmpSearchResult,
 } from './financial-modeling-prep.raw.schemas';
 import type {
-  IndexFundDetailOptions,
-  IndexFundHistoryOptions,
-  SearchIndexFundsOptions,
+  ProviderFundDetailOptions,
+  ProviderFundHistoryOptions,
+  SearchIndexedProductsOptions,
 } from './financial-modeling-prep.types';
 
 /**
- * Outbound provider for indexed fund discovery, profiles, and historical data.
+ * Outbound provider for indexed product discovery, profiles, and historical data.
  */
 @Injectable()
 export class FinancialModelingPrepProvider {
@@ -53,16 +53,16 @@ export class FinancialModelingPrepProvider {
   ) {}
 
   /**
-   * Searches indexed ETFs and mutual funds by name or ticker symbol.
+   * Searches index-tracking ETFs and mutual funds by name or ticker symbol.
    *
    * @param query - Partial fund name or ticker symbol.
    * @param options - Optional search constraints.
-   * @returns Matching normalized index fund search results.
+   * @returns Matching normalized provider fund search results.
    */
-  async searchIndexFunds(
+  async searchIndexedProducts(
     query: string,
-    options?: SearchIndexFundsOptions,
-  ): Promise<IndexFundSearchResult[]> {
+    options?: SearchIndexedProductsOptions,
+  ): Promise<ProviderFundSearchResult[]> {
     const normalizedQuery = query.trim();
 
     if (!normalizedQuery) {
@@ -70,10 +70,10 @@ export class FinancialModelingPrepProvider {
     }
 
     const rawResults = this.config.fmpUsesMocks
-      ? await this.searchIndexFundsFromFixture(normalizedQuery)
-      : await this.searchIndexFundsFromLiveApi(normalizedQuery);
+      ? await this.searchIndexedProductsFromFixture(normalizedQuery)
+      : await this.searchIndexedProductsFromLiveApi(normalizedQuery);
 
-    const normalizedResults = normalizeIndexFundSearchResults(rawResults);
+    const normalizedResults = normalizeProviderFundSearchResults(rawResults);
 
     if (options?.limit === undefined) {
       return normalizedResults;
@@ -83,28 +83,30 @@ export class FinancialModelingPrepProvider {
   }
 
   /**
-   * Retrieves end-of-day historical prices for an index fund.
+   * Retrieves end-of-day historical prices for a catalog product.
    *
    * @param symbol - Fund ticker symbol.
    * @param options - Optional date range filters.
    * @returns Normalized historical price points sorted by date descending.
    */
-  async getIndexFundHistory(
+  async getFundHistory(
     symbol: string,
-    options?: IndexFundHistoryOptions,
-  ): Promise<IndexFundHistoricalPrice[]> {
+    options?: ProviderFundHistoryOptions,
+  ): Promise<ProviderFundHistoricalPrice[]> {
     const rawPrices = await this.loadHistoricalPrices(symbol, options);
 
-    return normalizeIndexFundHistoricalPrices(rawPrices);
+    return normalizeProviderFundHistoricalPrices(rawPrices);
   }
 
   /**
-   * Retrieves normalized holdings and exposure weightings for an index fund.
+   * Retrieves normalized holdings and exposure weightings for an ETF.
+   *
+   * FMP exposes composition through `/stable/etf/*` endpoints.
    *
    * @param symbol - Fund ticker symbol.
    * @returns Normalized composition snapshot with holdings and weightings.
    */
-  async getIndexFundComposition(symbol: string): Promise<IndexFundComposition> {
+  async getFundComposition(symbol: string): Promise<ProviderFundComposition> {
     const normalizedSymbol = symbol.trim().toUpperCase();
 
     if (this.config.fmpUsesMocks) {
@@ -127,7 +129,7 @@ export class FinancialModelingPrepProvider {
           ),
         ]);
 
-      return buildIndexFundComposition(
+      return buildProviderFundComposition(
         rawHoldings,
         rawSectorWeightings,
         rawCountryWeightings,
@@ -141,7 +143,7 @@ export class FinancialModelingPrepProvider {
         this.client.fetchEtfCountryWeightings(normalizedSymbol),
       ]);
 
-    return buildIndexFundComposition(
+    return buildProviderFundComposition(
       rawHoldings,
       rawSectorWeightings,
       rawCountryWeightings,
@@ -149,7 +151,7 @@ export class FinancialModelingPrepProvider {
   }
 
   /**
-   * Retrieves the richest available index fund snapshot for a symbol.
+   * Retrieves the richest available product snapshot for a symbol.
    *
    * Combines profile metadata with derived statistics from the historical window.
    * In live mode this may require up to two API calls when the paid profile
@@ -157,37 +159,37 @@ export class FinancialModelingPrepProvider {
    *
    * @param symbol - Fund ticker symbol.
    * @param options - Optional date filters and history inclusion flag.
-   * @returns Index fund detail aggregate.
+   * @returns Provider fund detail aggregate.
    */
-  async getIndexFundDetail(
+  async getFundDetail(
     symbol: string,
-    options?: IndexFundDetailOptions,
-  ): Promise<IndexFundDetail> {
+    options?: ProviderFundDetailOptions,
+  ): Promise<ProviderFundDetail> {
     const normalizedSymbol = symbol.trim().toUpperCase();
     const [profile, rawPrices] = await Promise.all([
-      this.resolveIndexFundProfile(normalizedSymbol),
+      this.resolveProviderFundProfile(normalizedSymbol),
       this.loadHistoricalPrices(normalizedSymbol, options),
     ]);
-    const history = normalizeIndexFundHistoricalPrices(rawPrices);
+    const history = normalizeProviderFundHistoricalPrices(rawPrices);
 
     if (history.length === 0) {
       throw new ExternalHttpError({
-        message: `Historical data not found for index fund ${normalizedSymbol}`,
+        message: `Historical data not found for symbol ${normalizedSymbol}`,
         provider: FMP_PROVIDER_NAME,
         statusCode: 404,
       });
     }
 
-    return buildIndexFundDetail(
+    return buildProviderFundDetail(
       profile,
       history,
       options?.includeHistory ?? false,
     );
   }
 
-  private async resolveIndexFundProfile(
+  private async resolveProviderFundProfile(
     symbol: string,
-  ): Promise<IndexFundProfile> {
+  ): Promise<ProviderFundProfile> {
     const searchResult = await this.findSearchResultBySymbol(symbol);
 
     if (this.config.fmpUsesMocks) {
@@ -201,7 +203,7 @@ export class FinancialModelingPrepProvider {
       );
 
       if (profile !== undefined) {
-        return normalizeIndexFundProfile(profile, searchResult);
+        return normalizeProviderFundProfile(profile, searchResult);
       }
     } else {
       try {
@@ -211,7 +213,7 @@ export class FinancialModelingPrepProvider {
         );
 
         if (profile !== undefined) {
-          return normalizeIndexFundProfile(profile, searchResult);
+          return normalizeProviderFundProfile(profile, searchResult);
         }
       } catch (error: unknown) {
         if (!this.isPaidEndpointError(error)) {
@@ -222,13 +224,13 @@ export class FinancialModelingPrepProvider {
 
     if (searchResult === undefined) {
       throw new ExternalHttpError({
-        message: `Index fund profile not found for symbol ${symbol}`,
+        message: `Fund profile not found for symbol ${symbol}`,
         provider: FMP_PROVIDER_NAME,
         statusCode: 404,
       });
     }
 
-    return normalizeIndexFundProfileFromSearch(searchResult);
+    return normalizeProviderFundProfileFromSearch(searchResult);
   }
 
   private async findSearchResultBySymbol(
@@ -250,7 +252,7 @@ export class FinancialModelingPrepProvider {
 
   private async loadHistoricalPrices(
     symbol: string,
-    options?: IndexFundHistoryOptions,
+    options?: ProviderFundHistoryOptions,
   ): Promise<FmpHistoricalPrice[]> {
     const normalizedSymbol = symbol.trim().toUpperCase();
 
@@ -274,7 +276,7 @@ export class FinancialModelingPrepProvider {
     return this.client.fetchHistoricalData(normalizedSymbol, options);
   }
 
-  private async searchIndexFundsFromLiveApi(
+  private async searchIndexedProductsFromLiveApi(
     query: string,
   ): Promise<FmpSearchResult[]> {
     if (this.isTickerLikeQuery(query)) {
@@ -284,7 +286,7 @@ export class FinancialModelingPrepProvider {
     return this.client.searchByName(query);
   }
 
-  private async searchIndexFundsFromFixture(
+  private async searchIndexedProductsFromFixture(
     query: string,
   ): Promise<FmpSearchResult[]> {
     const fixtureFileName = this.isTickerLikeQuery(query)

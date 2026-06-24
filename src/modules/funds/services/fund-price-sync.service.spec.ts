@@ -7,7 +7,7 @@ import { FundPricesService } from './fund-prices.service';
 
 describe('FundPriceSyncService', () => {
   let service: FundPriceSyncService;
-  let fmpProvider: { getIndexFundHistory: jest.Mock };
+  let fmpProvider: { getFundHistory: jest.Mock };
   let fundsRepository: { findBySymbolAndProvider: jest.Mock };
   let fundPricesService: {
     getLatestDate: jest.Mock;
@@ -21,6 +21,7 @@ describe('FundPriceSyncService', () => {
     name: 'State Street SPDR S&P 500 ETF Trust',
     provider: 'financial-modeling-prep',
     category: 'index',
+    vehicle: 'etf',
     currency: 'USD',
     benchmark: 'S&P 500',
     metrics: {
@@ -40,7 +41,7 @@ describe('FundPriceSyncService', () => {
 
   beforeEach(async () => {
     fmpProvider = {
-      getIndexFundHistory: jest.fn().mockResolvedValue([
+      getFundHistory: jest.fn().mockResolvedValue([
         {
           date: '2024-02-01',
           open: 485.05,
@@ -106,7 +107,7 @@ describe('FundPriceSyncService', () => {
       'SPY',
       'financial-modeling-prep',
     );
-    expect(fmpProvider.getIndexFundHistory).toHaveBeenCalledWith('SPY', {
+    expect(fmpProvider.getFundHistory).toHaveBeenCalledWith('SPY', {
       from: '2024-02-01',
       to: '2024-02-02',
     });
@@ -124,7 +125,7 @@ describe('FundPriceSyncService', () => {
 
     await service.syncFromFmp('SPY', { to: '2024-02-02' });
 
-    expect(fmpProvider.getIndexFundHistory).toHaveBeenCalledWith('SPY', {
+    expect(fmpProvider.getFundHistory).toHaveBeenCalledWith('SPY', {
       from: '2024-02-01',
       to: '2024-02-02',
     });
@@ -146,7 +147,7 @@ describe('FundPriceSyncService', () => {
       upToDate: true,
     });
 
-    expect(fmpProvider.getIndexFundHistory).not.toHaveBeenCalled();
+    expect(fmpProvider.getFundHistory).not.toHaveBeenCalled();
     expect(fundPricesService.saveProviderPrices).not.toHaveBeenCalled();
   });
 
@@ -159,7 +160,7 @@ describe('FundPriceSyncService', () => {
   });
 
   it('should treat an empty provider response as up to date', async () => {
-    fmpProvider.getIndexFundHistory.mockResolvedValueOnce([]);
+    fmpProvider.getFundHistory.mockResolvedValueOnce([]);
 
     await expect(service.syncFromFmp('SPY')).resolves.toEqual({
       fundId: persistedFund.id,

@@ -15,6 +15,17 @@ Este documento describe la integración con [Financial Modeling Prep](https://si
 
 La app **nunca** llama a FMP directamente. Los services de `funds` consumen `FinancialModelingPrepProvider`.
 
+## Terminología: vehículo vs estrategia
+
+Inversora distingue dos dimensiones en el catálogo:
+
+| Dimensión | Campo | Valores | Significado |
+|-----------|-------|---------|-------------|
+| **Estrategia** | `Fund.category` | `index` | El producto replica un índice de referencia |
+| **Vehículo** | `Fund.vehicle` | `etf`, `mutual-fund` | Envoltorio legal y operativa (cotizado vs fondo de inversión) |
+
+FMP expone la composición vía `/stable/etf/*` (datos orientados a **ETFs**). Los fondos de inversión indexados aparecen en búsqueda con `exchangeShortName = MUTUAL_FUND`. El resolver `fund-vehicle.resolver.ts` infiere el vehículo a partir del nombre y del exchange.
+
 ## Endpoints FMP consumidos
 
 Todos los endpoints usan la base `FMP_BASE_URL` (por defecto `https://financialmodelingprep.com`) y el parámetro `apikey`.
@@ -33,13 +44,17 @@ Los endpoints de composición (holdings y weightings) están disponibles en el t
 
 ## API del provider (dominio)
 
-### `getIndexFundComposition(symbol)`
+### `searchIndexedProducts(query)`
+
+Descubre productos indexados (ETFs y fondos de inversión) filtrados por estrategia.
+
+### `getFundComposition(symbol)`
 
 Agrega holdings, pesos sectoriales y pesos por país en una sola llamada al provider. En modo live ejecuta tres peticiones en paralelo con `Promise.all`.
 
-**Entrada:** ticker del fondo (p. ej. `SPY`).
+**Entrada:** ticker del producto (p. ej. `SPY`).
 
-**Salida normalizada (`IndexFundComposition`):**
+**Salida normalizada (`ProviderFundComposition`):**
 
 ```json
 {
@@ -81,9 +96,9 @@ Agrega holdings, pesos sectoriales y pesos por país en una sola llamada al prov
 
 | Método | Descripción |
 |--------|-------------|
-| `searchIndexFunds(query, options?)` | Descubrimiento de ETFs/fondos indexados |
-| `getIndexFundHistory(symbol, options?)` | Serie de precios EOD normalizada |
-| `getIndexFundDetail(symbol, options?)` | Perfil + estadísticas derivadas del histórico |
+| `searchIndexedProducts(query, options?)` | Descubrimiento de ETFs y fondos indexados |
+| `getFundHistory(symbol, options?)` | Serie de precios EOD normalizada |
+| `getFundDetail(symbol, options?)` | Perfil + estadísticas derivadas del histórico |
 
 ## Ejemplos de respuesta FMP (raw)
 
@@ -141,10 +156,10 @@ Los fixtures commiteados en `src/modules/providers/financial-modeling-prep/fixtu
 
 ```text
 FundCompositionSyncService.syncFromFmp(symbol)
-    → FinancialModelingPrepProvider.getIndexFundComposition(symbol)
+    → FinancialModelingPrepProvider.getFundComposition(symbol)
         → Client: fetchEtfHoldings + fetchEtfSectorWeightings + fetchEtfCountryWeightings
-        → Normalizers: buildIndexFundComposition(...)
-    → Mappers: mapIndexFundHoldingsToUpsertInputs, mapSectorWeightingsToUpsertInputs,
+        → Normalizers: buildProviderFundComposition(...)
+    → Mappers: mapProviderFundHoldingsToUpsertInputs, mapSectorWeightingsToUpsertInputs,
                mapCountryWeightingsToUpsertInputs
     → FundCompositionService.saveProviderComposition(fundId, asOf, holdings, allocations)
     → PostgreSQL: fund_holdings + fund_allocations (snapshot reemplazado en transacción)
@@ -183,7 +198,7 @@ El script captura búsqueda, precios EOD y los tres endpoints de composición. `
 |------|-----------|------------|
 | Unit | `financial-modeling-prep.client.spec.ts` | Rutas y parámetros HTTP de composición |
 | Unit | `financial-modeling-prep.normalizers.spec.ts` | Normalización de holdings y weightings |
-| Unit | `financial-modeling-prep.provider.spec.ts` | `getIndexFundComposition` mock y live |
+| Unit | `financial-modeling-prep.provider.spec.ts` | `getFundComposition` mock y live |
 | Unit | `fund-composition-sync.service.spec.ts` | Import FMP → persistencia |
 | Integration | `test/integration/fund-sync.integration-spec.ts` | Pipeline completo con PostgreSQL y fixtures |
 

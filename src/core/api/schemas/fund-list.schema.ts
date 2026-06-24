@@ -3,6 +3,7 @@ import {
   fundCategorySchema,
   fundProviderSchema,
   fundSchema,
+  fundVehicleTypeSchema,
 } from '../../../modules/funds/entities/fund.schema';
 
 /** Supported sort fields for fund list queries. */
@@ -35,6 +36,7 @@ export const fundListQuerySchema = z.object({
   sortOrder: fundListSortOrderSchema.default('desc'),
   q: z.string().trim().min(1).optional(),
   category: fundCategorySchema.optional(),
+  vehicle: fundVehicleTypeSchema.optional(),
   currency: z
     .string()
     .length(3)

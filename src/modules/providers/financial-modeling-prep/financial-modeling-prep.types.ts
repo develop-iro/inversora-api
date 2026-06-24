@@ -1,15 +1,15 @@
 /**
- * Options for {@link FinancialModelingPrepProvider.searchIndexFunds}.
+ * Options for {@link FinancialModelingPrepProvider.searchIndexedProducts}.
  */
-export interface SearchIndexFundsOptions {
-  /** Maximum number of results to return after filtering index funds. */
+export interface SearchIndexedProductsOptions {
+  /** Maximum number of results to return after filtering indexed products. */
   readonly limit?: number;
 }
 
 /**
- * Options for historical index fund price queries.
+ * Options for historical provider fund price queries.
  */
-export interface IndexFundHistoryOptions {
+export interface ProviderFundHistoryOptions {
   /** Inclusive start date in `YYYY-MM-DD` format. */
   readonly from?: string;
 
@@ -18,9 +18,9 @@ export interface IndexFundHistoryOptions {
 }
 
 /**
- * Options for {@link FinancialModelingPrepProvider.getIndexFundDetail}.
+ * Options for {@link FinancialModelingPrepProvider.getFundDetail}.
  */
-export interface IndexFundDetailOptions extends IndexFundHistoryOptions {
+export interface ProviderFundDetailOptions extends ProviderFundHistoryOptions {
   /** When `true`, includes the full historical series in the response. */
   readonly includeHistory?: boolean;
 }

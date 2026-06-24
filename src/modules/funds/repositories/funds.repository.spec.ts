@@ -1,4 +1,9 @@
-import { CatalogVisibility, FundCategory, FundProvider } from '@prisma/client';
+import {
+  CatalogVisibility,
+  FundCategory,
+  FundProvider,
+  FundVehicleType,
+} from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../../shared/database/prisma.service';
@@ -11,6 +16,7 @@ const prismaFundRow = {
   name: 'State Street SPDR S&P 500 ETF Trust',
   provider: FundProvider.FINANCIAL_MODELING_PREP,
   category: FundCategory.INDEX,
+  vehicle: FundVehicleType.ETF,
   currency: 'USD',
   benchmark: 'S&P 500',
   volatility: null,
@@ -230,6 +236,7 @@ describe('FundsRepository', () => {
       name: 'State Street SPDR S&P 500 ETF Trust',
       provider: 'financial-modeling-prep',
       category: 'index',
+      vehicle: 'etf',
       currency: 'USD',
       benchmark: 'S&P 500',
       metrics: {
@@ -279,6 +286,7 @@ describe('FundsRepository', () => {
         name: 'State Street SPDR S&P 500 ETF Trust',
         provider: 'financial-modeling-prep',
         category: 'index',
+        vehicle: 'etf',
         currency: 'USD',
       }),
     ).resolves.toMatchObject({

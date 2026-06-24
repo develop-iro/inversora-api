@@ -1,9 +1,9 @@
 import {
-  isIndexFundSearchResult,
+  isIndexedProductSearchResult,
   isLikelyFundSearchResult,
-} from './index-fund.filters';
+} from './indexed-product.filters';
 
-describe('index-fund.filters', () => {
+describe('indexed-product.filters', () => {
   it('should accept ETF names and reject corporate stock names', () => {
     expect(
       isLikelyFundSearchResult({
@@ -32,7 +32,7 @@ describe('index-fund.filters', () => {
 
   it('should reject specialty index products', () => {
     expect(
-      isIndexFundSearchResult({
+      isIndexedProductSearchResult({
         symbol: 'SPYI',
         name: 'Neos S&P 500(R) High Income ETF',
         exchange: 'CBOE',

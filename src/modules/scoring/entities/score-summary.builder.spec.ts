@@ -5,40 +5,28 @@ function buildBreakdown(
   overrides: Partial<InvesoraScore['breakdown']> = {},
 ): InvesoraScore['breakdown'] {
   return {
-    riskAdjustedReturn: {
+    ter: {
       points: 24,
       maxPoints: 40,
-      label: 'Rentabilidad ajustada al riesgo',
+      label: 'Comisión (TER)',
       incomplete: false,
     },
-    risk: {
-      points: 12,
-      maxPoints: 20,
-      label: 'Riesgo',
+    tracking: {
+      points: 24,
+      maxPoints: 40,
+      label: 'Tracking error',
       incomplete: false,
     },
-    cost: {
-      points: 9,
-      maxPoints: 15,
-      label: 'Comisión anual',
-      incomplete: false,
-    },
-    diversification: {
+    aum: {
       points: 6,
       maxPoints: 10,
-      label: 'Diversificación',
-      incomplete: false,
-    },
-    fundSize: {
-      points: 6,
-      maxPoints: 10,
-      label: 'Tamaño del fondo',
+      label: 'Patrimonio (AUM)',
       incomplete: false,
     },
     age: {
-      points: 3,
-      maxPoints: 5,
-      label: 'Antigüedad',
+      points: 6,
+      maxPoints: 10,
+      label: 'Antigüedad del fondo',
       incomplete: false,
     },
     ...overrides,
@@ -56,16 +44,16 @@ describe('score-summary.builder', () => {
     expect(
       buildScoreSummary(
         buildBreakdown({
-          riskAdjustedReturn: {
+          ter: {
             points: 35,
             maxPoints: 40,
-            label: 'Rentabilidad ajustada al riesgo',
+            label: 'Comisión (TER)',
             incomplete: false,
           },
-          cost: {
-            points: 14,
-            maxPoints: 15,
-            label: 'Comisión anual',
+          tracking: {
+            points: 34,
+            maxPoints: 40,
+            label: 'Tracking error',
             incomplete: false,
           },
         }),
@@ -77,10 +65,10 @@ describe('score-summary.builder', () => {
     expect(
       buildScoreSummary(
         buildBreakdown({
-          diversification: {
-            points: 2,
-            maxPoints: 10,
-            label: 'Diversificación',
+          tracking: {
+            points: 8,
+            maxPoints: 40,
+            label: 'Tracking error',
             incomplete: false,
           },
         }),
@@ -92,16 +80,16 @@ describe('score-summary.builder', () => {
     expect(
       buildScoreSummary(
         buildBreakdown({
-          cost: {
-            points: 14,
-            maxPoints: 15,
-            label: 'Comisión anual',
+          ter: {
+            points: 35,
+            maxPoints: 40,
+            label: 'Comisión (TER)',
             incomplete: false,
           },
-          diversification: {
+          aum: {
             points: 2,
             maxPoints: 10,
-            label: 'Diversificación',
+            label: 'Patrimonio (AUM)',
             incomplete: false,
           },
         }),
@@ -113,10 +101,10 @@ describe('score-summary.builder', () => {
     expect(
       buildScoreWarnings(
         buildBreakdown({
-          cost: {
-            points: 6,
-            maxPoints: 15,
-            label: 'Comisión anual',
+          ter: {
+            points: 16,
+            maxPoints: 40,
+            label: 'Comisión (TER)',
             incomplete: true,
           },
         }),

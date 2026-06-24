@@ -19,6 +19,7 @@ const fund = {
   name: 'State Street SPDR S&P 500 ETF Trust',
   provider: 'financial-modeling-prep' as const,
   category: 'index' as const,
+  vehicle: 'etf' as const,
   currency: 'USD',
   benchmark: 'S&P 500',
   metrics: {
@@ -105,26 +106,28 @@ describe('GetFundByIsinUseCase', () => {
     scoringService = {
       calculateScoreForFundId: jest.fn().mockResolvedValue({
         score: 82,
-        version: 'mvp-1',
+        version: 'rn-04',
         breakdown: {
-          riskAdjustedReturn: {
+          ter: {
+            points: 32,
+            maxPoints: 40,
+            label: 'Comisión (TER)',
+          },
+          tracking: {
             points: 30,
             maxPoints: 40,
-            label: 'Rentabilidad ajustada al riesgo',
+            label: 'Tracking error',
           },
-          risk: { points: 14, maxPoints: 20, label: 'Riesgo' },
-          cost: { points: 12, maxPoints: 15, label: 'Comisión anual' },
-          diversification: {
-            points: 8,
+          aum: {
+            points: 10,
             maxPoints: 10,
-            label: 'Diversificación',
+            label: 'Patrimonio (AUM)',
           },
-          fundSize: {
-            points: 9,
+          age: {
+            points: 10,
             maxPoints: 10,
-            label: 'Tamaño del fondo',
+            label: 'Antigüedad del fondo',
           },
-          age: { points: 4, maxPoints: 5, label: 'Antigüedad' },
         },
         summary: 'Score sólido.',
         warnings: [],

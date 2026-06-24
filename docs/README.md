@@ -16,6 +16,8 @@
 | Campos editoriales (`badge`, `themeLabel`, `idealForBeginners`) | [fund-editorial-content.md](./fund-editorial-content.md) · [ADR-003](./architecture/adr-003-fund-editorial-fields.md) |
 | Algoritmo legado en código (`mvp-1`) | [scoring-algorithm.md](./scoring-algorithm.md) |
 | Arranque rápido local (instalación, scripts, health check) | [README.md](../README.md) |
+| **CORS y cliente Expo** (`CORS_ORIGINS`, Expo web) | [cors-and-expo-client.md](./cors-and-expo-client.md) |
+| **Despliegue staging (Neon + Railway)** | [staging-deploy.md](./staging-deploy.md) |
 | Contrato HTTP vivo (endpoints, DTOs) | Swagger en `http://localhost:3000/api/docs` |
 | **Contrato BFF** `GET /funds/:isin` → `FundDetail` (app) | [bff-fund-detail-contract.md](./bff-fund-detail-contract.md) |
 | **Destacados trimestre** `GET /featured` (dashboard) | [featured-funds-endpoint.md](./featured-funds-endpoint.md) |

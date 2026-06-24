@@ -38,6 +38,7 @@ export function mapFundToFeaturedFund(
     id: fund.id,
     isin: fund.isin ?? editorial.isin,
     name: fund.name,
+    vehicleType: fund.vehicle,
     categoryLabel: buildCategoryLabel(fund),
     themeLabel: editorial.themeLabel || fund.editorial.themeLabel,
     badge: editorial.badge || fund.editorial.badge,

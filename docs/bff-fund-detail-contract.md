@@ -78,7 +78,8 @@ Convenciones:
 | `id` | `string` | Sí | `"550e8400-e29b-41d4-a716-446655440000"` | **Propuesta:** UUID del backend. Los mocks usan slugs; la app debe aceptar UUID |
 | `isin` | `string` | Sí | `"IE00B4L5Y983"` | Mismo valor que el parámetro de ruta (normalizado) |
 | `name` | `string` | Sí | `"MSCI World Index Core"` | Desde `Fund.name` |
-| `categoryLabel` | `string` | Sí | `"Renta Variable Global"` | Etiqueta legible; ver transformaciones |
+| `vehicleType` | `"etf"` \| `"mutual-fund"` | Sí | `"etf"` | Desde `Fund.vehicle` |
+| `categoryLabel` | `string` | Sí | `"ETF · S&P 500"` | Etiqueta según vehículo + benchmark |
 | `themeLabel` | `string` | Sí | `"Multisector global"` | Tema de inversión para tarjetas; origen pendiente (ver § Transformaciones) |
 | `badge` | `string` | Sí | `"Ideal para empezar"` | Copy de producto; puede ser cadena vacía si no aplica |
 | `idealForBeginners` | `boolean` | Sí | `true` | Derivado de score, riesgo y reglas de producto |
@@ -163,7 +164,8 @@ El array debe incluir **los seis criterios** en orden estable (mismo orden que `
 | `description` | `string` | Sí | Texto educativo del fondo |
 | `manager` | `string` | Sí | Gestora |
 | `benchmark` | `string` | Sí | Índice de referencia |
-| `isIndexed` | `boolean` | Sí | `true` para fondos indexados del MVP |
+| `vehicleType` | `"etf"` \| `"mutual-fund"` | Sí | Vehículo del producto (ETF cotizado vs fondo de inversión) |
+| `tracksIndex` | `boolean` | Sí | `true` cuando `Fund.category = index` (estrategia indexada) |
 | `fundAum` | `string` | Sí | AUM formateado para UI (p. ej. `"1.200 M€"`) |
 | `classAum` | `string` | No | AUM de la clase comercial |
 | `inceptionDate` | `string` | Sí | Fecha de lanzamiento legible (p. ej. `"01/01/2018"`) |
@@ -229,7 +231,8 @@ GET /funds/:isin  (BFF)
 | `fund.id` | `Fund.id` | UUID tal cual |
 | `fund.isin` | `Fund.isin` | Uppercase; error 404 si null en DB |
 | `fund.name` | `Fund.name` | Directo |
-| `fund.categoryLabel` | `Fund.category` + `Fund.benchmark` | Mapa de categoría + etiqueta legible ES |
+| `fund.categoryLabel` | `Fund.vehicle` + `Fund.benchmark` | Etiqueta legible ES según vehículo (`ETF` vs `Fondo indexado`) |
+| `fund.vehicleType` | `Fund.vehicle` | Directo |
 | `fund.terPercent` | `Fund.metrics.ter` | `0` si `null` |
 | `fund.riskLevel` | `Fund.riskLevel` (1–7) | Ver tabla de riesgo abajo |
 | `fund.efficiencyScore` | `Fund.score` o score recalculado | Igual que `inversoraScore` |
@@ -391,7 +394,8 @@ Fondo reciente: sin rank, rentabilidades largas en `null`, exposición parcial, 
     "description": "Fondo indexado que replica el MSCI World.",
     "manager": "—",
     "benchmark": "MSCI World",
-    "isIndexed": true,
+    "vehicleType": "etf",
+    "tracksIndex": true,
     "fundAum": "850 MUSD",
     "inceptionDate": "15/03/2024",
     "summaryRows": [],
@@ -480,7 +484,8 @@ Incluye `rank`, series completas en `1y`/`3y`, exposición sectorial y desglose 
     "description": "Replica el índice S&P 500 con acumulación de dividendos.",
     "manager": "BlackRock",
     "benchmark": "S&P 500",
-    "isIndexed": true,
+    "vehicleType": "etf",
+    "tracksIndex": true,
     "fundAum": "12.400 MUSD",
     "classAum": "8.100 MUSD",
     "inceptionDate": "01/01/2012",
