@@ -34,4 +34,4 @@ SOFTWARE.
 
 ## Contact
 
-For licensing inquiries, contact: [airo.developer@hotmail.com](mailto:airo.developer@hotmail.com)
+For licensing inquiries, contact: [iro.developer@hotmail.com](mailto:iro.developer@hotmail.com)
