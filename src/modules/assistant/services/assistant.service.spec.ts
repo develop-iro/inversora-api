@@ -22,6 +22,7 @@ describe('AssistantService', () => {
   };
   let cacheRepository: { findValid: jest.Mock; save: jest.Mock };
   let openAiAssistant: { generate: jest.Mock };
+  let contextBuilder: { build: jest.Mock };
 
   beforeEach(async () => {
     config = {
@@ -35,6 +36,14 @@ describe('AssistantService', () => {
     };
     openAiAssistant = {
       generate: jest.fn(),
+    };
+    contextBuilder = {
+      build: jest.fn().mockResolvedValue({
+        surface: 'home',
+        intent: 'general',
+        locale: 'es',
+        userMessage: 'Explícame MSCI World en detalle educativo',
+      }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -53,7 +62,7 @@ describe('AssistantService', () => {
         },
         {
           provide: AssistantContextBuilderService,
-          useValue: { build: jest.fn() },
+          useValue: contextBuilder,
         },
         {
           provide: OpenAiAssistantService,
@@ -111,5 +120,68 @@ describe('AssistantService', () => {
 
     expect(response.source).toBe('cache');
     expect(response.cached).toBe(true);
+  });
+
+  it('generates OpenAI responses when enabled and glossary misses', async () => {
+    config.assistantEnabled = true;
+    openAiAssistant.generate.mockResolvedValue(
+      'MSCI World es un índice global de acciones de mercados desarrollados.',
+    );
+
+    const response = await service.explain({
+      surface: 'home',
+      message: 'Explícame MSCI World en detalle educativo',
+    });
+
+    expect(response.source).toBe('openai');
+    expect(response.title).toBe('Respuesta de SORA');
+    expect(cacheRepository.save).toHaveBeenCalled();
+  });
+
+  it('builds compare and score titles for OpenAI responses', async () => {
+    config.assistantEnabled = true;
+    openAiAssistant.generate.mockResolvedValue('Texto educativo.');
+
+    const compareResponse = await service.explain({
+      surface: 'compare',
+      message: 'SPY versus QQQ para aprender diferencias',
+    });
+    const scoreResponse = await service.explain({
+      surface: 'fund_detail',
+      message: 'Por que este fondo aparece asi',
+      fund: { isin: 'US78462F1030' },
+    });
+
+    expect(compareResponse.title).toBe('Cómo comparar fondos en Inversora');
+    expect(scoreResponse.title).toBe('Explicación del Score Inversora');
+  });
+
+  it('capitalizes question titles for OpenAI responses', async () => {
+    config.assistantEnabled = true;
+    openAiAssistant.generate.mockResolvedValue('Texto educativo.');
+
+    const response = await service.explain({
+      surface: 'home',
+      message: 'como funciona esto?',
+    });
+
+    expect(response.title).toBe('Como funciona esto?');
+  });
+
+  it('persists locale and related fund ISIN in OpenAI responses', async () => {
+    config.assistantEnabled = true;
+    openAiAssistant.generate.mockResolvedValue('Texto educativo.');
+
+    const response = await service.explain({
+      surface: 'fund_detail',
+      message: 'SPY versus QQQ para aprender diferencias',
+      locale: 'en',
+      fund: { isin: 'US78462F1030' },
+    });
+
+    expect(response.relatedFundIsin).toBe('US78462F1030');
+    expect(cacheRepository.save).toHaveBeenCalledWith(
+      expect.objectContaining({ locale: 'en', fundIsin: 'US78462F1030' }),
+    );
   });
 });

@@ -150,4 +150,20 @@ describe('validateEnv', () => {
       }),
     ).toThrow('Environment validation failed');
   });
+
+  it('should parse CORS origins from a comma-separated list', () => {
+    expect(
+      validateEnv({
+        ...validEnv,
+        CORS_ORIGINS:
+          'http://localhost:8081, https://app.example.com,http://127.0.0.1:8081',
+      }),
+    ).toMatchObject({
+      CORS_ORIGINS: [
+        'http://localhost:8081',
+        'https://app.example.com',
+        'http://127.0.0.1:8081',
+      ],
+    });
+  });
 });

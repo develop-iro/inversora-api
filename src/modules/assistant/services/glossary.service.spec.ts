@@ -18,4 +18,15 @@ describe('GlossaryService', () => {
   it('returns null for unrelated queries', () => {
     expect(service.match('MSCI World IE00B4L5Y983')).toBeNull();
   });
+
+  it('returns null for empty messages', () => {
+    expect(service.match('   ')).toBeNull();
+  });
+
+  it('prefers the longest matching glossary keyword', () => {
+    const match = service.match('¿Qué es la comision anual del fondo?');
+
+    expect(match?.matchedKeyword).toBe('comision anual');
+    expect(match?.entry.term).toBe('Comisión anual');
+  });
 });

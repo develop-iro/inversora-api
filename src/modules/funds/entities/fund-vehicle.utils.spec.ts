@@ -33,5 +33,10 @@ describe('fund-vehicle.utils', () => {
     expect(
       buildBenefitSummary({ vehicle: 'mutual-fund', benchmark: null }),
     ).toBe('Fondo indexado');
+
+    expect(buildCategoryLabel({ vehicle: 'etf', benchmark: null })).toBe('ETF');
+    expect(buildProductDescription({ vehicle: 'etf', benchmark: null })).toBe(
+      'ETF.',
+    );
   });
 });
