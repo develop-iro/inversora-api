@@ -14,6 +14,7 @@ import {
 } from './financial-modeling-prep.fixture.service';
 import {
   fmpCountryWeightingSchema,
+  fmpEtfListEntrySchema,
   fmpFundHoldingSchema,
   fmpFundProfileSchema,
   fmpHistoricalPriceSchema,
@@ -22,6 +23,7 @@ import {
 } from './financial-modeling-prep.raw.schemas';
 import type {
   FmpCountryWeighting,
+  FmpEtfListEntry,
   FmpFundHolding,
   FmpFundProfile,
   FmpHistoricalPrice,
@@ -70,6 +72,21 @@ export class FinancialModelingPrepClient {
       fmpSearchResultSchema,
       'search-name',
       FMP_FIXTURE_FILES.searchName,
+    );
+  }
+
+  /**
+   * Fetches the full ETF catalog exposed by FMP.
+   *
+   * @returns Raw ETF list rows (`symbol`, `name`).
+   */
+  async fetchEtfList(): Promise<FmpEtfListEntry[]> {
+    return this.fetchArray(
+      '/stable/etf-list',
+      {},
+      fmpEtfListEntrySchema,
+      'etf-list',
+      FMP_FIXTURE_FILES.etfList,
     );
   }
 

@@ -16,6 +16,10 @@ export interface FundDailySyncItemResult {
   allocationsSynced?: number;
   /** Snapshot ISO date persisted for composition data. */
   compositionAsOf?: string;
+  /** Whether composition sync was skipped due to plan limits or config. */
+  compositionSkipped?: boolean;
+  /** Whether price sync was skipped for non-US listings. */
+  pricesSkipped?: boolean;
   /** Error message when status is `failed`. */
   error?: string;
 }
@@ -82,6 +86,14 @@ export interface ManualSyncOptions {
   historyFrom?: string;
   /** Optional upper bound for provider historical price requests. */
   historyTo?: string;
+  /** When true, merges symbols from FMP `etf-list`. */
+  discover?: boolean;
+  /** Overrides env `SYNC_DISCOVERY_LIMIT` for this run. */
+  discoveryLimit?: number;
+  /** Overrides env `SYNC_DISCOVERY_OFFSET` for batched ingestion. */
+  discoveryOffset?: number;
+  /** Overrides env `SYNC_DISCOVERY_MODE` (`all` = full ~6k catalog). */
+  discoveryMode?: 'all' | 'indexed';
 }
 
 /** Execution metadata attached to manual synchronization responses. */

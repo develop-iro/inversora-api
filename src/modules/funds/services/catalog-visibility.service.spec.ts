@@ -87,6 +87,23 @@ describe('CatalogVisibilityService', () => {
     );
   });
 
+  it('should promote quarantined funds when catalog data becomes complete', async () => {
+    const completeQuarantinedFund = {
+      ...fund,
+      catalogVisibility: 'quarantined' as const,
+    };
+
+    await service.applyAutomaticVisibilityRules(completeQuarantinedFund);
+
+    expect(repository.updateCatalogVisibility).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fundId: fund.id,
+        catalogVisibility: 'visible',
+        actor: 'system',
+      }),
+    );
+  });
+
   it('should skip automatic updates when visibility already matches', async () => {
     await expect(
       service.applyAutomaticVisibilityRules(fund),

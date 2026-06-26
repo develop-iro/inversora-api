@@ -16,6 +16,17 @@ export const fmpSearchResultSchema = z
 /** Inferred type for a raw FMP search result. */
 export type FmpSearchResult = z.infer<typeof fmpSearchResultSchema>;
 
+/** Zod schema for rows returned by FMP `etf-list`. */
+export const fmpEtfListEntrySchema = z
+  .object({
+    symbol: z.string(),
+    name: z.string(),
+  })
+  .passthrough();
+
+/** Inferred type for a raw FMP ETF list row. */
+export type FmpEtfListEntry = z.infer<typeof fmpEtfListEntrySchema>;
+
 /** Zod schema for ETF and mutual fund profile data returned by FMP. */
 export const fmpFundProfileSchema = z
   .object({

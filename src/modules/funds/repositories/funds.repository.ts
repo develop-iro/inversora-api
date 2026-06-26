@@ -278,6 +278,36 @@ export class FundsRepository {
   }
 
   /**
+   * Returns fund counts grouped by catalog visibility state.
+   *
+   * @returns Counts for visible, quarantined, and blocked funds.
+   */
+  async countByCatalogVisibility(): Promise<{
+    visible: number;
+    quarantined: number;
+    blocked: number;
+  }> {
+    const groups = await this.prisma.fund.groupBy({
+      by: ['catalogVisibility'],
+      _count: { _all: true },
+    });
+
+    const counts = {
+      visible: 0,
+      quarantined: 0,
+      blocked: 0,
+    };
+
+    for (const group of groups) {
+      const key = mapPrismaCatalogVisibility(group.catalogVisibility);
+
+      counts[key] = group._count._all;
+    }
+
+    return counts;
+  }
+
+  /**
    * Returns catalog visibility audit rows for a fund ordered by newest first.
    *
    * @param fundId - Persisted fund identifier.

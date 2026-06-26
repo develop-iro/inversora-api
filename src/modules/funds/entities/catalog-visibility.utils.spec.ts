@@ -86,18 +86,30 @@ describe('catalog-visibility.utils', () => {
     ).toContain('requirements satisfied');
   });
 
-  it('should never auto-change blocked or quarantined funds', () => {
+  it('should never auto-change blocked funds', () => {
     expect(
       resolveAutomaticCatalogVisibility({
         ...completeFund,
         catalogVisibility: 'blocked',
       }),
     ).toBe('blocked');
+  });
 
+  it('should promote quarantined funds when catalog data becomes complete', () => {
     expect(
       resolveAutomaticCatalogVisibility({
         ...completeFund,
         catalogVisibility: 'quarantined',
+      }),
+    ).toBe('visible');
+  });
+
+  it('should keep quarantined funds quarantined when data is still incomplete', () => {
+    expect(
+      resolveAutomaticCatalogVisibility({
+        ...completeFund,
+        catalogVisibility: 'quarantined',
+        score: null,
       }),
     ).toBe('quarantined');
   });

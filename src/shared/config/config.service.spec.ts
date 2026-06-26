@@ -138,6 +138,10 @@ describe('AppConfigService', () => {
 
     service = module.get(AppConfigService);
     expect(service.assistantEnabled).toBe(true);
+    expect(service.assistantRuntime).toBe('nestjs');
+    expect(service.assistantAgentBaseUrl).toBe('http://localhost:8001');
+    expect(service.assistantAgentTimeoutMs).toBe(10_000);
+    expect(service.assistantInternalApiKey).toBeUndefined();
     expect(service.openAiApiKey).toBe('test-openai-key');
     expect(service.openAiModel).toBe('gpt-4o-mini');
     expect(service.assistantPromptVersion).toBe('sora-v2');

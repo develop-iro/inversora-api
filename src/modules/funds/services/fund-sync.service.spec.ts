@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { FinancialModelingPrepProvider } from '../../providers/financial-modeling-prep/financial-modeling-prep.provider';
 import { FundsRepository } from '../repositories/funds.repository';
+import { CatalogVisibilityService } from './catalog-visibility.service';
 import { FundPriceSyncService } from './fund-price-sync.service';
 import { FundSyncService } from './fund-sync.service';
 
@@ -9,6 +10,7 @@ describe('FundSyncService', () => {
   let fmpProvider: { getFundProfile: jest.Mock };
   let fundsRepository: { upsert: jest.Mock };
   let fundPriceSyncService: { syncFromFmp: jest.Mock };
+  let catalogVisibilityService: { applyAutomaticVisibilityRules: jest.Mock };
 
   const persistedFund = {
     id: '550e8400-e29b-41d4-a716-446655440000',
@@ -66,6 +68,13 @@ describe('FundSyncService', () => {
         upToDate: false,
       }),
     };
+    catalogVisibilityService = {
+      applyAutomaticVisibilityRules: jest
+        .fn()
+        .mockImplementation((fund: typeof persistedFund) =>
+          Promise.resolve(fund),
+        ),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -81,6 +90,10 @@ describe('FundSyncService', () => {
         {
           provide: FundPriceSyncService,
           useValue: fundPriceSyncService,
+        },
+        {
+          provide: CatalogVisibilityService,
+          useValue: catalogVisibilityService,
         },
       ],
     }).compile();

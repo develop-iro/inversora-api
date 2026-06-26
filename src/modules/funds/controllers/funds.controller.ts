@@ -8,12 +8,13 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
+import type { FundListResponse } from '../entities/fund-list.schema';
+import type { CatalogSummaryResponse } from '../../../core/api/schemas/catalog-summary.schema';
 import { FundListResponseDto } from '../dto/fund-list-response.dto';
 import { FundChartResponseDto } from '../dto/fund-chart-response.dto';
 import { FundCountryExposureResponseDto } from '../dto/fund-country-exposure-response.dto';
 import { FundHoldingsResponseDto } from '../dto/fund-holdings-response.dto';
 import { FundSectorExposureResponseDto } from '../dto/fund-sector-exposure-response.dto';
-import type { FundListResponse } from '../entities/fund-list.schema';
 import type { FundChartResponse } from '../entities/fund-chart.schema';
 import type { FundCountryExposureResponse } from '../entities/fund-country-exposure.schema';
 import type { FundHoldingsResponse } from '../entities/fund-holdings.schema';
@@ -86,6 +87,17 @@ export class FundsController {
     @Query() query: Record<string, unknown>,
   ): Promise<FundListResponse> {
     return this.fundsService.listFunds(query);
+  }
+
+  @Get('catalog-summary')
+  @ApiOperation({
+    summary: 'Catalog ingestion summary (totals by visibility state)',
+  })
+  @ApiOkResponse({
+    description: 'Aggregate fund counts for sync progress and app dashboards.',
+  })
+  getCatalogSummary(): Promise<CatalogSummaryResponse> {
+    return this.fundsService.getCatalogSummary();
   }
 
   @Get(':id/exposure/sectors')

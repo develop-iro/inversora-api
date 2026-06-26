@@ -6,6 +6,29 @@ export interface SearchIndexedProductsOptions {
   readonly limit?: number;
 }
 
+/** ETF catalog discovery scope for FMP `etf-list` ingestion. */
+export type EtfCatalogDiscoveryMode = 'all' | 'indexed';
+
+/**
+ * Options for {@link FinancialModelingPrepProvider.listEtfCatalogSymbols}.
+ */
+export interface ListEtfCatalogSymbolsOptions {
+  /** When `indexed`, applies index-tracking heuristics (~1k of ~6k rows). */
+  readonly mode?: EtfCatalogDiscoveryMode;
+  /** Number of symbols to skip before applying `limit` (batch pagination). */
+  readonly offset?: number;
+  /** Maximum number of symbols to return after mode filtering and offset. */
+  readonly limit?: number;
+}
+
+/**
+ * Options for {@link FinancialModelingPrepProvider.listIndexedEtfSymbols}.
+ */
+export interface ListIndexedEtfSymbolsOptions {
+  /** Maximum number of symbols to return after indexed-product filtering. */
+  readonly limit?: number;
+}
+
 /**
  * Options for historical provider fund price queries.
  */

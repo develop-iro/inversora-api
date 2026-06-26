@@ -109,6 +109,31 @@ export class AppConfigService {
     return this.configService.get('SYNC_FUND_SYMBOLS', { infer: true });
   }
 
+  /** Whether scheduled sync merges index-tracking symbols from FMP `etf-list`. */
+  get syncEtfListDiscoveryEnabled(): boolean {
+    return this.configService.get('SYNC_ETF_LIST_DISCOVERY', { infer: true });
+  }
+
+  /** Maximum number of discovered ETF symbols to process per sync run. */
+  get syncDiscoveryLimit(): number {
+    return this.configService.get('SYNC_DISCOVERY_LIMIT', { infer: true });
+  }
+
+  /** Offset into the discovered ETF list for batched ingestion. */
+  get syncDiscoveryOffset(): number {
+    return this.configService.get('SYNC_DISCOVERY_OFFSET', { infer: true });
+  }
+
+  /** Whether discovery ingests the full FMP `etf-list` or only index-tracking rows. */
+  get syncDiscoveryMode(): 'all' | 'indexed' {
+    return this.configService.get('SYNC_DISCOVERY_MODE', { infer: true });
+  }
+
+  /** Whether composition sync runs by default (disabled on FMP Starter). */
+  get syncCompositionEnabled(): boolean {
+    return this.configService.get('SYNC_COMPOSITION_ENABLED', { infer: true });
+  }
+
   /** Whether the manual admin sync endpoint and CLI are available. */
   get adminSyncEnabled(): boolean {
     return this.configService.get('ADMIN_SYNC_ENABLED', { infer: true });
@@ -155,6 +180,30 @@ export class AppConfigService {
   /** Whether the SORA assistant endpoint is active. */
   get assistantEnabled(): boolean {
     return this.configService.get('ASSISTANT_ENABLED', { infer: true });
+  }
+
+  /** Runtime used to generate SORA model responses. */
+  get assistantRuntime(): Env['ASSISTANT_RUNTIME'] {
+    return this.configService.get('ASSISTANT_RUNTIME', { infer: true });
+  }
+
+  /** Internal Python agent service base URL. */
+  get assistantAgentBaseUrl(): string {
+    return this.configService.get('ASSISTANT_AGENT_BASE_URL', { infer: true });
+  }
+
+  /** Internal Python agent service request timeout in milliseconds. */
+  get assistantAgentTimeoutMs(): number {
+    return this.configService.get('ASSISTANT_AGENT_TIMEOUT_MS', {
+      infer: true,
+    });
+  }
+
+  /** Shared secret for internal SORA tool endpoints. */
+  get assistantInternalApiKey(): string | undefined {
+    return this.configService.get('ASSISTANT_INTERNAL_API_KEY', {
+      infer: true,
+    });
   }
 
   /** Version tag for assistant system prompts (cache invalidation). */

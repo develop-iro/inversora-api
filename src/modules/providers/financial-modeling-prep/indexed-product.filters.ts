@@ -1,4 +1,7 @@
-import type { FmpSearchResult } from './financial-modeling-prep.raw.schemas';
+import type {
+  FmpEtfListEntry,
+  FmpSearchResult,
+} from './financial-modeling-prep.raw.schemas';
 
 /** Name pattern that identifies broad or benchmark-tracking indexed products. */
 const INDEXED_PRODUCT_NAME_PATTERN =
@@ -43,9 +46,33 @@ export function isIndexedProductSearchResult(result: FmpSearchResult): boolean {
     return false;
   }
 
-  if (NON_INDEXED_PRODUCT_NAME_PATTERN.test(result.name)) {
+  return isIndexedProductName(result.name);
+}
+
+/**
+ * Determines whether an FMP ETF list row represents an index-tracking product.
+ *
+ * @param entry - Raw ETF list row (`symbol` + `name` only).
+ * @returns `true` when the row matches indexed-product heuristics.
+ */
+export function isIndexedEtfListEntry(entry: FmpEtfListEntry): boolean {
+  if (!FUND_NAME_PATTERN.test(entry.name)) {
     return false;
   }
 
-  return INDEXED_PRODUCT_NAME_PATTERN.test(result.name);
+  return isIndexedProductName(entry.name);
+}
+
+/**
+ * Returns whether a product name matches indexed-product inclusion rules.
+ *
+ * @param name - Fund or ETF display name.
+ * @returns `true` when the name looks like a broad index tracker.
+ */
+function isIndexedProductName(name: string): boolean {
+  if (NON_INDEXED_PRODUCT_NAME_PATTERN.test(name)) {
+    return false;
+  }
+
+  return INDEXED_PRODUCT_NAME_PATTERN.test(name);
 }

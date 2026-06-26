@@ -57,6 +57,69 @@ export function extractBenchmarkFromName(name: string): string | undefined {
 }
 
 /**
+ * Extracts a benchmark label from an FMP fund description when present.
+ *
+ * @param description - Provider fund description text.
+ * @returns Benchmark label or `undefined`.
+ */
+export function extractBenchmarkFromDescription(
+  description: string,
+): string | undefined {
+  const normalized = description.trim();
+
+  if (normalized.length === 0) {
+    return undefined;
+  }
+
+  const indexMatch = normalized.match(
+    /\b(?:replicat(?:e|es|ing)|track(?:s|ing)?)\s+(?:the\s+)?([^.,;]+?\bindex)\b/i,
+  );
+
+  if (indexMatch?.[1] !== undefined) {
+    return indexMatch[1].trim();
+  }
+
+  const namedIndexMatch = normalized.match(
+    /\b([A-Z][A-Za-z0-9&'./\-\s]{2,80}\bIndex)\b/,
+  );
+
+  return namedIndexMatch?.[1]?.trim();
+}
+
+/**
+ * Derives a catalog benchmark label from the fund name when heuristics fail.
+ *
+ * @param name - Fund display name.
+ * @returns Human-readable benchmark label.
+ */
+export function deriveBenchmarkLabelFromName(name: string): string {
+  const withoutEtfSuffix = name.replace(/\s+ETF\b.*$/i, '').trim();
+  const cleaned = withoutEtfSuffix.length > 0 ? withoutEtfSuffix : name.trim();
+
+  return cleaned.length > 0 ? cleaned : 'Broad Market Index';
+}
+
+/**
+ * Resolves the best available benchmark label for catalog and scoring grouping.
+ *
+ * @param name - Fund display name.
+ * @param description - Optional provider description.
+ * @returns Benchmark label.
+ */
+export function resolveFundBenchmark(
+  name: string,
+  description?: string,
+): string {
+  return (
+    extractBenchmarkFromName(name) ??
+    (description === undefined
+      ? undefined
+      : extractBenchmarkFromDescription(description)) ??
+    deriveBenchmarkLabelFromName(name)
+  );
+}
+
+/**
  * Maps a raw FMP search result to the normalized provider fund search shape.
  *
  * @param result - Raw FMP search result.
@@ -130,7 +193,7 @@ export function normalizeProviderFundProfile(
     exchange,
     exchangeFullName:
       searchResult?.exchangeFullName ?? searchResult?.stockExchange,
-    benchmark: extractBenchmarkFromName(name),
+    benchmark: resolveFundBenchmark(name, profile.description),
   });
 }
 
@@ -156,7 +219,7 @@ export function normalizeProviderFundProfileFromSearch(
     exchange,
     exchangeFullName:
       searchResult.exchangeFullName ?? searchResult.stockExchange,
-    benchmark: extractBenchmarkFromName(searchResult.name),
+    benchmark: resolveFundBenchmark(searchResult.name),
   });
 }
 

@@ -3,6 +3,8 @@ import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { AppConfigService } from '../../../shared/config/config.service';
 import { ScoringService } from '../../scoring/services/scoring.service';
 import { FundsRepository } from '../repositories/funds.repository';
+import { isNonUsListedSymbol } from '../utils/fund-listing.utils';
+import { isPaidPlanCapabilityError } from '../utils/sync-capability.utils';
 import type {
   FundDailySyncItemResult,
   FundDailySyncResult,
@@ -12,15 +14,9 @@ import type {
   ResolvedManualSyncSteps,
 } from './fund-daily-sync.types';
 import { FundCompositionSyncService } from './fund-composition-sync.service';
+import { FundDiscoveryService } from './fund-discovery.service';
 import { FundPriceSyncService } from './fund-price-sync.service';
 import { FundSyncService } from './fund-sync.service';
-
-const DEFAULT_MANUAL_SYNC_STEPS: ResolvedManualSyncSteps = {
-  metadata: true,
-  prices: true,
-  composition: true,
-  scoring: true,
-};
 
 /**
  * Orchestrates daily fund metadata, price, and composition synchronization.
@@ -32,6 +28,7 @@ export class FundDailySyncService {
   constructor(
     private readonly config: AppConfigService,
     private readonly fundsRepository: FundsRepository,
+    private readonly fundDiscoveryService: FundDiscoveryService,
     private readonly fundSyncService: FundSyncService,
     private readonly fundPriceSyncService: FundPriceSyncService,
     private readonly fundCompositionSyncService: FundCompositionSyncService,
@@ -45,7 +42,9 @@ export class FundDailySyncService {
    * @returns Aggregate sync result with per-symbol outcomes.
    */
   async runDailySync(): Promise<FundDailySyncResult> {
-    const result = await this.runManualSync();
+    const result = await this.runManualSync({
+      discover: this.config.syncEtfListDiscoveryEnabled,
+    });
 
     return {
       total: result.total,
@@ -70,13 +69,13 @@ export class FundDailySyncService {
   ): Promise<ManualSyncResult> {
     const runId = randomUUID();
     const startedAt = new Date();
-    const steps = resolveManualSyncSteps(options.steps);
+    const steps = this.resolveManualSyncSteps(options.steps);
 
     this.logger.log(
       `Manual sync ${runId} started (steps: ${formatStepsForLog(steps)})`,
     );
 
-    const symbols = await this.resolveManualSyncSymbols(options.symbols);
+    const symbols = await this.resolveManualSyncSymbols(options);
     const hasSymbolSteps = steps.metadata || steps.prices || steps.composition;
 
     if (symbols.length === 0 && hasSymbolSteps) {
@@ -155,12 +154,15 @@ export class FundDailySyncService {
     options: ManualSyncOptions,
   ): Promise<FundDailySyncItemResult> {
     try {
+      const normalizedSymbol = symbol.trim().toUpperCase();
       let fundCreated: boolean | undefined;
       let pricesSynced: number | undefined;
       let upToDate: boolean | undefined;
       let holdingsSynced: number | undefined;
       let allocationsSynced: number | undefined;
       let compositionAsOf: string | undefined;
+      let compositionSkipped = false;
+      let pricesSkipped = false;
 
       if (steps.metadata) {
         const fundResult = await this.fundSyncService.syncFromFmp(symbol);
@@ -168,24 +170,42 @@ export class FundDailySyncService {
       }
 
       if (steps.prices) {
-        const priceResult = await this.fundPriceSyncService.syncFromFmp(
-          symbol,
-          {
-            from: options.historyFrom,
-            to: options.historyTo,
-            incremental: options.incrementalPrices ?? true,
-          },
-        );
-        pricesSynced = priceResult.pricesSynced;
-        upToDate = priceResult.upToDate;
+        if (isNonUsListedSymbol(normalizedSymbol)) {
+          pricesSkipped = true;
+          this.logger.log(
+            `Price sync skipped for non-US symbol ${normalizedSymbol}`,
+          );
+        } else {
+          const priceResult = await this.fundPriceSyncService.syncFromFmp(
+            symbol,
+            {
+              from: options.historyFrom,
+              to: options.historyTo,
+              incremental: options.incrementalPrices ?? true,
+            },
+          );
+          pricesSynced = priceResult.pricesSynced;
+          upToDate = priceResult.upToDate;
+        }
       }
 
       if (steps.composition) {
-        const compositionResult =
-          await this.fundCompositionSyncService.syncFromFmp(symbol);
-        holdingsSynced = compositionResult.holdingsSynced;
-        allocationsSynced = compositionResult.allocationsSynced;
-        compositionAsOf = compositionResult.asOf;
+        try {
+          const compositionResult =
+            await this.fundCompositionSyncService.syncFromFmp(symbol);
+          holdingsSynced = compositionResult.holdingsSynced;
+          allocationsSynced = compositionResult.allocationsSynced;
+          compositionAsOf = compositionResult.asOf;
+        } catch (error: unknown) {
+          if (isPaidPlanCapabilityError(error)) {
+            compositionSkipped = true;
+            this.logger.warn(
+              `Composition sync skipped for ${normalizedSymbol}: ${error instanceof Error ? error.message : String(error)}`,
+            );
+          } else {
+            throw error;
+          }
+        }
       }
 
       return {
@@ -197,6 +217,8 @@ export class FundDailySyncService {
         holdingsSynced,
         allocationsSynced,
         compositionAsOf,
+        ...(compositionSkipped ? { compositionSkipped: true } : {}),
+        ...(pricesSkipped ? { pricesSkipped: true } : {}),
       };
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
@@ -237,53 +259,35 @@ export class FundDailySyncService {
   }
 
   private async resolveManualSyncSymbols(
-    symbols: readonly string[] | undefined,
+    options: ManualSyncOptions,
   ): Promise<string[]> {
-    if (symbols !== undefined && symbols.length > 0) {
-      return normalizeSymbols(symbols);
-    }
+    const resolved = await this.fundDiscoveryService.resolveSyncSymbols({
+      explicitSymbols: options.symbols,
+      discover: options.discover,
+      discoveryLimit: options.discoveryLimit,
+      discoveryOffset: options.discoveryOffset,
+      discoveryMode: options.discoveryMode,
+    });
 
-    return this.resolveSymbols();
-  }
-
-  private async resolveSymbols(): Promise<string[]> {
-    const configuredSymbols = this.config.syncFundSymbols;
-
-    if (configuredSymbols.length > 0) {
-      return [...configuredSymbols];
+    if (resolved.length > 0) {
+      return resolved;
     }
 
     const funds = await this.fundsRepository.findAll();
 
     return funds.map((fund) => fund.symbol);
   }
-}
 
-/**
- * Normalizes ticker symbols to uppercase trimmed values.
- *
- * @param symbols - Raw symbol list from request input.
- * @returns Normalized symbols.
- */
-function normalizeSymbols(symbols: readonly string[]): string[] {
-  return symbols.map((symbol) => symbol.trim().toUpperCase());
-}
-
-/**
- * Resolves partial step flags into explicit booleans.
- *
- * @param steps - Optional step overrides from a manual sync request.
- * @returns Fully resolved step configuration.
- */
-function resolveManualSyncSteps(
-  steps: ManualSyncOptions['steps'],
-): ResolvedManualSyncSteps {
-  return {
-    metadata: steps?.metadata ?? DEFAULT_MANUAL_SYNC_STEPS.metadata,
-    prices: steps?.prices ?? DEFAULT_MANUAL_SYNC_STEPS.prices,
-    composition: steps?.composition ?? DEFAULT_MANUAL_SYNC_STEPS.composition,
-    scoring: steps?.scoring ?? DEFAULT_MANUAL_SYNC_STEPS.scoring,
-  };
+  private resolveManualSyncSteps(
+    steps: ManualSyncOptions['steps'],
+  ): ResolvedManualSyncSteps {
+    return {
+      metadata: steps?.metadata ?? true,
+      prices: steps?.prices ?? true,
+      composition: steps?.composition ?? this.config.syncCompositionEnabled,
+      scoring: steps?.scoring ?? true,
+    };
+  }
 }
 
 /**

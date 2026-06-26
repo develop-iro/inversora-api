@@ -1,6 +1,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { GetFundsUseCase } from '../get-funds';
+import { GetCatalogSummaryUseCase } from '../get-catalog-summary';
 import { FundsRepository } from '../repositories/funds.repository';
 import { CatalogVisibilityService } from './catalog-visibility.service';
 import { FundCompositionService } from './fund-composition.service';
@@ -37,6 +38,7 @@ const fund = {
 describe('FundsService', () => {
   let service: FundsService;
   let getFundsUseCase: { execute: jest.Mock };
+  let getCatalogSummaryUseCase: { execute: jest.Mock };
   let repository: { findMany: jest.Mock; findById: jest.Mock };
   let fundPricesService: {
     getLatestDate: jest.Mock;
@@ -49,6 +51,9 @@ describe('FundsService', () => {
 
   beforeEach(async () => {
     getFundsUseCase = {
+      execute: jest.fn(),
+    };
+    getCatalogSummaryUseCase = {
       execute: jest.fn(),
     };
     repository = {
@@ -146,6 +151,10 @@ describe('FundsService', () => {
         {
           provide: GetFundsUseCase,
           useValue: getFundsUseCase,
+        },
+        {
+          provide: GetCatalogSummaryUseCase,
+          useValue: getCatalogSummaryUseCase,
         },
         {
           provide: FundsRepository,

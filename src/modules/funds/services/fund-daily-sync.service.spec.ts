@@ -6,6 +6,7 @@ import { FundsRepository } from '../repositories/funds.repository';
 import { ScoringService } from '../../scoring/services/scoring.service';
 import { FundCompositionSyncService } from './fund-composition-sync.service';
 import { FundDailySyncService } from './fund-daily-sync.service';
+import { FundDiscoveryService } from './fund-discovery.service';
 import { FundPriceSyncService } from './fund-price-sync.service';
 import { FundSyncService } from './fund-sync.service';
 
@@ -20,7 +21,34 @@ const validEnv = {
   DATABASE_URL: 'postgresql://inversora:inversora@localhost:5432/inversora',
   FMP_API_KEY: 'test-fmp-api-key',
   SYNC_FUND_SYMBOLS: 'SPY, QQQ',
+  SYNC_COMPOSITION_ENABLED: 'true',
 };
+
+import type { FundDiscoveryOptions } from './fund-discovery.service';
+
+function createFundDiscoveryMock(symbols: readonly string[] = ['SPY', 'QQQ']): {
+  resolveSyncSymbols: jest.Mock<Promise<string[]>, [FundDiscoveryOptions?]>;
+} {
+  return {
+    resolveSyncSymbols: jest.fn(
+      (options?: FundDiscoveryOptions): Promise<string[]> => {
+        if (options?.explicitSymbols && options.explicitSymbols.length > 0) {
+          return Promise.resolve(
+            options.explicitSymbols.map((symbol) =>
+              symbol.trim().toUpperCase(),
+            ),
+          );
+        }
+
+        if (symbols.length > 0) {
+          return Promise.resolve([...symbols]);
+        }
+
+        return Promise.resolve([]);
+      },
+    ),
+  };
+}
 
 describe('FundDailySyncService', () => {
   let service: FundDailySyncService;
@@ -28,6 +56,7 @@ describe('FundDailySyncService', () => {
   let fundPriceSyncService: { syncFromFmp: jest.Mock };
   let fundCompositionSyncService: { syncFromFmp: jest.Mock };
   let fundsRepository: { findAll: jest.Mock };
+  let fundDiscoveryService: { resolveSyncSymbols: jest.Mock };
   let scoringService: { recalculateAllScores: jest.Mock };
 
   beforeEach(async () => {
@@ -52,6 +81,7 @@ describe('FundDailySyncService', () => {
     fundsRepository = {
       findAll: jest.fn(),
     };
+    fundDiscoveryService = createFundDiscoveryMock();
     scoringService = {
       recalculateAllScores: jest.fn().mockResolvedValue({
         total: 2,
@@ -86,6 +116,10 @@ describe('FundDailySyncService', () => {
         {
           provide: FundCompositionSyncService,
           useValue: fundCompositionSyncService,
+        },
+        {
+          provide: FundDiscoveryService,
+          useValue: fundDiscoveryService,
         },
         {
           provide: ScoringService,
@@ -181,6 +215,10 @@ describe('FundDailySyncService', () => {
         {
           provide: FundCompositionSyncService,
           useValue: fundCompositionSyncService,
+        },
+        {
+          provide: FundDiscoveryService,
+          useValue: createFundDiscoveryMock([]),
         },
         {
           provide: ScoringService,
@@ -316,6 +354,10 @@ describe('FundDailySyncService', () => {
         {
           provide: FundCompositionSyncService,
           useValue: fundCompositionSyncService,
+        },
+        {
+          provide: FundDiscoveryService,
+          useValue: createFundDiscoveryMock([]),
         },
         {
           provide: ScoringService,

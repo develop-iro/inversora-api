@@ -1,4 +1,5 @@
 import {
+  isIndexedEtfListEntry,
   isIndexedProductSearchResult,
   isLikelyFundSearchResult,
 } from './indexed-product.filters';
@@ -36,6 +37,22 @@ describe('indexed-product.filters', () => {
         symbol: 'SPYI',
         name: 'Neos S&P 500(R) High Income ETF',
         exchange: 'CBOE',
+      }),
+    ).toBe(false);
+  });
+
+  it('should filter etf-list rows to index-tracking products', () => {
+    expect(
+      isIndexedEtfListEntry({
+        symbol: 'VOO',
+        name: 'Vanguard S&P 500 ETF',
+      }),
+    ).toBe(true);
+
+    expect(
+      isIndexedEtfListEntry({
+        symbol: 'CGGO',
+        name: 'Capital Group Global Growth Equity ETF',
       }),
     ).toBe(false);
   });

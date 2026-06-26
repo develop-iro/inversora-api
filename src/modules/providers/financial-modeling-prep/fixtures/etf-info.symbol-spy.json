@@ -1,17 +1,68 @@
 [
   {
-    "symbol": "SPY",
-    "name": "State Street SPDR S&P 500 ETF Trust",
-    "description": "The fund seeks to provide investment results that, before expenses, correspond generally to the price and yield performance of the S&P 500 Index.",
-    "isin": "US78462F1030",
+    "symbol": "VWCE.DE",
+    "name": "Vanguard FTSE All-World UCITS ETF (USD) Accumulating",
+    "description": "This fund adopts a passive, index-tracking investment methodology, aiming to replicate the returns of the FTSE All-World Index. It accomplishes this objective by directly acquiring the constituent securities of the index.",
+    "isin": "IE00BK5BQT80",
     "assetClass": "Equity",
-    "domicile": "US",
-    "expenseRatio": 0.0945,
-    "assetsUnderManagement": 520000000000,
-    "nav": 482.88,
-    "navCurrency": "USD",
-    "holdingsCount": 503,
-    "inceptionDate": "1993-01-22",
-    "etfCompany": "State Street"
+    "securityCusip": "G9T17Y653",
+    "domicile": "IE",
+    "website": "https://www.nl.vanguard/professional/product/etf/equity/9679/ftse-all-world-ucits",
+    "etfCompany": "Vanguard",
+    "expenseRatio": 0.19,
+    "assetsUnderManagement": 62140065367,
+    "avgVolume": 268802,
+    "inceptionDate": "2019-07-23",
+    "nav": 166.5,
+    "navCurrency": "EUR",
+    "holdingsCount": 4155,
+    "isActivelyTrading": true,
+    "updatedAt": "2026-06-23T16:49:33.810Z",
+    "sectorsList": [
+      {
+        "industry": "Basic Materials",
+        "exposure": 3.76
+      },
+      {
+        "industry": "Communication Services",
+        "exposure": 8.43
+      },
+      {
+        "industry": "Consumer Cyclical",
+        "exposure": 9.19
+      },
+      {
+        "industry": "Consumer Defensive",
+        "exposure": 4.6
+      },
+      {
+        "industry": "Energy",
+        "exposure": 3.76
+      },
+      {
+        "industry": "Financial Services",
+        "exposure": 15.31
+      },
+      {
+        "industry": "Healthcare",
+        "exposure": 7.73
+      },
+      {
+        "industry": "Industrials",
+        "exposure": 10.51
+      },
+      {
+        "industry": "Real Estate",
+        "exposure": 1.79
+      },
+      {
+        "industry": "Technology",
+        "exposure": 32.51
+      },
+      {
+        "industry": "Utilities",
+        "exposure": 2.44
+      }
+    ]
   }
 ]

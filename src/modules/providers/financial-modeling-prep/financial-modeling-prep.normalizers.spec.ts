@@ -10,10 +10,28 @@ import {
   normalizeProviderFundProfile,
   normalizeProviderFundSearchResults,
   normalizeProviderFundSectorWeightings,
+  resolveFundBenchmark,
 } from './financial-modeling-prep.normalizers';
 import { isIndexedProductSearchResult } from './indexed-product.filters';
 
 describe('FinancialModelingPrep normalizers', () => {
+  it('should resolve benchmarks from name, description, or derived labels', () => {
+    expect(resolveFundBenchmark('State Street SPDR S&P 500 ETF Trust')).toBe(
+      'S&P 500',
+    );
+
+    expect(
+      resolveFundBenchmark(
+        'Some ETF',
+        'This fund aims to replicate the FTSE All-World Index.',
+      ),
+    ).toBe('FTSE All-World Index');
+
+    expect(resolveFundBenchmark('VanEck Semiconductor ETF')).toBe(
+      'VanEck Semiconductor',
+    );
+  });
+
   it('should identify index funds and exclude specialty products', () => {
     expect(
       isIndexedProductSearchResult({
