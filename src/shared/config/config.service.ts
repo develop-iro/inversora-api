@@ -206,6 +206,20 @@ export class AppConfigService {
     });
   }
 
+  /** Maximum public SORA requests allowed per client/window. */
+  get assistantRateLimitMaxRequests(): number {
+    return this.configService.get('ASSISTANT_RATE_LIMIT_MAX_REQUESTS', {
+      infer: true,
+    });
+  }
+
+  /** Public SORA rate-limit window duration in seconds. */
+  get assistantRateLimitWindowSeconds(): number {
+    return this.configService.get('ASSISTANT_RATE_LIMIT_WINDOW_SECONDS', {
+      infer: true,
+    });
+  }
+
   /** Version tag for assistant system prompts (cache invalidation). */
   get assistantPromptVersion(): string {
     return this.configService.get('ASSISTANT_PROMPT_VERSION', { infer: true });

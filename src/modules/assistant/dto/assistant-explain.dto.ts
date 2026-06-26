@@ -30,6 +30,24 @@ export class AssistantExplainRequestDto {
   locale?: string;
 }
 
+/** Swagger schema for assistant chat request body. */
+export class AssistantChatRequestDto extends AssistantExplainRequestDto {
+  @ApiPropertyOptional({
+    description:
+      'Client-provided conversation identifier. The backend echoes it in the response.',
+    example: 'user-123:compare-sp500',
+  })
+  sessionId?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Funds selected in the app for comparison or product analysis.',
+    type: [AssistantExplainFundDto],
+    maxItems: 5,
+  })
+  funds?: AssistantExplainFundDto[];
+}
+
 /** Swagger schema for assistant explain response. */
 export class AssistantExplainResponseDto {
   @ApiProperty({
@@ -48,7 +66,7 @@ export class AssistantExplainResponseDto {
 
   @ApiProperty({
     example:
-      'Inversora no oferece asesoramiento financiero personalizado. Esta respuesta es orientativa y educativa.',
+      'Inversora no ofrece asesoramiento financiero personalizado. Esta respuesta es orientativa y educativa.',
   })
   disclaimer!: string;
 
@@ -57,4 +75,10 @@ export class AssistantExplainResponseDto {
 
   @ApiProperty({ example: 'sora-v1' })
   promptVersion!: string;
+}
+
+/** Swagger schema for assistant chat response. */
+export class AssistantChatResponseDto extends AssistantExplainResponseDto {
+  @ApiPropertyOptional({ example: 'user-123:compare-sp500' })
+  sessionId?: string;
 }

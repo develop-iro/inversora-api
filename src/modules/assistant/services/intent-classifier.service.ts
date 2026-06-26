@@ -38,8 +38,8 @@ export class IntentClassifierService {
     const normalized = normalizeAssistantQuery(message);
 
     if (
-      /\b(compar|versus|vs|diferencia entre)\b/.test(normalized) ||
-      normalized.includes('comparar')
+      normalized.includes('compar') ||
+      /\b(versus|vs|diferencia entre)\b/.test(normalized)
     ) {
       return 'compare';
     }

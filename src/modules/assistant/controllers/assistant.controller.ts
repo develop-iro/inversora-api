@@ -4,6 +4,7 @@ import {
   Controller,
   Post,
   ServiceUnavailableException,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -11,19 +12,30 @@ import {
   ApiOperation,
   ApiServiceUnavailableResponse,
   ApiTags,
+  ApiTooManyRequestsResponse,
 } from '@nestjs/swagger';
 import { ZodError } from 'zod';
 
 import {
+  AssistantChatRequestDto,
+  AssistantChatResponseDto,
   AssistantExplainRequestDto,
   AssistantExplainResponseDto,
 } from '../dto/assistant-explain.dto';
-import type { AssistantExplainResponse } from '../entities/assistant-context.schema';
-import { parseAssistantExplainRequest } from '../entities/assistant-context.schema';
+import type {
+  AssistantChatResponse,
+  AssistantExplainResponse,
+} from '../entities/assistant-context.schema';
+import {
+  parseAssistantChatRequest,
+  parseAssistantExplainRequest,
+} from '../entities/assistant-context.schema';
+import { AssistantRateLimitGuard } from '../guards/assistant-rate-limit.guard';
 import { AssistantService } from '../services/assistant.service';
 
 @ApiTags('assistant')
 @Controller('assistant')
+@UseGuards(AssistantRateLimitGuard)
 export class AssistantController {
   constructor(private readonly assistantService: AssistantService) {}
 
@@ -42,6 +54,9 @@ export class AssistantController {
   })
   @ApiServiceUnavailableResponse({
     description: 'Assistant disabled or OpenAI unavailable.',
+  })
+  @ApiTooManyRequestsResponse({
+    description: 'Temporary SORA usage limit reached.',
   })
   async explain(
     @Body() body: AssistantExplainRequestDto,
@@ -65,6 +80,54 @@ export class AssistantController {
       if (error instanceof Error && error.message.includes('prohibited')) {
         throw new BadRequestException(
           'SORA no puede responder con lenguaje de recomendación directa.',
+        );
+      }
+
+      throw error;
+    }
+  }
+
+  @Post('chat')
+  @ApiOperation({
+    summary: 'Chat with SORA about educational investing questions',
+    description:
+      'Conversational assistant endpoint for app bot flows. Supports selected funds for educational product analysis and comparison. Does not provide buy/sell advice.',
+  })
+  @ApiOkResponse({
+    description: 'Conversational educational assistant response.',
+    type: AssistantChatResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid request or prohibited intent.',
+  })
+  @ApiServiceUnavailableResponse({
+    description: 'Assistant disabled or runtime unavailable.',
+  })
+  @ApiTooManyRequestsResponse({
+    description: 'Temporary SORA usage limit reached.',
+  })
+  async chat(
+    @Body() body: AssistantChatRequestDto,
+  ): Promise<AssistantChatResponse> {
+    try {
+      const request = parseAssistantChatRequest(body);
+      return await this.assistantService.chat(request);
+    } catch (error: unknown) {
+      if (error instanceof ZodError) {
+        throw new BadRequestException(formatZodError(error));
+      }
+
+      if (error instanceof ServiceUnavailableException) {
+        throw error;
+      }
+
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
+      if (error instanceof Error && error.message.includes('prohibited')) {
+        throw new BadRequestException(
+          'SORA no puede responder con lenguaje de recomendaciÃ³n directa.',
         );
       }
 

@@ -1,0 +1,92 @@
+import { ServiceUnavailableException } from '@nestjs/common';
+
+import { AppConfigService } from '../../../shared/config/config.service';
+import { HttpClientService } from '../../../shared/http/http-client.service';
+import { PythonAgentAssistantService } from './python-agent-assistant.service';
+
+describe('PythonAgentAssistantService', () => {
+  let service: PythonAgentAssistantService;
+  let config: {
+    assistantAgentBaseUrl: string;
+    assistantAgentTimeoutMs: number;
+  };
+  let httpClient: { post: jest.Mock };
+
+  beforeEach(() => {
+    config = {
+      assistantAgentBaseUrl: 'http://localhost:8001',
+      assistantAgentTimeoutMs: 5_000,
+    };
+    httpClient = {
+      post: jest.fn(),
+    };
+    service = new PythonAgentAssistantService(
+      config as AppConfigService,
+      httpClient as unknown as HttpClientService,
+    );
+  });
+
+  it('returns text from the Python agent runtime', async () => {
+    httpClient.post.mockResolvedValue({
+      data: {
+        text: 'Respuesta educativa.',
+        source: 'openai-agents',
+        model: 'gpt-4o-mini',
+      },
+    });
+
+    const response = await service.generate(
+      {
+        surface: 'home',
+        intent: 'general',
+        locale: 'es',
+        userMessage: 'Hola',
+      },
+      'Hola',
+    );
+
+    expect(response).toBe('Respuesta educativa.');
+    expect(httpClient.post).toHaveBeenCalledWith(
+      'http://localhost:8001/agent/respond',
+      {
+        message: 'Hola',
+        surface: 'home',
+        locale: 'es',
+        session_id: undefined,
+        context: {
+          surface: 'home',
+          intent: 'general',
+          locale: 'es',
+          userMessage: 'Hola',
+        },
+      },
+      {
+        provider: 'sora-agent',
+        timeout: 5_000,
+        retries: 1,
+      },
+    );
+  });
+
+  it('throws a service unavailable error when the response contract is invalid', async () => {
+    httpClient.post.mockResolvedValue({
+      data: {
+        text: '',
+        source: 'openai-agents',
+        model: 'gpt-4o-mini',
+      },
+    });
+
+    await expect(
+      service.generate(
+        {
+          surface: 'home',
+          intent: 'general',
+          locale: 'es',
+          userMessage: 'Hola',
+        },
+        'Hola',
+      ),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+  });
+});

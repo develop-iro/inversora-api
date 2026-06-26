@@ -78,6 +78,16 @@ export const envSchema = z
       .positive()
       .default(10_000),
     ASSISTANT_INTERNAL_API_KEY: z.string().min(8).optional(),
+    ASSISTANT_RATE_LIMIT_MAX_REQUESTS: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(30),
+    ASSISTANT_RATE_LIMIT_WINDOW_SECONDS: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(60),
     ASSISTANT_PROMPT_VERSION: z.string().min(1).default('sora-v1'),
     ASSISTANT_CACHE_TTL_DAYS: z.coerce.number().int().positive().default(90),
   })

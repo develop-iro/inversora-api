@@ -3,10 +3,13 @@ import {
   Injectable,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 
 import { AppConfigService } from '../../../shared/config/config.service';
 import { SCORING_ALGORITHM_VERSION } from '../../scoring/entities/score-weights';
 import type {
+  AssistantChatRequest,
+  AssistantChatResponse,
   AssistantExplainRequest,
   AssistantExplainResponse,
 } from '../entities/assistant-context.schema';
@@ -17,11 +20,13 @@ import {
 } from '../entities/assistant-cache.utils';
 import { ASSISTANT_EDUCATIONAL_DISCLAIMER } from '../entities/assistant-system-prompt';
 import { AssistantCacheRepository } from '../repositories/assistant-cache.repository';
+import { AssistantConversationRepository } from '../repositories/assistant-conversation.repository';
 import { AssistantContextBuilderService } from './assistant-context.builder';
 import { AssistantOutputGuardrailsService } from './assistant-output.guardrails';
 import { GlossaryService } from './glossary.service';
 import { IntentClassifierService } from './intent-classifier.service';
 import { OpenAiAssistantService } from './openai-assistant.service';
+import { PythonAgentAssistantService } from './python-agent-assistant.service';
 
 /**
  * Orchestrates SORA assistant explain requests across glossary, cache, and OpenAI.
@@ -36,6 +41,8 @@ export class AssistantService {
     private readonly contextBuilder: AssistantContextBuilderService,
     private readonly openAiAssistant: OpenAiAssistantService,
     private readonly guardrails: AssistantOutputGuardrailsService,
+    private readonly pythonAgentAssistant: PythonAgentAssistantService,
+    private readonly conversationRepository: AssistantConversationRepository,
   ) {}
 
   /**
@@ -100,7 +107,7 @@ export class AssistantService {
     }
 
     const context = await this.contextBuilder.build(request, intent);
-    const generatedText = await this.openAiAssistant.generate(
+    const generatedText = await this.generateWithConfiguredRuntime(
       context,
       request.message,
     );
@@ -129,6 +136,134 @@ export class AssistantService {
     });
 
     return response;
+  }
+
+  /**
+   * Resolves a conversational assistant response.
+   *
+   * Chat requests are not cached in the MVP because they may include session
+   * state and multiple selected funds.
+   *
+   * @param request - Validated assistant chat request.
+   */
+  async chat(request: AssistantChatRequest): Promise<AssistantChatResponse> {
+    if (this.intentClassifier.isForbiddenInput(request.message)) {
+      throw new BadRequestException(
+        'SORA no puede ayudarte con recomendaciones de compra o venta ni modificar rankings.',
+      );
+    }
+
+    const promptVersion = this.config.assistantPromptVersion;
+    const sessionId = request.sessionId ?? this.createSessionId();
+    const locale = request.locale ?? 'es';
+    const requestedFundIsins = this.getRequestedFundIsins(request);
+    const recentMessages =
+      request.sessionId === undefined
+        ? []
+        : await this.conversationRepository.findRecentMessages(
+            request.sessionId,
+            8,
+          );
+    const glossaryMatch = this.glossaryService.match(request.message);
+
+    if (glossaryMatch !== null) {
+      const response = this.guardrails.assertResponse({
+        title: glossaryMatch.entry.term,
+        text: glossaryMatch.entry.explanation,
+        source: 'glossary',
+        cached: false,
+        disclaimer: ASSISTANT_EDUCATIONAL_DISCLAIMER,
+        promptVersion,
+        sessionId,
+      });
+
+      await this.conversationRepository.saveTurn({
+        sessionId,
+        surface: request.surface,
+        locale,
+        userMessage: request.message,
+        intent: 'glossary',
+        response,
+        runtime: this.config.assistantRuntime,
+        relatedFundIsins: requestedFundIsins,
+      });
+
+      return response;
+    }
+
+    if (!this.config.assistantEnabled) {
+      throw new ServiceUnavailableException(
+        'El asistente SORA no estÃ¡ disponible en este entorno.',
+      );
+    }
+
+    const intent = this.intentClassifier.classify(
+      request.message,
+      requestedFundIsins.length > 0,
+    );
+    const context = await this.contextBuilder.build(
+      request,
+      intent,
+      recentMessages,
+    );
+    const generatedText = await this.generateWithConfiguredRuntime(
+      context,
+      request.message,
+    );
+    const sanitizedText = this.guardrails.sanitize(generatedText);
+
+    const response = this.guardrails.assertResponse({
+      title: this.buildTitle(request.message, intent),
+      text: sanitizedText,
+      source: 'openai',
+      cached: false,
+      disclaimer: ASSISTANT_EDUCATIONAL_DISCLAIMER,
+      relatedFundIsin:
+        requestedFundIsins.length === 1 ? requestedFundIsins[0] : undefined,
+      promptVersion,
+      sessionId,
+    });
+
+    await this.conversationRepository.saveTurn({
+      sessionId,
+      surface: request.surface,
+      locale,
+      userMessage: request.message,
+      intent,
+      response,
+      runtime: this.config.assistantRuntime,
+      relatedFundIsins: requestedFundIsins,
+    });
+
+    return response;
+  }
+
+  private async generateWithConfiguredRuntime(
+    context: Awaited<ReturnType<AssistantContextBuilderService['build']>>,
+    message: string,
+  ): Promise<string> {
+    if (this.config.assistantRuntime === 'python-agent') {
+      return this.pythonAgentAssistant.generate(context, message);
+    }
+
+    return this.openAiAssistant.generate(context, message);
+  }
+
+  private getRequestedFundIsins(
+    request: AssistantChatRequest,
+  ): readonly string[] {
+    return [
+      ...new Set(
+        [
+          request.fund?.isin,
+          ...(request.funds?.map((fund) => fund.isin) ?? []),
+        ].filter((isin): isin is string => isin !== undefined),
+      ),
+    ];
+  }
+
+  private createSessionId(): string {
+    return `sora_${randomUUID()}`;
   }
 
   private buildTitle(message: string, intent: string): string {

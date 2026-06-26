@@ -22,5 +22,20 @@ services:
       retries: 5
       start_period: 10s
 
+  assistant-agent:
+    profiles:
+      - agent
+    build:
+      context: ./agent-service
+    container_name: inversora-assistant-agent
+    restart: unless-stopped
+    ports:
+      - '${SORA_AGENT_PORT:-8001}:8001'
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_AGENT_MODEL: ${OPENAI_AGENT_MODEL:-gpt-4o-mini}
+      SORA_BACKEND_BASE_URL: ${SORA_BACKEND_BASE_URL:-http://host.docker.internal:3000}
+      SORA_INTERNAL_API_KEY: ${SORA_INTERNAL_API_KEY:-}
+
 volumes:
   postgres_data:

@@ -1,9 +1,25 @@
 import { Injectable } from '@nestjs/common';
 
 import { FundsRepository } from '../../funds/repositories/funds.repository';
+import type { Fund } from '../../funds/entities/fund.schema';
 import { ScoringService } from '../../scoring/services/scoring.service';
-import type { AssistantExplainRequest } from '../entities/assistant-context.schema';
+import type {
+  AssistantChatRequest,
+  AssistantExplainRequest,
+} from '../entities/assistant-context.schema';
 import type { AssistantIntent } from '../entities/assistant-context.schema';
+import type { AssistantRecentMessage } from '../repositories/assistant-conversation.repository';
+
+type AssistantFundPromptContext = {
+  isin: string;
+  name: string;
+  benchmark: string | null;
+  ter: number | null;
+  score: number | null;
+  scoreSummary?: string;
+  scoreWarnings?: string[];
+  scoreVersion?: string;
+};
 
 /** Factual context passed to OpenAI for grounded explanations. */
 export type AssistantPromptContext = {
@@ -11,16 +27,10 @@ export type AssistantPromptContext = {
   intent: AssistantIntent;
   locale: string;
   userMessage: string;
-  fund?: {
-    isin: string;
-    name: string;
-    benchmark: string | null;
-    ter: number | null;
-    score: number | null;
-    scoreSummary?: string;
-    scoreWarnings?: string[];
-    scoreVersion?: string;
-  };
+  fund?: AssistantFundPromptContext;
+  funds?: AssistantFundPromptContext[];
+  sessionId?: string;
+  recentMessages?: readonly AssistantRecentMessage[];
 };
 
 /**
@@ -40,8 +50,9 @@ export class AssistantContextBuilderService {
    * @param intent - Classified assistant intent.
    */
   async build(
-    request: AssistantExplainRequest,
+    request: AssistantExplainRequest | AssistantChatRequest,
     intent: AssistantIntent,
+    recentMessages: readonly AssistantRecentMessage[] = [],
   ): Promise<AssistantPromptContext> {
     const locale = request.locale ?? 'es';
     const base: AssistantPromptContext = {
@@ -49,32 +60,68 @@ export class AssistantContextBuilderService {
       intent,
       locale,
       userMessage: request.message,
+      sessionId: 'sessionId' in request ? request.sessionId : undefined,
+      recentMessages: recentMessages.length > 0 ? recentMessages : undefined,
     };
 
-    if (request.fund === undefined) {
+    const requestedIsins = this.getRequestedIsins(request);
+
+    if (requestedIsins.length === 0) {
       return base;
     }
 
-    const fund = await this.fundsRepository.findByIsin(request.fund.isin);
+    const persistedFunds =
+      await this.fundsRepository.findByIsins(requestedIsins);
 
-    if (fund === null) {
+    if (persistedFunds.size === 0) {
       return base;
     }
 
-    const score = await this.scoringService.calculateScoreForFundId(fund.id);
+    const funds = await Promise.all(
+      requestedIsins
+        .map((isin) => ({ isin, fund: persistedFunds.get(isin) }))
+        .filter(
+          (entry): entry is { isin: string; fund: Fund } =>
+            entry.fund !== undefined,
+        )
+        .map((entry) => this.buildFundContext(entry.fund, entry.isin)),
+    );
 
     return {
       ...base,
-      fund: {
-        isin: fund.isin ?? request.fund.isin,
-        name: fund.name,
-        benchmark: fund.benchmark ?? null,
-        ter: fund.metrics.ter ?? null,
-        score: score?.score ?? null,
-        scoreSummary: score?.summary,
-        scoreWarnings: score?.warnings,
-        scoreVersion: score?.version,
-      },
+      fund: funds.length === 1 ? funds[0] : undefined,
+      funds,
+    };
+  }
+
+  private getRequestedIsins(
+    request: AssistantExplainRequest | AssistantChatRequest,
+  ): readonly string[] {
+    const isins = [
+      request.fund?.isin,
+      ...('funds' in request
+        ? (request.funds?.map((fund) => fund.isin) ?? [])
+        : []),
+    ].filter((isin): isin is string => isin !== undefined);
+
+    return [...new Set(isins)];
+  }
+
+  private async buildFundContext(
+    fund: Fund,
+    requestedIsin: string,
+  ): Promise<AssistantFundPromptContext> {
+    const score = await this.scoringService.calculateScoreForFundId(fund.id);
+
+    return {
+      isin: fund.isin ?? requestedIsin,
+      name: fund.name,
+      benchmark: fund.benchmark ?? null,
+      ter: fund.metrics.ter ?? null,
+      score: score?.score ?? null,
+      scoreSummary: score?.summary,
+      scoreWarnings: score?.warnings,
+      scoreVersion: score?.version,
     };
   }
 }

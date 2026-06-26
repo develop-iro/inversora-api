@@ -12,6 +12,7 @@
 | Buenas prácticas, ejemplos y anti-patrones de desarrollo | [development-guide.md](./development-guide.md) |
 | Integración FMP: endpoints, composición y fixtures | [fmp-provider.md](./fmp-provider.md) |
 | Capacidades FMP y roadmap de dataset | [fmp-capabilities-roadmap.md](./fmp-capabilities-roadmap.md) |
+| SORA: agente OpenAI y runtime Python | [openai-agent-python-backend.md](./openai-agent-python-backend.md) |
 | Score Inversora MVP (RN-04, spec de producción) | [scoring-rn-04.md](./scoring-rn-04.md) |
 | Decisión RN-04 vs mvp-1 | [architecture/adr-002-scoring-mvp-version.md](./architecture/adr-002-scoring-mvp-version.md) |
 | Campos editoriales (`badge`, `themeLabel`, `idealForBeginners`) | [fund-editorial-content.md](./fund-editorial-content.md) · [ADR-003](./architecture/adr-003-fund-editorial-fields.md) |

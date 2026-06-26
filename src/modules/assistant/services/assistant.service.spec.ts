@@ -5,28 +5,41 @@ import {
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { AppConfigService } from '../../../shared/config/config.service';
+import type {
+  AssistantExplainRequest,
+  AssistantIntent,
+} from '../entities/assistant-context.schema';
 import { AssistantCacheRepository } from '../repositories/assistant-cache.repository';
+import { AssistantConversationRepository } from '../repositories/assistant-conversation.repository';
 import { AssistantContextBuilderService } from './assistant-context.builder';
 import { AssistantOutputGuardrailsService } from './assistant-output.guardrails';
 import { AssistantService } from './assistant.service';
 import { GlossaryService } from './glossary.service';
 import { IntentClassifierService } from './intent-classifier.service';
 import { OpenAiAssistantService } from './openai-assistant.service';
+import { PythonAgentAssistantService } from './python-agent-assistant.service';
 
 describe('AssistantService', () => {
   let service: AssistantService;
   let config: {
     assistantEnabled: boolean;
+    assistantRuntime: 'nestjs' | 'python-agent';
     assistantPromptVersion: string;
     assistantCacheTtlDays: number;
   };
   let cacheRepository: { findValid: jest.Mock; save: jest.Mock };
+  let conversationRepository: {
+    findRecentMessages: jest.Mock;
+    saveTurn: jest.Mock;
+  };
   let openAiAssistant: { generate: jest.Mock };
+  let pythonAgentAssistant: { generate: jest.Mock };
   let contextBuilder: { build: jest.Mock };
 
   beforeEach(async () => {
     config = {
       assistantEnabled: false,
+      assistantRuntime: 'nestjs',
       assistantPromptVersion: 'sora-v1',
       assistantCacheTtlDays: 90,
     };
@@ -34,16 +47,26 @@ describe('AssistantService', () => {
       findValid: jest.fn().mockResolvedValue(null),
       save: jest.fn(),
     };
+    conversationRepository = {
+      findRecentMessages: jest.fn().mockResolvedValue([]),
+      saveTurn: jest.fn(),
+    };
     openAiAssistant = {
       generate: jest.fn(),
     };
+    pythonAgentAssistant = {
+      generate: jest.fn(),
+    };
     contextBuilder = {
-      build: jest.fn().mockResolvedValue({
-        surface: 'home',
-        intent: 'general',
-        locale: 'es',
-        userMessage: 'Explícame MSCI World en detalle educativo',
-      }),
+      build: jest.fn(
+        (request: AssistantExplainRequest, intent: AssistantIntent) =>
+          Promise.resolve({
+            surface: request.surface,
+            intent,
+            locale: request.locale ?? 'es',
+            userMessage: request.message,
+          }),
+      ),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -61,12 +84,20 @@ describe('AssistantService', () => {
           useValue: cacheRepository,
         },
         {
+          provide: AssistantConversationRepository,
+          useValue: conversationRepository,
+        },
+        {
           provide: AssistantContextBuilderService,
           useValue: contextBuilder,
         },
         {
           provide: OpenAiAssistantService,
           useValue: openAiAssistant,
+        },
+        {
+          provide: PythonAgentAssistantService,
+          useValue: pythonAgentAssistant,
         },
       ],
     }).compile();
@@ -135,7 +166,124 @@ describe('AssistantService', () => {
 
     expect(response.source).toBe('openai');
     expect(response.title).toBe('Respuesta de SORA');
+    expect(pythonAgentAssistant.generate).not.toHaveBeenCalled();
     expect(cacheRepository.save).toHaveBeenCalled();
+  });
+
+  it('generates Python agent responses when configured', async () => {
+    config.assistantEnabled = true;
+    config.assistantRuntime = 'python-agent';
+    pythonAgentAssistant.generate.mockResolvedValue(
+      'Respuesta educativa desde el agente Python.',
+    );
+
+    const response = await service.explain({
+      surface: 'home',
+      message: 'ExplÃ­came la diferencia entre dos fondos indexados',
+    });
+
+    expect(response.source).toBe('openai');
+    expect(openAiAssistant.generate).not.toHaveBeenCalled();
+    expect(pythonAgentAssistant.generate).toHaveBeenCalledWith(
+      expect.objectContaining({ surface: 'home', intent: 'compare' }),
+      'ExplÃ­came la diferencia entre dos fondos indexados',
+    );
+  });
+
+  it('generates uncached chat responses with selected funds', async () => {
+    config.assistantEnabled = true;
+    openAiAssistant.generate.mockResolvedValue(
+      'Comparacion educativa entre los fondos seleccionados.',
+    );
+
+    const response = await service.chat({
+      surface: 'compare',
+      message: 'Compara estos dos fondos',
+      sessionId: 'session-1',
+      funds: [{ isin: 'US78462F1030' }, { isin: 'US46090E1038' }],
+    });
+
+    expect(response).toMatchObject({
+      source: 'openai',
+      cached: false,
+      sessionId: 'session-1',
+      title: 'Cómo comparar fondos en Inversora',
+    });
+    expect(cacheRepository.findValid).not.toHaveBeenCalled();
+    expect(cacheRepository.save).not.toHaveBeenCalled();
+    expect(conversationRepository.saveTurn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sessionId: 'session-1',
+        surface: 'compare',
+        locale: 'es',
+        userMessage: 'Compara estos dos fondos',
+        intent: 'compare',
+        runtime: 'nestjs',
+        relatedFundIsins: ['US78462F1030', 'US46090E1038'],
+      }),
+    );
+    expect(contextBuilder.build).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sessionId: 'session-1',
+        funds: [{ isin: 'US78462F1030' }, { isin: 'US46090E1038' }],
+      }),
+      'compare',
+      [],
+    );
+  });
+
+  it('passes recent session messages into chat context', async () => {
+    config.assistantEnabled = true;
+    const recentMessages = [
+      {
+        role: 'user',
+        content: 'Que es el TER?',
+        intent: 'explain_term',
+        createdAt: '2026-06-25T08:00:00.000Z',
+      },
+      {
+        role: 'assistant',
+        content: 'El TER mide costes anuales.',
+        intent: 'explain_term',
+        createdAt: '2026-06-25T08:00:01.000Z',
+      },
+    ];
+    conversationRepository.findRecentMessages.mockResolvedValue(recentMessages);
+    openAiAssistant.generate.mockResolvedValue('Respuesta con memoria.');
+
+    await service.chat({
+      surface: 'home',
+      message: 'Y como afecta a largo plazo?',
+      sessionId: 'session-1',
+    });
+
+    expect(conversationRepository.findRecentMessages).toHaveBeenCalledWith(
+      'session-1',
+      8,
+    );
+    expect(contextBuilder.build).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionId: 'session-1' }),
+      'general',
+      recentMessages,
+    );
+  });
+
+  it('generates a session id for chat responses when the client omits one', async () => {
+    config.assistantEnabled = true;
+    openAiAssistant.generate.mockResolvedValue('Respuesta educativa.');
+
+    const response = await service.chat({
+      surface: 'home',
+      message: 'Pregunta general sobre fondos indexados',
+    });
+
+    expect(response.sessionId).toMatch(/^sora_/);
+    expect(conversationRepository.saveTurn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sessionId: response.sessionId,
+        userMessage: 'Pregunta general sobre fondos indexados',
+      }),
+    );
   });
 
   it('builds compare and score titles for OpenAI responses', async () => {

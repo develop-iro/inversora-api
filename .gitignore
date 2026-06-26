@@ -43,3 +43,9 @@ lerna-debug.log*
 # local MCP client configs may contain API keys
 .mcp.json
 mcp.json
+
+# Python assistant agent
+agent-service/.venv/
+agent-service/__pycache__/
+agent-service/**/__pycache__/
+agent-service/.pytest_cache/
