@@ -11,6 +11,7 @@ import {
   deleteFundBySymbol,
   INTEGRATION_FUND_SYMBOL,
   isDatabaseAvailable,
+  scoreAndPublishIntegrationFundById,
 } from './integration-test.utils';
 
 describe('Fund sync pipeline (integration)', () => {
@@ -167,18 +168,22 @@ describe('Fund sync pipeline (integration)', () => {
     const composition = await fundCompositionSyncService.syncFromFmp(
       INTEGRATION_FUND_SYMBOL,
     );
+    const publishedFund = await scoreAndPublishIntegrationFundById(
+      moduleRef!,
+      metadata.fund.id,
+    );
 
     expect(composition.holdingsSynced).toBeGreaterThan(0);
     expect(composition.allocationsSynced).toBeGreaterThan(0);
     expect(composition.asOf).toBe('2024-01-31');
 
-    const holdings = await fundsService.getFundHoldings(metadata.fund.id, {});
+    const holdings = await fundsService.getFundHoldings(publishedFund.id, {});
     const sectorExposure = await fundsService.getFundSectorExposure(
-      metadata.fund.id,
+      publishedFund.id,
       {},
     );
     const countryExposure = await fundsService.getFundCountryExposure(
-      metadata.fund.id,
+      publishedFund.id,
       {},
     );
 
@@ -202,7 +207,15 @@ describe('Fund sync pipeline (integration)', () => {
       incrementalPrices: false,
     });
 
-    const result = await fundDailySyncService.runDailySync();
+    const result = await fundDailySyncService.runManualSync({
+      symbols: [INTEGRATION_FUND_SYMBOL],
+      steps: {
+        metadata: true,
+        prices: false,
+        composition: true,
+        scoring: false,
+      },
+    });
     const fund = await fundsRepository.findBySymbolAndProvider(
       INTEGRATION_FUND_SYMBOL,
       'financial-modeling-prep',
@@ -221,7 +234,11 @@ describe('Fund sync pipeline (integration)', () => {
 
     expect(fund).not.toBeNull();
 
-    const holdings = await fundsService.getFundHoldings(fund!.id, {});
+    const publishedFund = await scoreAndPublishIntegrationFundById(
+      moduleRef!,
+      fund!.id,
+    );
+    const holdings = await fundsService.getFundHoldings(publishedFund.id, {});
 
     expect(holdings.holdings.length).toBe(3);
   });

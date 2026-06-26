@@ -1,9 +1,37 @@
 [
   {
-    "symbol": "VWCE.DE",
-    "name": "Vanguard FTSE All-World UCITS ETF (USD) Accumulating",
-    "currency": "EUR",
-    "exchangeFullName": "Deutsche Börse",
-    "exchange": "XETRA"
+    "symbol": "SPY",
+    "name": "State Street SPDR S&P 500 ETF Trust",
+    "currency": "USD",
+    "exchangeFullName": "New York Stock Exchange Arca",
+    "exchange": "AMEX"
+  },
+  {
+    "symbol": "SPYG",
+    "name": "State Street SPDR Portfolio S&P 500 Growth ETF",
+    "currency": "USD",
+    "exchangeFullName": "New York Stock Exchange Arca",
+    "exchange": "AMEX"
+  },
+  {
+    "symbol": "SPYM",
+    "name": "State Street SPDR Portfolio S&P 500 ETF",
+    "currency": "USD",
+    "exchangeFullName": "New York Stock Exchange Arca",
+    "exchange": "AMEX"
+  },
+  {
+    "symbol": "SPYV",
+    "name": "State Street SPDR Portfolio S&P 500 Value ETF",
+    "currency": "USD",
+    "exchangeFullName": "New York Stock Exchange Arca",
+    "exchange": "AMEX"
+  },
+  {
+    "symbol": "SPYD",
+    "name": "State Street SPDR Portfolio S&P 500 High Dividend ETF",
+    "currency": "USD",
+    "exchangeFullName": "New York Stock Exchange Arca",
+    "exchange": "AMEX"
   }
 ]

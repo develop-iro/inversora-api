@@ -1,7 +1,5 @@
 import type { TestingModule } from '@nestjs/testing';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { FundCompositionSyncService } from '../../src/modules/funds/services/fund-composition-sync.service';
-import { FundSyncService } from '../../src/modules/funds/services/fund-sync.service';
 import { FundDetailService } from '../../src/modules/bff/services/fund-detail.service';
 import { fundDetailResponseSchema } from '../../src/modules/bff/entities/fund-detail.schema';
 import { PrismaService } from '../../src/shared/database/prisma.service';
@@ -10,13 +8,12 @@ import {
   deleteFundBySymbol,
   INTEGRATION_FUND_SYMBOL,
   isDatabaseAvailable,
+  syncAndPublishIntegrationFund,
 } from './integration-test.utils';
 
 describe('Fund detail BFF (integration)', () => {
   let moduleRef: TestingModule | undefined;
   let prisma: PrismaService;
-  let fundSyncService: FundSyncService;
-  let fundCompositionSyncService: FundCompositionSyncService;
   let fundDetailService: FundDetailService;
   let skipSuite = false;
   let syncedIsin = 'US78462F1030';
@@ -33,8 +30,6 @@ describe('Fund detail BFF (integration)', () => {
 
     moduleRef = await createFundsIntegrationModule();
     prisma = moduleRef.get(PrismaService);
-    fundSyncService = moduleRef.get(FundSyncService);
-    fundCompositionSyncService = moduleRef.get(FundCompositionSyncService);
     fundDetailService = moduleRef.get(FundDetailService);
     await prisma.onModuleInit();
   });
@@ -56,18 +51,18 @@ describe('Fund detail BFF (integration)', () => {
 
     await deleteFundBySymbol(prisma, INTEGRATION_FUND_SYMBOL);
 
-    const syncResult = await fundSyncService.syncFromFmp(
+    const publishedFund = await syncAndPublishIntegrationFund(
+      moduleRef!,
       INTEGRATION_FUND_SYMBOL,
       {
         includePrices: true,
         historyFrom: '2024-01-01',
         historyTo: '2024-03-31',
         incrementalPrices: false,
+        composition: true,
       },
     );
-
-    await fundCompositionSyncService.syncFromFmp(INTEGRATION_FUND_SYMBOL);
-    syncedIsin = syncResult.fund.isin ?? syncedIsin;
+    syncedIsin = publishedFund.isin ?? syncedIsin;
   });
 
   it('should return 400 for an invalid ISIN format', async () => {
@@ -86,7 +81,7 @@ describe('Fund detail BFF (integration)', () => {
     }
 
     await expect(
-      fundDetailService.getFundDetailByIsin('IE00B4L5Y983'),
+      fundDetailService.getFundDetailByIsin('IE00TEST1234'),
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 

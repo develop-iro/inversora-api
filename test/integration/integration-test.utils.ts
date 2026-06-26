@@ -12,6 +12,13 @@ import { BffModule } from '../../src/modules/bff/bff.module';
 import { FundsModule } from '../../src/modules/funds/funds.module';
 import { ProvidersModule } from '../../src/modules/providers/providers.module';
 import { ScoringModule } from '../../src/modules/scoring/scoring.module';
+import type { Fund } from '../../src/modules/funds/entities/fund.schema';
+import type { FundSyncOptions } from '../../src/modules/funds/services/fund-sync.types';
+import { FundSyncService } from '../../src/modules/funds/services/fund-sync.service';
+import { FundCompositionSyncService } from '../../src/modules/funds/services/fund-composition-sync.service';
+import { CatalogVisibilityService } from '../../src/modules/funds/services/catalog-visibility.service';
+import { FundsRepository } from '../../src/modules/funds/repositories/funds.repository';
+import { ScoringService } from '../../src/modules/scoring/services/scoring.service';
 
 /** Symbol used by committed FMP fixtures and sync integration scenarios. */
 export const INTEGRATION_FUND_SYMBOL = 'SPY';
@@ -37,7 +44,10 @@ export const integrationTestEnv = {
   FMP_SAVE_FIXTURES: 'false',
   SYNC_SCHEDULER_ENABLED: 'false',
   SYNC_CRON_EXPRESSION: '0 6 * * *',
-  SYNC_FUND_SYMBOLS: '',
+  SYNC_FUND_SYMBOLS: 'SPY',
+  SYNC_ETF_LIST_DISCOVERY: 'false',
+  SYNC_DISCOVERY_MODE: 'all',
+  SYNC_COMPOSITION_ENABLED: 'true',
 } as const;
 
 /**
@@ -130,4 +140,60 @@ export async function deleteFundBySymbol(
       symbol: symbol.trim().toUpperCase(),
     },
   });
+}
+
+/**
+ * Syncs a fund from fixtures, optionally loads composition/prices, then scores and
+ * promotes it to public catalog visibility for BFF and read API integration tests.
+ *
+ * @param moduleRef - Active integration testing module.
+ * @param symbol - Fund ticker symbol.
+ * @param options - Optional metadata, price, and composition sync flags.
+ * @returns Persisted fund after scoring and visibility reconciliation.
+ */
+export async function syncAndPublishIntegrationFund(
+  moduleRef: TestingModule,
+  symbol: string,
+  options: FundSyncOptions & { composition?: boolean } = {},
+): Promise<Fund> {
+  const fundSyncService = moduleRef.get(FundSyncService);
+  const fundCompositionSyncService = moduleRef.get(FundCompositionSyncService);
+
+  const { composition = false, ...syncOptions } = options;
+  const syncResult = await fundSyncService.syncFromFmp(symbol, syncOptions);
+
+  if (composition) {
+    await fundCompositionSyncService.syncFromFmp(symbol);
+  }
+
+  return scoreAndPublishIntegrationFundById(moduleRef, syncResult.fund.id);
+}
+
+/**
+ * Persists a computed score and promotes a fund to public catalog visibility.
+ *
+ * @param moduleRef - Active integration testing module.
+ * @param fundId - Persisted fund identifier.
+ * @returns Fund after scoring and visibility reconciliation.
+ */
+export async function scoreAndPublishIntegrationFundById(
+  moduleRef: TestingModule,
+  fundId: string,
+): Promise<Fund> {
+  const scoringService = moduleRef.get(ScoringService);
+  const fundsRepository = moduleRef.get(FundsRepository);
+  const catalogVisibilityService = moduleRef.get(CatalogVisibilityService);
+
+  const computedScore = await scoringService.calculateScoreForFundId(fundId);
+
+  if (computedScore === null) {
+    throw new Error(`Unable to calculate score for fund ${fundId}`);
+  }
+
+  const scoredFund = await fundsRepository.updateScore(
+    fundId,
+    computedScore.score,
+  );
+
+  return catalogVisibilityService.applyAutomaticVisibilityRules(scoredFund);
 }
