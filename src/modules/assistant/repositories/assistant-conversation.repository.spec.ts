@@ -167,6 +167,24 @@ describe('AssistantConversationRepository', () => {
     });
   });
 
+  it('returns an empty list when limit is zero or negative', async () => {
+    await expect(
+      repository.findRecentMessages('session-1', 0),
+    ).resolves.toEqual([]);
+    await expect(
+      repository.findRecentMessages('session-1', -1),
+    ).resolves.toEqual([]);
+    expect(prisma.assistantConversation.findUnique).not.toHaveBeenCalled();
+  });
+
+  it('returns an empty list when the session does not exist', async () => {
+    prisma.assistantConversation.findUnique.mockResolvedValue(null);
+
+    await expect(
+      repository.findRecentMessages('missing-session', 5),
+    ).resolves.toEqual([]);
+  });
+
   it('returns recent messages in chronological order', async () => {
     prisma.assistantConversation.findUnique.mockResolvedValue({
       id: 'conversation-1',
@@ -175,7 +193,7 @@ describe('AssistantConversationRepository', () => {
         {
           role: 'assistant',
           content: 'Respuesta previa.',
-          intent: 'compare',
+          intent: null,
           createdAt: new Date('2026-06-25T08:00:02.000Z'),
         },
         {
@@ -199,7 +217,6 @@ describe('AssistantConversationRepository', () => {
       {
         role: 'assistant',
         content: 'Respuesta previa.',
-        intent: 'compare',
         createdAt: '2026-06-25T08:00:02.000Z',
       },
     ]);

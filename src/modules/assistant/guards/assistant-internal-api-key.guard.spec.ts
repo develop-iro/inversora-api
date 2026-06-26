@@ -40,6 +40,21 @@ describe('AssistantInternalApiKeyGuard', () => {
     expect(() =>
       guard.canActivate(createContext({ 'x-sora-internal-api-key': 'wrong' })),
     ).toThrow(UnauthorizedException);
+    expect(() =>
+      guard.canActivate(
+        createContext({ authorization: 'Basic test-sora-key' }),
+      ),
+    ).toThrow(UnauthorizedException);
+  });
+
+  it('rejects requests when internal auth is not configured', () => {
+    const guard = new AssistantInternalApiKeyGuard({
+      assistantInternalApiKey: undefined,
+    } as never);
+
+    expect(() =>
+      guard.canActivate(createContext({ 'x-sora-internal-api-key': 'any' })),
+    ).toThrow(UnauthorizedException);
   });
 });
 

@@ -53,6 +53,41 @@ describe('AssistantToolsService', () => {
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 
+  it('falls back to the requested isin when the fund has no isin stored', async () => {
+    fundsRepository.findByIsin.mockResolvedValue(
+      buildFund({ isin: null as unknown as string }),
+    );
+    scoringService.calculateScoreForFundId.mockResolvedValue(null);
+
+    await expect(
+      service.getFundSnapshot('us78462f1030'),
+    ).resolves.toMatchObject({
+      isin: 'US78462F1030',
+      score: { value: null },
+    });
+  });
+
+  it('skips missing funds when comparing snapshots', async () => {
+    const first = buildFund({
+      id: 'fund-1',
+      isin: 'US78462F1030',
+      symbol: 'SPY',
+    });
+    fundsRepository.findByIsins.mockResolvedValue(
+      new Map([['US78462F1030', first]]),
+    );
+    scoringService.calculateScoreForFundId.mockResolvedValue({
+      score: 88,
+      version: 'rn-04',
+    });
+
+    await expect(
+      service.compareFunds(['US78462F1030', 'US0000000000']),
+    ).resolves.toMatchObject({
+      funds: [{ isin: 'US78462F1030', score: { value: 88 } }],
+    });
+  });
+
   it('returns comparable fund snapshots in requested order', async () => {
     const first = buildFund({
       id: 'fund-1',

@@ -41,6 +41,7 @@ describe('PythonAgentAssistantService', () => {
         intent: 'general',
         locale: 'es',
         userMessage: 'Hola',
+        sessionId: 'session-1',
       },
       'Hola',
     );
@@ -52,12 +53,13 @@ describe('PythonAgentAssistantService', () => {
         message: 'Hola',
         surface: 'home',
         locale: 'es',
-        session_id: undefined,
+        session_id: 'session-1',
         context: {
           surface: 'home',
           intent: 'general',
           locale: 'es',
           userMessage: 'Hola',
+          sessionId: 'session-1',
         },
       },
       {
@@ -76,6 +78,22 @@ describe('PythonAgentAssistantService', () => {
         model: 'gpt-4o-mini',
       },
     });
+
+    await expect(
+      service.generate(
+        {
+          surface: 'home',
+          intent: 'general',
+          locale: 'es',
+          userMessage: 'Hola',
+        },
+        'Hola',
+      ),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+  });
+
+  it('throws a service unavailable error when the HTTP client fails', async () => {
+    httpClient.post.mockRejectedValue(new Error('network down'));
 
     await expect(
       service.generate(

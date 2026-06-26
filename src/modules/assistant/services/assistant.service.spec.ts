@@ -268,6 +268,61 @@ describe('AssistantService', () => {
     );
   });
 
+  it('rejects forbidden chat messages', async () => {
+    await expect(
+      service.chat({
+        surface: 'home',
+        message: 'Deberia comprar SPY ahora?',
+        sessionId: 'session-1',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('returns glossary chat responses without OpenAI', async () => {
+    const response = await service.chat({
+      surface: 'home',
+      message: 'Que es el TER?',
+      sessionId: 'session-1',
+      locale: 'es',
+    });
+
+    expect(response.source).toBe('glossary');
+    expect(openAiAssistant.generate).not.toHaveBeenCalled();
+    expect(conversationRepository.saveTurn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sessionId: 'session-1',
+        intent: 'glossary',
+        locale: 'es',
+      }),
+    );
+  });
+
+  it('throws when chat misses glossary and assistant is disabled', async () => {
+    await expect(
+      service.chat({
+        surface: 'home',
+        message: 'Explícame MSCI World en detalle educativo',
+        sessionId: 'session-1',
+      }),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+  });
+
+  it('returns relatedFundIsin for chat requests with a single selected fund', async () => {
+    config.assistantEnabled = true;
+    openAiAssistant.generate.mockResolvedValue(
+      'Explicacion educativa del fondo.',
+    );
+
+    const response = await service.chat({
+      surface: 'fund_detail',
+      message: 'Explicame este fondo',
+      sessionId: 'session-1',
+      fund: { isin: 'US78462F1030' },
+    });
+
+    expect(response.relatedFundIsin).toBe('US78462F1030');
+  });
+
   it('generates a session id for chat responses when the client omits one', async () => {
     config.assistantEnabled = true;
     openAiAssistant.generate.mockResolvedValue('Respuesta educativa.');
