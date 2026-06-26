@@ -141,6 +141,9 @@ describe('FundSyncService', () => {
       },
     });
     expect(fundPriceSyncService.syncFromFmp).not.toHaveBeenCalled();
+    expect(
+      catalogVisibilityService.applyAutomaticVisibilityRules,
+    ).toHaveBeenCalledWith(persistedFund);
   });
 
   it('should delegate price history sync when includePrices is enabled', async () => {

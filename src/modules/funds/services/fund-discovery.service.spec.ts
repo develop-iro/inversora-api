@@ -53,6 +53,13 @@ describe('FundDiscoveryService', () => {
     await expect(service.resolveSyncSymbols()).resolves.toEqual(['SPY']);
   });
 
+  it('should return an empty universe when no symbols are configured', async () => {
+    config.syncFundSymbols = [];
+
+    await expect(service.resolveSyncSymbols()).resolves.toEqual([]);
+    expect(fmpProvider.listEtfCatalogSymbols).not.toHaveBeenCalled();
+  });
+
   it('should append curated non-US tickers when discovery is enabled', async () => {
     config.syncEtfListDiscoveryEnabled = true;
 
@@ -69,6 +76,25 @@ describe('FundDiscoveryService', () => {
       mode: 'all',
       offset: 0,
       limit: 50,
+    });
+  });
+
+  it('should honor discovery overrides when loading etf-list symbols', async () => {
+    config.syncFundSymbols = [];
+
+    await expect(
+      service.resolveSyncSymbols({
+        discover: true,
+        discoveryMode: 'indexed',
+        discoveryOffset: 5,
+        discoveryLimit: 10,
+      }),
+    ).resolves.toEqual(['VOO', 'VTI', 'IWDA.L', 'CSPX.L', 'VWCE.DE']);
+
+    expect(fmpProvider.listEtfCatalogSymbols).toHaveBeenCalledWith({
+      mode: 'indexed',
+      offset: 5,
+      limit: 10,
     });
   });
 });

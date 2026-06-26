@@ -55,6 +55,11 @@ describe('AppConfigService', () => {
     expect(service.syncSchedulerEnabled).toBe(false);
     expect(service.syncCronExpression).toBe('0 6 * * *');
     expect(service.syncFundSymbols).toEqual([]);
+    expect(service.syncEtfListDiscoveryEnabled).toBe(false);
+    expect(service.syncDiscoveryLimit).toBe(50);
+    expect(service.syncDiscoveryOffset).toBe(0);
+    expect(service.syncDiscoveryMode).toBe('all');
+    expect(service.syncCompositionEnabled).toBe(false);
     expect(service.adminSyncEnabled).toBe(false);
     expect(service.adminCatalogEnabled).toBe(false);
     expect(service.adminApiEnabled).toBe(false);
@@ -146,5 +151,35 @@ describe('AppConfigService', () => {
     expect(service.openAiModel).toBe('gpt-4o-mini');
     expect(service.assistantPromptVersion).toBe('sora-v2');
     expect(service.assistantCacheTtlDays).toBe(30);
+  });
+
+  it('should expose ETF discovery sync configuration', async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        ConfigModule.forRoot({
+          isGlobal: true,
+          ignoreEnvFile: true,
+          load: [
+            () =>
+              validateEnv({
+                ...validEnv,
+                SYNC_ETF_LIST_DISCOVERY: 'true',
+                SYNC_DISCOVERY_LIMIT: '25',
+                SYNC_DISCOVERY_OFFSET: '10',
+                SYNC_DISCOVERY_MODE: 'indexed',
+                SYNC_COMPOSITION_ENABLED: 'true',
+              }),
+          ],
+        }),
+      ],
+      providers: [AppConfigService],
+    }).compile();
+
+    service = module.get(AppConfigService);
+    expect(service.syncEtfListDiscoveryEnabled).toBe(true);
+    expect(service.syncDiscoveryLimit).toBe(25);
+    expect(service.syncDiscoveryOffset).toBe(10);
+    expect(service.syncDiscoveryMode).toBe('indexed');
+    expect(service.syncCompositionEnabled).toBe(true);
   });
 });

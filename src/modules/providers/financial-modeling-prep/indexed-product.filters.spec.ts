@@ -55,5 +55,12 @@ describe('indexed-product.filters', () => {
         name: 'Capital Group Global Growth Equity ETF',
       }),
     ).toBe(false);
+
+    expect(
+      isIndexedEtfListEntry({
+        symbol: 'ABC',
+        name: 'Not a fund product',
+      }),
+    ).toBe(false);
   });
 });

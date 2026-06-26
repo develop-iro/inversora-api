@@ -209,6 +209,18 @@ describe('FundsService', () => {
     });
   });
 
+  it('should delegate catalog summary reads to GetCatalogSummaryUseCase', async () => {
+    const summary = {
+      total: 14,
+      byVisibility: { visible: 10, quarantined: 3, blocked: 1 },
+      asOf: '2024-01-01T00:00:00.000Z',
+    };
+    getCatalogSummaryUseCase.execute.mockResolvedValue(summary);
+
+    await expect(service.getCatalogSummary()).resolves.toBe(summary);
+    expect(getCatalogSummaryUseCase.execute).toHaveBeenCalledTimes(1);
+  });
+
   it('should return a fund by id', async () => {
     await expect(
       service.getFundById('550e8400-e29b-41d4-a716-446655440000'),
