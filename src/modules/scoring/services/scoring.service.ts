@@ -42,6 +42,9 @@ const FACTOR_LABELS = {
   age: 'Antigüedad del fondo',
 } as const;
 
+/** Maximum parallel metric builds during bulk scoring (avoids Prisma pool exhaustion). */
+const SCORING_METRICS_BATCH_SIZE = 4;
+
 /**
  * Domain service that computes the Invesora Score for index funds and ETFs.
  *
@@ -198,11 +201,13 @@ export class ScoringService {
       };
     }
 
-    const entries = await Promise.all(
-      funds.map(async (fund) => ({
+    const entries = await mapInBatches(
+      funds,
+      SCORING_METRICS_BATCH_SIZE,
+      async (fund) => ({
         fund,
         metrics: await this.buildMetricsForFund(fund),
-      })),
+      }),
     );
     const scores = this.calculateCategoryScores(entries);
     const results: ScoringSyncItemResult[] = [];
@@ -272,4 +277,27 @@ export class ScoringService {
       })),
     );
   }
+}
+
+/**
+ * Maps items through an async function in small concurrent batches.
+ *
+ * @param items - Items to process.
+ * @param batchSize - Maximum concurrent mapper invocations.
+ * @param mapper - Async transform for a single item.
+ */
+async function mapInBatches<TItem, TResult>(
+  items: readonly TItem[],
+  batchSize: number,
+  mapper: (item: TItem) => Promise<TResult>,
+): Promise<TResult[]> {
+  const results: TResult[] = [];
+
+  for (let index = 0; index < items.length; index += batchSize) {
+    const batch = items.slice(index, index + batchSize);
+    const batchResults = await Promise.all(batch.map((item) => mapper(item)));
+    results.push(...batchResults);
+  }
+
+  return results;
 }

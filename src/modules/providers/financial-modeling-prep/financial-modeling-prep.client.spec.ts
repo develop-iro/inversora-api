@@ -182,4 +182,23 @@ describe('FinancialModelingPrepClient', () => {
       ExternalHttpError,
     );
   });
+
+  it('should fetch the ETF catalog list from FMP', async () => {
+    const payload = [
+      { symbol: 'SPY', name: 'SPDR S&P 500 ETF Trust' },
+      { symbol: 'QQQ', name: 'Invesco QQQ Trust' },
+    ];
+    httpClient.get.mockResolvedValue({ data: payload });
+
+    await expect(client.fetchEtfList()).resolves.toEqual(payload);
+    expect(httpClient.get).toHaveBeenCalledWith(
+      `${FMP_DEFAULT_BASE_URL}/stable/etf-list`,
+      {
+        provider: 'financial-modeling-prep',
+        params: {
+          apikey: 'test-api-key',
+        },
+      },
+    );
+  });
 });

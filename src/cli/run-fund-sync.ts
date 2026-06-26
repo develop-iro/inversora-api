@@ -116,6 +116,42 @@ function parseCliArgs(args: readonly string[]): Record<string, unknown> {
       case '--no-scoring':
         steps.scoring = false;
         break;
+      case '--discover':
+        body.discover = true;
+        break;
+      case '--discovery-limit': {
+        const value = args[index + 1];
+
+        if (value === undefined) {
+          throw new Error('--discovery-limit requires a positive integer');
+        }
+
+        body.discoveryLimit = Number.parseInt(value, 10);
+        index += 1;
+        break;
+      }
+      case '--discovery-offset': {
+        const value = args[index + 1];
+
+        if (value === undefined) {
+          throw new Error('--discovery-offset requires a non-negative integer');
+        }
+
+        body.discoveryOffset = Number.parseInt(value, 10);
+        index += 1;
+        break;
+      }
+      case '--discovery-mode': {
+        const value = args[index + 1];
+
+        if (value === undefined || (value !== 'all' && value !== 'indexed')) {
+          throw new Error('--discovery-mode requires `all` or `indexed`');
+        }
+
+        body.discoveryMode = value;
+        index += 1;
+        break;
+      }
       case '--help':
         printHelp();
         process.exit(0);
@@ -150,9 +186,14 @@ Options:
   --full-prices           Disable incremental price sync
   --from YYYY-MM-DD       Lower bound for historical prices
   --to YYYY-MM-DD         Upper bound for historical prices
+  --discover              Merge symbols from FMP etf-list
+  --discovery-mode MODE   all (full ~6k catalog) or indexed (~1k heuristics)
+  --discovery-offset N    Skip first N etf-list symbols (batch pagination)
+  --discovery-limit N     Cap etf-list symbols per run (default: env SYNC_DISCOVERY_LIMIT)
   --help                  Show this message
 
 Examples:
+  npm run sync:run -- --discover --discovery-mode all --discovery-offset 0 --discovery-limit 50 --no-composition
   npm run sync:run -- --symbols SPY,QQQ
   npm run sync:run -- --symbols SPY --no-composition --no-scoring
   npm run sync:run -- --scoring

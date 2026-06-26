@@ -1,6 +1,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { GetFundsUseCase } from '../get-funds';
+import { GetCatalogSummaryUseCase } from '../get-catalog-summary';
 import { FundsRepository } from '../repositories/funds.repository';
 import { CatalogVisibilityService } from './catalog-visibility.service';
 import { FundCompositionService } from './fund-composition.service';
@@ -37,6 +38,7 @@ const fund = {
 describe('FundsService', () => {
   let service: FundsService;
   let getFundsUseCase: { execute: jest.Mock };
+  let getCatalogSummaryUseCase: { execute: jest.Mock };
   let repository: { findMany: jest.Mock; findById: jest.Mock };
   let fundPricesService: {
     getLatestDate: jest.Mock;
@@ -49,6 +51,9 @@ describe('FundsService', () => {
 
   beforeEach(async () => {
     getFundsUseCase = {
+      execute: jest.fn(),
+    };
+    getCatalogSummaryUseCase = {
       execute: jest.fn(),
     };
     repository = {
@@ -148,6 +153,10 @@ describe('FundsService', () => {
           useValue: getFundsUseCase,
         },
         {
+          provide: GetCatalogSummaryUseCase,
+          useValue: getCatalogSummaryUseCase,
+        },
+        {
           provide: FundsRepository,
           useValue: repository,
         },
@@ -198,6 +207,18 @@ describe('FundsService', () => {
       sortBy: 'score',
       sortOrder: 'desc',
     });
+  });
+
+  it('should delegate catalog summary reads to GetCatalogSummaryUseCase', async () => {
+    const summary = {
+      total: 14,
+      byVisibility: { visible: 10, quarantined: 3, blocked: 1 },
+      asOf: '2024-01-01T00:00:00.000Z',
+    };
+    getCatalogSummaryUseCase.execute.mockResolvedValue(summary);
+
+    await expect(service.getCatalogSummary()).resolves.toBe(summary);
+    expect(getCatalogSummaryUseCase.execute).toHaveBeenCalledTimes(1);
   });
 
   it('should return a fund by id', async () => {

@@ -1,7 +1,5 @@
 import type { TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
-import { FundCompositionSyncService } from '../../src/modules/funds/services/fund-composition-sync.service';
-import { FundSyncService } from '../../src/modules/funds/services/fund-sync.service';
 import { FeaturedFundsService } from '../../src/modules/bff/services/featured-funds.service';
 import { featuredFundsResponseSchema } from '../../src/modules/bff/entities/featured-funds.schema';
 import { PrismaService } from '../../src/shared/database/prisma.service';
@@ -10,13 +8,12 @@ import {
   deleteFundBySymbol,
   INTEGRATION_FUND_SYMBOL,
   isDatabaseAvailable,
+  syncAndPublishIntegrationFund,
 } from './integration-test.utils';
 
 describe('Featured funds BFF (integration)', () => {
   let moduleRef: TestingModule | undefined;
   let prisma: PrismaService;
-  let fundSyncService: FundSyncService;
-  let fundCompositionSyncService: FundCompositionSyncService;
   let featuredFundsService: FeaturedFundsService;
   let skipSuite = false;
   let syncedIsin = 'US78462F1030';
@@ -33,8 +30,6 @@ describe('Featured funds BFF (integration)', () => {
 
     moduleRef = await createFundsIntegrationModule();
     prisma = moduleRef.get(PrismaService);
-    fundSyncService = moduleRef.get(FundSyncService);
-    fundCompositionSyncService = moduleRef.get(FundCompositionSyncService);
     featuredFundsService = moduleRef.get(FeaturedFundsService);
     await prisma.onModuleInit();
   });
@@ -56,18 +51,18 @@ describe('Featured funds BFF (integration)', () => {
 
     await deleteFundBySymbol(prisma, INTEGRATION_FUND_SYMBOL);
 
-    const syncResult = await fundSyncService.syncFromFmp(
+    const publishedFund = await syncAndPublishIntegrationFund(
+      moduleRef!,
       INTEGRATION_FUND_SYMBOL,
       {
         includePrices: true,
         historyFrom: '2024-01-01',
         historyTo: '2024-03-31',
         incrementalPrices: false,
+        composition: true,
       },
     );
-
-    await fundCompositionSyncService.syncFromFmp(INTEGRATION_FUND_SYMBOL);
-    syncedIsin = syncResult.fund.isin ?? syncedIsin;
+    syncedIsin = publishedFund.isin ?? syncedIsin;
   });
 
   it('should return 400 for an invalid quarter format', async () => {

@@ -199,6 +199,45 @@ describe('ScoringService', () => {
     );
   });
 
+  it('should batch metrics loading when recalculating many funds', async () => {
+    const funds = Array.from({ length: 5 }, (_, index) => ({
+      ...fund,
+      id: `550e8400-e29b-41d4-a716-44665544000${index}`,
+      symbol: `FUND${index}`,
+    }));
+    fundsRepository.findAll.mockResolvedValueOnce(funds);
+
+    const result = await service.recalculateAllScores();
+
+    expect(result.total).toBe(5);
+    expect(result.updated).toBe(5);
+    expect(fundsRepository.updateScore).toHaveBeenCalledTimes(5);
+  });
+
+  it('should score funds within and across benchmark peer groups', () => {
+    const peerFund = {
+      ...fund,
+      id: '660e8400-e29b-41d4-a716-446655440001',
+      symbol: 'VOO',
+    };
+    const otherBenchmarkFund = {
+      ...fund,
+      id: '770e8400-e29b-41d4-a716-446655440002',
+      symbol: 'EEM',
+      benchmark: 'MSCI Emerging Markets',
+    };
+
+    const scores = service.calculateCategoryScores([
+      { fund, metrics: scoringMetrics },
+      { fund: peerFund, metrics: scoringMetrics },
+      { fund: otherBenchmarkFund, metrics: scoringMetrics },
+    ]);
+
+    expect(scores.size).toBe(3);
+    expect(scores.get(fund.id)?.score).toBeGreaterThanOrEqual(0);
+    expect(scores.get(otherBenchmarkFund.id)?.score).toBeGreaterThanOrEqual(0);
+  });
+
   it('should skip persistence when a computed score is missing', async () => {
     jest.spyOn(service, 'calculateCategoryScores').mockReturnValue(new Map());
 

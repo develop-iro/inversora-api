@@ -19,7 +19,7 @@ import {
 
 const visibilityQaFundData = {
   symbol: 'VISQA',
-  isin: 'IE00B4L5Y983',
+  isin: 'IE00VISQA001',
   name: 'Visibility QA Fund',
   provider: FundProvider.FINANCIAL_MODELING_PREP,
   category: FundCategory.INDEX,

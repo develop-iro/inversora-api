@@ -18,6 +18,10 @@ export const adminSyncRequestSchema = z.object({
   incrementalPrices: z.boolean().optional(),
   historyFrom: z.string().regex(isoDatePattern).optional(),
   historyTo: z.string().regex(isoDatePattern).optional(),
+  discover: z.boolean().optional(),
+  discoveryLimit: z.coerce.number().int().positive().optional(),
+  discoveryOffset: z.coerce.number().int().nonnegative().optional(),
+  discoveryMode: z.enum(['all', 'indexed']).optional(),
 });
 
 /** Validated manual admin sync request payload. */
@@ -49,5 +53,9 @@ export function mapAdminSyncRequestToManualSyncOptions(
     incrementalPrices: request.incrementalPrices,
     historyFrom: request.historyFrom,
     historyTo: request.historyTo,
+    discover: request.discover,
+    discoveryLimit: request.discoveryLimit,
+    discoveryOffset: request.discoveryOffset,
+    discoveryMode: request.discoveryMode,
   };
 }

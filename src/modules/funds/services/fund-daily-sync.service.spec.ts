@@ -6,7 +6,9 @@ import { FundsRepository } from '../repositories/funds.repository';
 import { ScoringService } from '../../scoring/services/scoring.service';
 import { FundCompositionSyncService } from './fund-composition-sync.service';
 import { FundDailySyncService } from './fund-daily-sync.service';
+import { FundDiscoveryService } from './fund-discovery.service';
 import { FundPriceSyncService } from './fund-price-sync.service';
+import { ExternalHttpError } from '../../../shared/http/external-http.error';
 import { FundSyncService } from './fund-sync.service';
 
 const validEnv = {
@@ -20,7 +22,34 @@ const validEnv = {
   DATABASE_URL: 'postgresql://inversora:inversora@localhost:5432/inversora',
   FMP_API_KEY: 'test-fmp-api-key',
   SYNC_FUND_SYMBOLS: 'SPY, QQQ',
+  SYNC_COMPOSITION_ENABLED: 'true',
 };
+
+import type { FundDiscoveryOptions } from './fund-discovery.service';
+
+function createFundDiscoveryMock(symbols: readonly string[] = ['SPY', 'QQQ']): {
+  resolveSyncSymbols: jest.Mock<Promise<string[]>, [FundDiscoveryOptions?]>;
+} {
+  return {
+    resolveSyncSymbols: jest.fn(
+      (options?: FundDiscoveryOptions): Promise<string[]> => {
+        if (options?.explicitSymbols && options.explicitSymbols.length > 0) {
+          return Promise.resolve(
+            options.explicitSymbols.map((symbol) =>
+              symbol.trim().toUpperCase(),
+            ),
+          );
+        }
+
+        if (symbols.length > 0) {
+          return Promise.resolve([...symbols]);
+        }
+
+        return Promise.resolve([]);
+      },
+    ),
+  };
+}
 
 describe('FundDailySyncService', () => {
   let service: FundDailySyncService;
@@ -28,6 +57,7 @@ describe('FundDailySyncService', () => {
   let fundPriceSyncService: { syncFromFmp: jest.Mock };
   let fundCompositionSyncService: { syncFromFmp: jest.Mock };
   let fundsRepository: { findAll: jest.Mock };
+  let fundDiscoveryService: { resolveSyncSymbols: jest.Mock };
   let scoringService: { recalculateAllScores: jest.Mock };
 
   beforeEach(async () => {
@@ -52,6 +82,7 @@ describe('FundDailySyncService', () => {
     fundsRepository = {
       findAll: jest.fn(),
     };
+    fundDiscoveryService = createFundDiscoveryMock();
     scoringService = {
       recalculateAllScores: jest.fn().mockResolvedValue({
         total: 2,
@@ -86,6 +117,10 @@ describe('FundDailySyncService', () => {
         {
           provide: FundCompositionSyncService,
           useValue: fundCompositionSyncService,
+        },
+        {
+          provide: FundDiscoveryService,
+          useValue: fundDiscoveryService,
         },
         {
           provide: ScoringService,
@@ -181,6 +216,10 @@ describe('FundDailySyncService', () => {
         {
           provide: FundCompositionSyncService,
           useValue: fundCompositionSyncService,
+        },
+        {
+          provide: FundDiscoveryService,
+          useValue: createFundDiscoveryMock([]),
         },
         {
           provide: ScoringService,
@@ -318,6 +357,10 @@ describe('FundDailySyncService', () => {
           useValue: fundCompositionSyncService,
         },
         {
+          provide: FundDiscoveryService,
+          useValue: createFundDiscoveryMock([]),
+        },
+        {
           provide: ScoringService,
           useValue: scoringService,
         },
@@ -394,6 +437,131 @@ describe('FundDailySyncService', () => {
     expect(result.results).toEqual([]);
     expect(fundSyncService.syncFromFmp).not.toHaveBeenCalled();
     expect(scoringService.recalculateAllScores).toHaveBeenCalledTimes(1);
+  });
+
+  it('should skip price sync for non-US listed symbols', async () => {
+    const result = await service.runManualSync({
+      symbols: ['IWDA.L'],
+      steps: {
+        metadata: false,
+        prices: true,
+        composition: false,
+        scoring: false,
+      },
+    });
+
+    expect(result.results[0]).toMatchObject({
+      symbol: 'IWDA.L',
+      status: 'success',
+      pricesSkipped: true,
+    });
+    expect(fundPriceSyncService.syncFromFmp).not.toHaveBeenCalled();
+  });
+
+  it('should skip composition when FMP reports a paid-plan restriction', async () => {
+    fundCompositionSyncService.syncFromFmp.mockRejectedValueOnce(
+      new ExternalHttpError({
+        message: 'Payment required',
+        statusCode: 402,
+        provider: 'financial-modeling-prep',
+      }),
+    );
+
+    const result = await service.runManualSync({
+      symbols: ['SPY'],
+      steps: {
+        metadata: false,
+        prices: false,
+        composition: true,
+        scoring: false,
+      },
+    });
+
+    expect(result.results[0]).toMatchObject({
+      symbol: 'SPY',
+      status: 'success',
+      compositionSkipped: true,
+    });
+  });
+
+  it('should rethrow composition errors that are not paid-plan restrictions', async () => {
+    fundCompositionSyncService.syncFromFmp.mockRejectedValueOnce(
+      new Error('Provider unavailable'),
+    );
+
+    await expect(
+      service.runManualSync({
+        symbols: ['SPY'],
+        steps: {
+          metadata: false,
+          prices: false,
+          composition: true,
+          scoring: false,
+        },
+      }),
+    ).resolves.toMatchObject({
+      failed: 1,
+      results: [
+        {
+          symbol: 'SPY',
+          status: 'failed',
+          error: 'Provider unavailable',
+        },
+      ],
+    });
+  });
+
+  it('should pass ETF discovery settings from config during daily sync', async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        ConfigModule.forRoot({
+          isGlobal: true,
+          ignoreEnvFile: true,
+          load: [
+            () =>
+              validateEnv({
+                ...validEnv,
+                SYNC_ETF_LIST_DISCOVERY: 'true',
+              }),
+          ],
+        }),
+      ],
+      providers: [
+        AppConfigService,
+        FundDailySyncService,
+        {
+          provide: FundsRepository,
+          useValue: fundsRepository,
+        },
+        {
+          provide: FundSyncService,
+          useValue: fundSyncService,
+        },
+        {
+          provide: FundPriceSyncService,
+          useValue: fundPriceSyncService,
+        },
+        {
+          provide: FundCompositionSyncService,
+          useValue: fundCompositionSyncService,
+        },
+        {
+          provide: FundDiscoveryService,
+          useValue: fundDiscoveryService,
+        },
+        {
+          provide: ScoringService,
+          useValue: scoringService,
+        },
+      ],
+    }).compile();
+
+    service = module.get(FundDailySyncService);
+    await service.runDailySync();
+
+    expect(fundDiscoveryService.resolveSyncSymbols).toHaveBeenCalledWith({
+      discover: true,
+    });
   });
 
   it('should include execution metadata in manual sync responses', async () => {

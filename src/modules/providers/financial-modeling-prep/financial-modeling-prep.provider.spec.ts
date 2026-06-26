@@ -16,6 +16,7 @@ describe('FinancialModelingPrepProvider', () => {
     fetchEtfHoldings: jest.Mock;
     fetchEtfSectorWeightings: jest.Mock;
     fetchEtfCountryWeightings: jest.Mock;
+    fetchEtfList: jest.Mock;
   };
   let fixtures: {
     readFixture: jest.Mock;
@@ -36,6 +37,7 @@ describe('FinancialModelingPrepProvider', () => {
       fetchEtfHoldings: jest.fn(),
       fetchEtfSectorWeightings: jest.fn(),
       fetchEtfCountryWeightings: jest.fn(),
+      fetchEtfList: jest.fn(),
     };
 
     fixtures = {
@@ -219,6 +221,39 @@ describe('FinancialModelingPrepProvider', () => {
         latestClose: 482.88,
         periodStartClose: 472.65,
       },
+    });
+  });
+
+  it('should return normalized fund profile metadata without prices', async () => {
+    fixtures.readFixture.mockImplementation((fileName: string) => {
+      if (fileName.includes('etf-info')) {
+        return Promise.resolve([
+          {
+            symbol: 'SPY',
+            name: 'State Street SPDR S&P 500 ETF Trust',
+            expenseRatio: 0.0945,
+            assetsUnderManagement: 520000000000,
+            etfCompany: 'State Street',
+          },
+        ]);
+      }
+
+      return Promise.resolve([]);
+    });
+    fixtures.filterSearchFixture.mockReturnValue([
+      {
+        symbol: 'SPY',
+        name: 'State Street SPDR S&P 500 ETF Trust',
+        currency: 'USD',
+        exchange: 'AMEX',
+        exchangeFullName: 'New York Stock Exchange Arca',
+      },
+    ]);
+
+    await expect(provider.getFundProfile('spy')).resolves.toMatchObject({
+      symbol: 'SPY',
+      benchmark: 'S&P 500',
+      expenseRatio: 0.0945,
     });
   });
 
@@ -524,6 +559,51 @@ describe('FinancialModelingPrepProvider', () => {
     ]);
 
     expect(client.searchByName).toHaveBeenCalledWith('Vanguard Total');
+    configMock.fmpUsesMocks = true;
+  });
+
+  it('should list all ETF catalog symbols from fixtures with offset and limit', async () => {
+    fixtures.readFixture.mockResolvedValue([
+      { symbol: 'SPY', name: 'SPDR S&P 500 ETF Trust' },
+      { symbol: 'QQQ', name: 'Invesco QQQ Trust' },
+      { symbol: 'ARKK', name: 'ARK Innovation ETF' },
+    ]);
+
+    await expect(
+      provider.listEtfCatalogSymbols({ mode: 'all', offset: 1, limit: 1 }),
+    ).resolves.toEqual(['QQQ']);
+  });
+
+  it('should filter indexed ETF catalog symbols by default', async () => {
+    fixtures.readFixture.mockResolvedValue([
+      { symbol: 'SPY', name: 'SPDR S&P 500 ETF Trust' },
+      { symbol: 'ARKK', name: 'ARK Innovation ETF' },
+    ]);
+
+    await expect(provider.listEtfCatalogSymbols()).resolves.toEqual(['SPY']);
+  });
+
+  it('should list indexed ETF symbols through the catalog helper', async () => {
+    fixtures.readFixture.mockResolvedValue([
+      { symbol: 'VTI', name: 'Vanguard Total Stock Market ETF' },
+    ]);
+
+    await expect(provider.listIndexedEtfSymbols({ limit: 5 })).resolves.toEqual(
+      ['VTI'],
+    );
+  });
+
+  it('should fetch the live ETF list when mocks are disabled', async () => {
+    configMock.fmpUsesMocks = false;
+    client.fetchEtfList.mockResolvedValue([
+      { symbol: 'spy', name: 'SPDR S&P 500 ETF Trust' },
+    ]);
+
+    await expect(
+      provider.listEtfCatalogSymbols({ mode: 'all', limit: 10 }),
+    ).resolves.toEqual(['SPY']);
+
+    expect(client.fetchEtfList).toHaveBeenCalledTimes(1);
     configMock.fmpUsesMocks = true;
   });
 });

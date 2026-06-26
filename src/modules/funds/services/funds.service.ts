@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { z } from 'zod';
 import type { FundListResponse } from '../entities/fund-list.schema';
+import type { CatalogSummaryResponse } from '../../../core/api/schemas/catalog-summary.schema';
 import { fundIdParamSchema, fundSchema } from '../entities/fund.schema';
 import type { Fund } from '../entities/fund.schema';
 import {
@@ -27,6 +28,7 @@ import { FUND_SECTOR_EXPOSURE_CATEGORY } from '../entities/fund-sector-exposure.
 import type { FundSectorExposureResponse } from '../entities/fund-sector-exposure.schema';
 import { FundsRepository } from '../repositories/funds.repository';
 import { GetFundsUseCase } from '../get-funds';
+import { GetCatalogSummaryUseCase } from '../get-catalog-summary';
 import { CatalogVisibilityService } from './catalog-visibility.service';
 import { FundCompositionService } from './fund-composition.service';
 import { FundPricesService } from './fund-prices.service';
@@ -38,6 +40,7 @@ import { FundPricesService } from './fund-prices.service';
 export class FundsService {
   constructor(
     private readonly getFundsUseCase: GetFundsUseCase,
+    private readonly getCatalogSummaryUseCase: GetCatalogSummaryUseCase,
     private readonly fundsRepository: FundsRepository,
     private readonly catalogVisibilityService: CatalogVisibilityService,
     private readonly fundPricesService: FundPricesService,
@@ -54,6 +57,15 @@ export class FundsService {
     rawQuery: Record<string, unknown>,
   ): Promise<FundListResponse> {
     return this.getFundsUseCase.execute(rawQuery);
+  }
+
+  /**
+   * Returns aggregate catalog counts for ingestion monitoring.
+   *
+   * @returns Total funds and per-visibility breakdown.
+   */
+  async getCatalogSummary(): Promise<CatalogSummaryResponse> {
+    return this.getCatalogSummaryUseCase.execute();
   }
 
   /**

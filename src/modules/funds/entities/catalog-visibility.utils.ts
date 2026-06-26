@@ -57,20 +57,17 @@ export function isCatalogDataComplete(fund: Fund): boolean {
 /**
  * Resolves the catalog visibility state that automatic rules would assign.
  *
- * Blocked and quarantined funds are never promoted automatically; operators
- * must change those states through the admin API. Visible funds are quarantined
- * when minimum catalog data is missing.
+ * `blocked` funds are never promoted automatically; operators must unblock them
+ * through the admin API. `quarantined` funds promote to `visible` when catalog
+ * data becomes complete. Visible funds are quarantined when data is missing.
  *
  * @param fund - Persisted fund entity.
  */
 export function resolveAutomaticCatalogVisibility(
   fund: Fund,
 ): CatalogVisibility {
-  if (
-    fund.catalogVisibility === 'blocked' ||
-    fund.catalogVisibility === 'quarantined'
-  ) {
-    return fund.catalogVisibility;
+  if (fund.catalogVisibility === 'blocked') {
+    return 'blocked';
   }
 
   return isCatalogDataComplete(fund) ? 'visible' : 'quarantined';

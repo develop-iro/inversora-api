@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { FinancialModelingPrepProvider } from '../../providers/financial-modeling-prep/financial-modeling-prep.provider';
 import { mapProviderFundProfileToUpsertFundInput } from '../entities/fund.mapper';
 import { FundsRepository } from '../repositories/funds.repository';
+import { CatalogVisibilityService } from './catalog-visibility.service';
 import { FundPriceSyncService } from './fund-price-sync.service';
 import type { FundSyncOptions, FundSyncResult } from './fund-sync.types';
 
@@ -14,6 +15,7 @@ export class FundSyncService {
     private readonly fmpProvider: FinancialModelingPrepProvider,
     private readonly fundsRepository: FundsRepository,
     private readonly fundPriceSyncService: FundPriceSyncService,
+    private readonly catalogVisibilityService: CatalogVisibilityService,
   ) {}
 
   /**
@@ -33,9 +35,11 @@ export class FundSyncService {
     const profile = await this.fmpProvider.getFundProfile(normalizedSymbol);
     const upsertInput = mapProviderFundProfileToUpsertFundInput(profile);
     const { fund, created } = await this.fundsRepository.upsert(upsertInput);
+    const fundWithVisibility =
+      await this.catalogVisibilityService.applyAutomaticVisibilityRules(fund);
 
     if (!options.includePrices) {
-      return { fund, created };
+      return { fund: fundWithVisibility, created };
     }
 
     const priceSyncResult = await this.fundPriceSyncService.syncFromFmp(
@@ -48,7 +52,7 @@ export class FundSyncService {
     );
 
     return {
-      fund,
+      fund: fundWithVisibility,
       created,
       pricesSynced: priceSyncResult.pricesSynced,
     };

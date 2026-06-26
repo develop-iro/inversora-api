@@ -40,6 +40,17 @@ export const envSchema = z
       .string()
       .default('')
       .transform((value) => parseFundSymbolList(value)),
+    SYNC_ETF_LIST_DISCOVERY: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((value) => value === 'true'),
+    SYNC_DISCOVERY_LIMIT: z.coerce.number().int().positive().default(50),
+    SYNC_DISCOVERY_OFFSET: z.coerce.number().int().nonnegative().default(0),
+    SYNC_DISCOVERY_MODE: z.enum(['all', 'indexed']).default('all'),
+    SYNC_COMPOSITION_ENABLED: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((value) => value === 'true'),
     ADMIN_SYNC_ENABLED: z
       .enum(['true', 'false'])
       .default('false')
@@ -59,6 +70,14 @@ export const envSchema = z
       .enum(['true', 'false'])
       .default('false')
       .transform((value) => value === 'true'),
+    ASSISTANT_RUNTIME: z.enum(['nestjs', 'python-agent']).default('nestjs'),
+    ASSISTANT_AGENT_BASE_URL: z.string().url().default('http://localhost:8001'),
+    ASSISTANT_AGENT_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(10_000),
+    ASSISTANT_INTERNAL_API_KEY: z.string().min(8).optional(),
     ASSISTANT_PROMPT_VERSION: z.string().min(1).default('sora-v1'),
     ASSISTANT_CACHE_TTL_DAYS: z.coerce.number().int().positive().default(90),
   })
@@ -74,11 +93,16 @@ export const envSchema = z
       });
     }
 
-    if (env.ASSISTANT_ENABLED && env.OPENAI_API_KEY === undefined) {
+    if (
+      env.ASSISTANT_ENABLED &&
+      env.ASSISTANT_RUNTIME === 'nestjs' &&
+      env.OPENAI_API_KEY === undefined
+    ) {
       ctx.addIssue({
         code: 'custom',
         path: ['OPENAI_API_KEY'],
-        message: 'OPENAI_API_KEY is required when ASSISTANT_ENABLED is true',
+        message:
+          'OPENAI_API_KEY is required when ASSISTANT_ENABLED is true and ASSISTANT_RUNTIME is nestjs',
       });
     }
   });

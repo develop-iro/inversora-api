@@ -10,10 +10,40 @@ import {
   normalizeProviderFundProfile,
   normalizeProviderFundSearchResults,
   normalizeProviderFundSectorWeightings,
+  resolveFundBenchmark,
+  extractBenchmarkFromDescription,
+  deriveBenchmarkLabelFromName,
 } from './financial-modeling-prep.normalizers';
 import { isIndexedProductSearchResult } from './indexed-product.filters';
 
 describe('FinancialModelingPrep normalizers', () => {
+  it('should resolve benchmarks from name, description, or derived labels', () => {
+    expect(resolveFundBenchmark('State Street SPDR S&P 500 ETF Trust')).toBe(
+      'S&P 500',
+    );
+
+    expect(
+      resolveFundBenchmark(
+        'Some ETF',
+        'This fund aims to replicate the FTSE All-World Index.',
+      ),
+    ).toBe('FTSE All-World Index');
+
+    expect(resolveFundBenchmark('VanEck Semiconductor ETF')).toBe(
+      'VanEck Semiconductor',
+    );
+  });
+
+  it('should extract benchmark labels from descriptions and derived names', () => {
+    expect(extractBenchmarkFromDescription('   ')).toBeUndefined();
+    expect(
+      extractBenchmarkFromDescription(
+        'The fund seeks to track the MSCI World Index.',
+      ),
+    ).toBe('MSCI World Index');
+    expect(deriveBenchmarkLabelFromName('   ')).toBe('Broad Market Index');
+  });
+
   it('should identify index funds and exclude specialty products', () => {
     expect(
       isIndexedProductSearchResult({
@@ -266,13 +296,17 @@ describe('FinancialModelingPrep normalizers', () => {
       normalizeProviderFundSectorWeightings([
         {
           sector: 'Healthcare',
-          weight: 31.5,
+          weight: 0,
+        },
+        {
+          sector: 'Energy',
+          weight: 0.25,
         },
       ]),
     ).toEqual([
       {
-        sector: 'Healthcare',
-        weightPercentage: 31.5,
+        sector: 'Energy',
+        weightPercentage: 25,
       },
     ]);
   });

@@ -45,6 +45,7 @@ describe('FundsRepository', () => {
       upsert: jest.Mock;
       update: jest.Mock;
       count: jest.Mock;
+      groupBy: jest.Mock;
     };
     fundCatalogVisibilityAudit: {
       create: jest.Mock;
@@ -64,6 +65,7 @@ describe('FundsRepository', () => {
           score: new Decimal('87.00'),
         }),
         count: jest.fn().mockResolvedValue(0),
+        groupBy: jest.fn().mockResolvedValue([]),
       },
       fundCatalogVisibilityAudit: {
         create: jest.fn(),
@@ -373,6 +375,34 @@ describe('FundsRepository', () => {
         createdAt: new Date('2024-03-01T00:00:00.000Z'),
       },
     ]);
+  });
+
+  it('should count funds grouped by catalog visibility', async () => {
+    prisma.fund.groupBy.mockResolvedValueOnce([
+      {
+        catalogVisibility: CatalogVisibility.VISIBLE,
+        _count: { _all: 12 },
+      },
+      {
+        catalogVisibility: CatalogVisibility.QUARANTINED,
+        _count: { _all: 3 },
+      },
+      {
+        catalogVisibility: CatalogVisibility.BLOCKED,
+        _count: { _all: 1 },
+      },
+    ]);
+
+    await expect(repository.countByCatalogVisibility()).resolves.toEqual({
+      visible: 12,
+      quarantined: 3,
+      blocked: 1,
+    });
+
+    expect(prisma.fund.groupBy).toHaveBeenCalledWith({
+      by: ['catalogVisibility'],
+      _count: { _all: true },
+    });
   });
 
   it('should update editorial fields', async () => {

@@ -25,6 +25,7 @@ import {
 } from './financial-modeling-prep.normalizers';
 import {
   fmpCountryWeightingSchema,
+  fmpEtfListEntrySchema,
   fmpFundHoldingSchema,
   fmpFundProfileSchema,
   fmpHistoricalPriceSchema,
@@ -38,8 +39,11 @@ import type {
 import type {
   ProviderFundDetailOptions,
   ProviderFundHistoryOptions,
+  ListEtfCatalogSymbolsOptions,
+  ListIndexedEtfSymbolsOptions,
   SearchIndexedProductsOptions,
 } from './financial-modeling-prep.types';
+import { isIndexedEtfListEntry } from './indexed-product.filters';
 
 /**
  * Outbound provider for indexed product discovery, profiles, and historical data.
@@ -80,6 +84,59 @@ export class FinancialModelingPrepProvider {
     }
 
     return normalizedResults.slice(0, options.limit);
+  }
+
+  /**
+   * Lists ETF symbols from the FMP `etf-list` catalog.
+   *
+   * Starter returns ~6k US rows (`symbol`, `name` only). Use `mode: 'indexed'`
+   * to keep the beginner index-fund slice, or `mode: 'all'` to ingest the full
+   * paid catalog. Non-US UCITS are not present in this feed.
+   *
+   * @param options - Discovery mode, offset, and limit for batch ingestion.
+   * @returns Normalized uppercase ticker symbols.
+   */
+  async listEtfCatalogSymbols(
+    options?: ListEtfCatalogSymbolsOptions,
+  ): Promise<string[]> {
+    const rawEntries = this.config.fmpUsesMocks
+      ? await this.getFixtureArray(
+          FMP_FIXTURE_FILES.etfList,
+          fmpEtfListEntrySchema,
+          'etf-list',
+        )
+      : await this.client.fetchEtfList();
+
+    const mode = options?.mode ?? 'indexed';
+    const filtered =
+      mode === 'all'
+        ? rawEntries
+        : rawEntries.filter((entry) => isIndexedEtfListEntry(entry));
+
+    const symbols = filtered.map((entry) => entry.symbol.trim().toUpperCase());
+    const offset = options?.offset ?? 0;
+    const sliced = symbols.slice(offset);
+
+    if (options?.limit === undefined) {
+      return sliced;
+    }
+
+    return sliced.slice(0, options.limit);
+  }
+
+  /**
+   * Lists index-tracking ETF symbols from the FMP ETF catalog.
+   *
+   * @param options - Optional maximum number of symbols to return.
+   * @returns Normalized uppercase ticker symbols.
+   */
+  async listIndexedEtfSymbols(
+    options?: ListIndexedEtfSymbolsOptions,
+  ): Promise<string[]> {
+    return this.listEtfCatalogSymbols({
+      mode: 'indexed',
+      limit: options?.limit,
+    });
   }
 
   /**

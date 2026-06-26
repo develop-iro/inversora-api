@@ -33,12 +33,21 @@ describe('validateEnv', () => {
       SYNC_SCHEDULER_ENABLED: false,
       SYNC_CRON_EXPRESSION: '0 6 * * *',
       SYNC_FUND_SYMBOLS: [],
+      SYNC_ETF_LIST_DISCOVERY: false,
+      SYNC_DISCOVERY_LIMIT: 50,
+      SYNC_DISCOVERY_OFFSET: 0,
+      SYNC_DISCOVERY_MODE: 'all',
+      SYNC_COMPOSITION_ENABLED: false,
       ADMIN_SYNC_ENABLED: false,
       ADMIN_CATALOG_ENABLED: false,
       ADMIN_API_KEY: undefined,
       CORS_ORIGINS: [],
       OPENAI_MODEL: 'gpt-4o-mini',
       ASSISTANT_ENABLED: false,
+      ASSISTANT_RUNTIME: 'nestjs',
+      ASSISTANT_AGENT_BASE_URL: 'http://localhost:8001',
+      ASSISTANT_AGENT_TIMEOUT_MS: 10_000,
+      ASSISTANT_INTERNAL_API_KEY: undefined,
       ASSISTANT_PROMPT_VERSION: 'sora-v1',
       ASSISTANT_CACHE_TTL_DAYS: 90,
     });
@@ -73,12 +82,21 @@ describe('validateEnv', () => {
       SYNC_SCHEDULER_ENABLED: false,
       SYNC_CRON_EXPRESSION: '0 6 * * *',
       SYNC_FUND_SYMBOLS: [],
+      SYNC_ETF_LIST_DISCOVERY: false,
+      SYNC_DISCOVERY_LIMIT: 50,
+      SYNC_DISCOVERY_OFFSET: 0,
+      SYNC_DISCOVERY_MODE: 'all',
+      SYNC_COMPOSITION_ENABLED: false,
       ADMIN_SYNC_ENABLED: false,
       ADMIN_CATALOG_ENABLED: false,
       ADMIN_API_KEY: undefined,
       CORS_ORIGINS: [],
       OPENAI_MODEL: 'gpt-4o-mini',
       ASSISTANT_ENABLED: false,
+      ASSISTANT_RUNTIME: 'nestjs',
+      ASSISTANT_AGENT_BASE_URL: 'http://localhost:8001',
+      ASSISTANT_AGENT_TIMEOUT_MS: 10_000,
+      ASSISTANT_INTERNAL_API_KEY: undefined,
       ASSISTANT_PROMPT_VERSION: 'sora-v1',
       ASSISTANT_CACHE_TTL_DAYS: 90,
     });
@@ -149,6 +167,22 @@ describe('validateEnv', () => {
         ASSISTANT_ENABLED: 'true',
       }),
     ).toThrow('Environment validation failed');
+  });
+
+  it('should allow the Python agent runtime without a NestJS OpenAI key', () => {
+    expect(
+      validateEnv({
+        ...validEnv,
+        ASSISTANT_ENABLED: 'true',
+        ASSISTANT_RUNTIME: 'python-agent',
+        ASSISTANT_AGENT_BASE_URL: 'http://localhost:8001',
+      }),
+    ).toMatchObject({
+      ASSISTANT_ENABLED: true,
+      ASSISTANT_RUNTIME: 'python-agent',
+      ASSISTANT_AGENT_BASE_URL: 'http://localhost:8001',
+      ASSISTANT_AGENT_TIMEOUT_MS: 10_000,
+    });
   });
 
   it('should parse CORS origins from a comma-separated list', () => {

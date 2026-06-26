@@ -4,6 +4,7 @@ import { ProvidersModule } from '../providers/providers.module';
 import { ScoringModule } from '../scoring/scoring.module';
 import { FundsController } from './controllers/funds.controller';
 import { GetFundsUseCase } from './get-funds';
+import { GetCatalogSummaryUseCase } from './get-catalog-summary';
 import { FundSyncScheduler } from './schedulers/fund-sync.scheduler';
 import { CatalogVisibilityService } from './services/catalog-visibility.service';
 import { FundEditorialService } from './services/fund-editorial.service';
@@ -13,6 +14,7 @@ import { FundsRepository } from './repositories/funds.repository';
 import { FundCompositionService } from './services/fund-composition.service';
 import { FundCompositionSyncService } from './services/fund-composition-sync.service';
 import { FundDailySyncService } from './services/fund-daily-sync.service';
+import { FundDiscoveryService } from './services/fund-discovery.service';
 import { FundPriceSyncService } from './services/fund-price-sync.service';
 import { FundPricesService } from './services/fund-prices.service';
 import { FundSyncService } from './services/fund-sync.service';
@@ -27,6 +29,7 @@ import { FundsService } from './services/funds.service';
   providers: [
     FundsRepository,
     GetFundsUseCase,
+    GetCatalogSummaryUseCase,
     FundsService,
     FundPricesRepository,
     FundPricesService,
@@ -35,6 +38,7 @@ import { FundsService } from './services/funds.service';
     FundCompositionSyncService,
     FundPriceSyncService,
     FundSyncService,
+    FundDiscoveryService,
     FundDailySyncService,
     FundSyncScheduler,
     CatalogVisibilityService,
