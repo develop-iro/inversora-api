@@ -118,7 +118,13 @@ export class AssistantToolsService {
         };
       });
 
-    return evaluateComparisonFairness(profiles);
+    const result = evaluateComparisonFairness(profiles);
+
+    return {
+      isFair: result.isFair,
+      warnings: [...result.warnings],
+      funds: result.funds.map((fund) => ({ ...fund })),
+    };
   }
 
   getGlossaryTerm(term: string): AssistantGlossaryToolResponse {
