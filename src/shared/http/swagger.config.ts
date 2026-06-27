@@ -23,6 +23,16 @@ export function setupSwagger(app: INestApplication): void {
       },
       'admin-api-key',
     )
+    .addApiKey(
+      {
+        type: 'apiKey',
+        in: 'header',
+        name: 'X-Sora-Internal-Api-Key',
+        description:
+          'Shared secret for internal SORA tool endpoints (ASSISTANT_INTERNAL_API_KEY). Bearer auth is also supported.',
+      },
+      'sora-internal-api-key',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

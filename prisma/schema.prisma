@@ -42,36 +42,36 @@ enum FundAllocationCategory {
 
 /// Persisted catalog product used as the main domain record in Inversora.
 model Fund {
-  id           String          @id @default(uuid())
-  symbol       String
-  isin         String?         @unique
-  name         String
-  provider     FundProvider
-  category     FundCategory
-  vehicle      FundVehicleType
-  currency     String          @db.Char(3)
-  benchmark     String?
-  volatility    Decimal?     @db.Decimal(8, 4)
-  drawdown      Decimal?     @db.Decimal(8, 4)
-  ter           Decimal?     @db.Decimal(8, 4)
-  aum           Decimal?     @db.Decimal(20, 2)
-  per           Decimal?     @db.Decimal(10, 4)
-  dividendYield Decimal?     @db.Decimal(8, 4)
-  trackingError Decimal?     @db.Decimal(8, 4)
-  riskLevel     Int?
-  score              Decimal?           @db.Decimal(5, 2)
+  id                      String                       @id @default(uuid())
+  symbol                  String
+  isin                    String?                      @unique
+  name                    String
+  provider                FundProvider
+  category                FundCategory
+  vehicle                 FundVehicleType
+  currency                String                       @db.Char(3)
+  benchmark               String?
+  volatility              Decimal?                     @db.Decimal(8, 4)
+  drawdown                Decimal?                     @db.Decimal(8, 4)
+  ter                     Decimal?                     @db.Decimal(8, 4)
+  aum                     Decimal?                     @db.Decimal(20, 2)
+  per                     Decimal?                     @db.Decimal(10, 4)
+  dividendYield           Decimal?                     @db.Decimal(8, 4)
+  trackingError           Decimal?                     @db.Decimal(8, 4)
+  riskLevel               Int?
+  score                   Decimal?                     @db.Decimal(5, 2)
   /// Product badge shown on fund cards (Spanish MVP copy; not sourced from FMP).
-  badge              String             @default("")
+  badge                   String                       @default("")
   /// Investment theme label for catalog cards (Spanish MVP copy).
-  themeLabel         String             @default("")
+  themeLabel              String                       @default("")
   /// Editorial flag: fund is suitable for beginner investors.
-  idealForBeginners  Boolean            @default(false)
-  catalogVisibility  CatalogVisibility  @default(VISIBLE)
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-  prices             FundPrice[]
-  holdings           FundHolding[]
-  allocations        FundAllocation[]
+  idealForBeginners       Boolean                      @default(false)
+  catalogVisibility       CatalogVisibility            @default(VISIBLE)
+  createdAt               DateTime                     @default(now())
+  updatedAt               DateTime                     @updatedAt
+  prices                  FundPrice[]
+  holdings                FundHolding[]
+  allocations             FundAllocation[]
   catalogVisibilityAudits FundCatalogVisibilityAudit[]
 
   @@unique([symbol, provider])
@@ -173,4 +173,38 @@ model AssistantResponseCache {
   @@index([intent, normalizedQuery])
   @@index([expiresAt])
   @@map("assistant_response_cache")
+}
+
+/// Persisted SORA conversation envelope for chat sessions.
+model AssistantConversation {
+  id            String             @id @default(cuid())
+  sessionId     String             @unique
+  surface       String
+  locale        String             @default("es")
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  lastMessageAt DateTime           @default(now())
+  messages      AssistantMessage[]
+
+  @@index([lastMessageAt])
+  @@map("assistant_conversations")
+}
+
+/// Individual user/assistant turn stored for audit and future memory.
+model AssistantMessage {
+  id               String                @id @default(cuid())
+  conversationId   String
+  role             String
+  content          String
+  intent           String?
+  source           String?
+  runtime          String?
+  promptVersion    String?
+  relatedFundIsins String[]              @default([])
+  metadataJson     Json?
+  createdAt        DateTime              @default(now())
+  conversation     AssistantConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@map("assistant_messages")
 }

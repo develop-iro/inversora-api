@@ -151,6 +151,8 @@ describe('AppConfigService', () => {
     expect(service.openAiModel).toBe('gpt-4o-mini');
     expect(service.assistantPromptVersion).toBe('sora-v2');
     expect(service.assistantCacheTtlDays).toBe(30);
+    expect(service.assistantRateLimitMaxRequests).toBe(30);
+    expect(service.assistantRateLimitWindowSeconds).toBe(60);
   });
 
   it('should expose ETF discovery sync configuration', async () => {

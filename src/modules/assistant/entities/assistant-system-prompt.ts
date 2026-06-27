@@ -1,6 +1,6 @@
 /** Fixed educational disclaimer for all SORA responses (HU-38, HU-40). */
 export const ASSISTANT_EDUCATIONAL_DISCLAIMER =
-  'Inversora no oferece asesoramiento financiero personalizado. Esta respuesta es orientativa y educativa. El rendimiento pasado no garantiza resultados futuros.';
+  'Inversora no ofrece asesoramiento financiero personalizado. Esta respuesta es orientativa y educativa. El rendimiento pasado no garantiza resultados futuros.';
 
 /** System prompt for SORA — versioned via ASSISTANT_PROMPT_VERSION. */
 export const SORA_SYSTEM_PROMPT = `Eres SORA, el asistente educativo de Inversora. Tu rol es explicar conceptos de inversión y los datos de fondos indexados en lenguaje claro para principiantes.

@@ -49,7 +49,7 @@ export class AssistantOutputGuardrailsService {
    *
    * @param response - Assistant response payload.
    */
-  assertResponse(response: AssistantExplainResponse): AssistantExplainResponse {
+  assertResponse<T extends AssistantExplainResponse>(response: T): T {
     return {
       ...response,
       text: this.sanitize(response.text),
