@@ -78,6 +78,27 @@ jobs:
 
   # ── Phase 2: Tests ──────────────────────────────────────────────────────────
 
+  agent-service-tests:
+    name: SORA agent service tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install agent service dependencies
+        working-directory: agent-service
+        run: python -m pip install -e ".[dev]"
+
+      - name: Run agent service tests
+        working-directory: agent-service
+        run: pytest
+
   unit-tests:
     name: Unit tests
     needs: build
@@ -163,7 +184,7 @@ jobs:
 
   report:
     name: Test report
-    needs: [unit-tests, integration-tests]
+    needs: [agent-service-tests, unit-tests, integration-tests]
     if: always() && !cancelled()
     runs-on: ubuntu-latest
 
@@ -179,6 +200,7 @@ jobs:
         env:
           UNIT_RESULT: ${{ needs.unit-tests.result }}
           INTEGRATION_RESULT: ${{ needs.integration-tests.result }}
+          AGENT_RESULT: ${{ needs.agent-service-tests.result }}
         run: |
           {
             echo "## CI test report"
@@ -187,6 +209,7 @@ jobs:
             echo "| --- | --- |"
             echo "| Unit tests | ${UNIT_RESULT} |"
             echo "| Integration tests | ${INTEGRATION_RESULT} |"
+            echo "| SORA agent service | ${AGENT_RESULT} |"
             echo ""
           } >> "${GITHUB_STEP_SUMMARY}"
 
@@ -209,5 +232,5 @@ jobs:
           fi
 
       - name: Enforce test job results
-        if: needs.unit-tests.result != 'success' || needs.integration-tests.result != 'success'
+        if: needs.agent-service-tests.result != 'success' || needs.unit-tests.result != 'success' || needs.integration-tests.result != 'success'
         run: exit 1

@@ -50,7 +50,7 @@ describe('validateEnv', () => {
       ASSISTANT_INTERNAL_API_KEY: undefined,
       ASSISTANT_RATE_LIMIT_MAX_REQUESTS: 30,
       ASSISTANT_RATE_LIMIT_WINDOW_SECONDS: 60,
-      ASSISTANT_PROMPT_VERSION: 'sora-v1',
+      ASSISTANT_PROMPT_VERSION: 'sora-v2',
       ASSISTANT_CACHE_TTL_DAYS: 90,
     });
   });
@@ -101,7 +101,7 @@ describe('validateEnv', () => {
       ASSISTANT_INTERNAL_API_KEY: undefined,
       ASSISTANT_RATE_LIMIT_MAX_REQUESTS: 30,
       ASSISTANT_RATE_LIMIT_WINDOW_SECONDS: 60,
-      ASSISTANT_PROMPT_VERSION: 'sora-v1',
+      ASSISTANT_PROMPT_VERSION: 'sora-v2',
       ASSISTANT_CACHE_TTL_DAYS: 90,
     });
   });

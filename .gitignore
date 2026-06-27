@@ -49,3 +49,4 @@ agent-service/.venv/
 agent-service/__pycache__/
 agent-service/**/__pycache__/
 agent-service/.pytest_cache/
+agent-service/*.egg-info/

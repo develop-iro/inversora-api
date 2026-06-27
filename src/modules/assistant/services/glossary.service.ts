@@ -56,4 +56,33 @@ export class GlossaryService {
 
     return bestMatch;
   }
+
+  /**
+   * Looks up a glossary entry by term or keyword.
+   *
+   * @param term - Glossary term or keyword to resolve.
+   */
+  lookup(term: string): GlossaryEntry | null {
+    const normalized = normalizeAssistantQuery(term);
+
+    if (normalized.length === 0) {
+      return null;
+    }
+
+    for (const entry of ASSISTANT_GLOSSARY) {
+      if (normalizeAssistantQuery(entry.term) === normalized) {
+        return entry;
+      }
+
+      const keywordMatch = entry.keywords.some(
+        (keyword) => normalizeAssistantQuery(keyword) === normalized,
+      );
+
+      if (keywordMatch) {
+        return entry;
+      }
+    }
+
+    return null;
+  }
 }

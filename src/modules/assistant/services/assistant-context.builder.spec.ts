@@ -102,7 +102,9 @@ describe('AssistantContextBuilderService', () => {
             isin: 'US78462F1030',
             name: 'SPDR S&P 500 ETF Trust',
             benchmark: 'S&P 500',
-            metrics: { ter: 0.09 },
+            currency: 'USD',
+            vehicle: 'etf',
+            metrics: { ter: 0.09, trackingError: 0.03 },
           },
         ],
       ]),
@@ -112,6 +114,12 @@ describe('AssistantContextBuilderService', () => {
       summary: 'Buen equilibrio entre coste y tamano.',
       warnings: ['Tracking error no disponible'],
       version: 'rn-04',
+      breakdown: {
+        ter: { points: 36, maxPoints: 40, label: 'TER' },
+        tracking: { points: 34, maxPoints: 40, label: 'Tracking error' },
+        aum: { points: 8, maxPoints: 10, label: 'AUM' },
+        age: { points: 10, maxPoints: 10, label: 'Antigüedad' },
+      },
     });
 
     const context = await service.build(
@@ -129,10 +137,19 @@ describe('AssistantContextBuilderService', () => {
       name: 'SPDR S&P 500 ETF Trust',
       benchmark: 'S&P 500',
       ter: 0.09,
+      trackingError: 0.03,
+      currency: 'USD',
+      vehicle: 'etf',
       score: 88,
       scoreSummary: 'Buen equilibrio entre coste y tamano.',
       scoreWarnings: ['Tracking error no disponible'],
       scoreVersion: 'rn-04',
+      scoreBreakdown: {
+        ter: { points: 36, maxPoints: 40, label: 'TER' },
+        tracking: { points: 34, maxPoints: 40, label: 'Tracking error' },
+        aum: { points: 8, maxPoints: 10, label: 'AUM' },
+        age: { points: 10, maxPoints: 10, label: 'Antigüedad' },
+      },
     });
   });
 
@@ -176,7 +193,9 @@ describe('AssistantContextBuilderService', () => {
             isin: 'US78462F1030',
             name: 'SPDR S&P 500 ETF Trust',
             benchmark: 'S&P 500',
-            metrics: { ter: 0.09 },
+            currency: 'USD',
+            vehicle: 'etf',
+            metrics: { ter: 0.09, trackingError: 0.03 },
           },
         ],
         [
@@ -186,7 +205,9 @@ describe('AssistantContextBuilderService', () => {
             isin: 'US46090E1038',
             name: 'iShares Russell 2000 ETF',
             benchmark: 'Russell 2000',
-            metrics: { ter: 0.19 },
+            currency: 'USD',
+            vehicle: 'etf',
+            metrics: { ter: 0.19, trackingError: 0.08 },
           },
         ],
       ]),
@@ -226,5 +247,11 @@ describe('AssistantContextBuilderService', () => {
       isin: 'US46090E1038',
       score: 72,
     });
+    expect(context.comparisonHints?.isFair).toBe(false);
+    expect(
+      context.comparisonHints?.warnings.some((warning) =>
+        warning.includes('benchmarks distintos'),
+      ),
+    ).toBe(true);
   });
 });

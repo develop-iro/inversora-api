@@ -88,8 +88,9 @@ export const envSchema = z
       .int()
       .positive()
       .default(60),
-    ASSISTANT_PROMPT_VERSION: z.string().min(1).default('sora-v1'),
+    ASSISTANT_PROMPT_VERSION: z.string().min(1).default('sora-v2'),
     ASSISTANT_CACHE_TTL_DAYS: z.coerce.number().int().positive().default(90),
+    BRANDFETCH_CLIENT_ID: z.string().min(1).optional(),
   })
   .superRefine((env, ctx) => {
     const adminApiEnabled = env.ADMIN_SYNC_ENABLED || env.ADMIN_CATALOG_ENABLED;
