@@ -2,12 +2,14 @@ import { Injectable } from '@nestjs/common';
 
 import { FundsRepository } from '../../funds/repositories/funds.repository';
 import type { Fund } from '../../funds/entities/fund.schema';
+import type { InvesoraScore } from '../../scoring/entities/invesora-score.schema';
 import { ScoringService } from '../../scoring/services/scoring.service';
 import type {
   AssistantChatRequest,
   AssistantExplainRequest,
 } from '../entities/assistant-context.schema';
 import type { AssistantIntent } from '../entities/assistant-context.schema';
+import { evaluateComparisonFairness } from '../entities/assistant-comparison.utils';
 import type { AssistantRecentMessage } from '../repositories/assistant-conversation.repository';
 
 type AssistantFundPromptContext = {
@@ -15,10 +17,19 @@ type AssistantFundPromptContext = {
   name: string;
   benchmark: string | null;
   ter: number | null;
+  trackingError: number | null;
+  currency: string;
+  vehicle: string;
   score: number | null;
   scoreSummary?: string;
   scoreWarnings?: string[];
   scoreVersion?: string;
+  scoreBreakdown?: InvesoraScore['breakdown'];
+};
+
+type AssistantComparisonHints = {
+  isFair: boolean;
+  warnings: readonly string[];
 };
 
 /** Factual context passed to OpenAI for grounded explanations. */
@@ -29,6 +40,7 @@ export type AssistantPromptContext = {
   userMessage: string;
   fund?: AssistantFundPromptContext;
   funds?: AssistantFundPromptContext[];
+  comparisonHints?: AssistantComparisonHints;
   sessionId?: string;
   recentMessages?: readonly AssistantRecentMessage[];
 };
@@ -77,6 +89,10 @@ export class AssistantContextBuilderService {
       return base;
     }
 
+    const includeBreakdown = this.shouldIncludeScoreBreakdown(
+      intent,
+      request.surface,
+    );
     const funds = await Promise.all(
       requestedIsins
         .map((isin) => ({ isin, fund: persistedFunds.get(isin) }))
@@ -84,14 +100,51 @@ export class AssistantContextBuilderService {
           (entry): entry is { isin: string; fund: Fund } =>
             entry.fund !== undefined,
         )
-        .map((entry) => this.buildFundContext(entry.fund, entry.isin)),
+        .map((entry) =>
+          this.buildFundContext(entry.fund, entry.isin, includeBreakdown),
+        ),
     );
 
-    return {
+    const enriched: AssistantPromptContext = {
       ...base,
       fund: funds.length === 1 ? funds[0] : undefined,
       funds,
     };
+
+    if (
+      this.shouldIncludeComparisonHints(intent, request.surface, funds.length)
+    ) {
+      enriched.comparisonHints = evaluateComparisonFairness(
+        funds.map((fund) => ({
+          isin: fund.isin,
+          benchmark: fund.benchmark,
+          currency: fund.currency,
+          vehicle: fund.vehicle,
+        })),
+      );
+    }
+
+    return enriched;
+  }
+
+  private shouldIncludeScoreBreakdown(
+    intent: AssistantIntent,
+    surface: AssistantExplainRequest['surface'],
+  ): boolean {
+    return (
+      intent === 'explain_score' ||
+      intent === 'compare' ||
+      surface === 'fund-detail' ||
+      surface === 'compare'
+    );
+  }
+
+  private shouldIncludeComparisonHints(
+    intent: AssistantIntent,
+    surface: AssistantExplainRequest['surface'],
+    fundCount: number,
+  ): boolean {
+    return fundCount >= 2 && (intent === 'compare' || surface === 'compare');
   }
 
   private getRequestedIsins(
@@ -110,6 +163,7 @@ export class AssistantContextBuilderService {
   private async buildFundContext(
     fund: Fund,
     requestedIsin: string,
+    includeBreakdown: boolean,
   ): Promise<AssistantFundPromptContext> {
     const score = await this.scoringService.calculateScoreForFundId(fund.id);
 
@@ -118,10 +172,14 @@ export class AssistantContextBuilderService {
       name: fund.name,
       benchmark: fund.benchmark ?? null,
       ter: fund.metrics.ter ?? null,
+      trackingError: fund.metrics.trackingError ?? null,
+      currency: fund.currency,
+      vehicle: fund.vehicle,
       score: score?.score ?? null,
       scoreSummary: score?.summary,
       scoreWarnings: score?.warnings,
       scoreVersion: score?.version,
+      scoreBreakdown: includeBreakdown ? score?.breakdown : undefined,
     };
   }
 }

@@ -1,5 +1,6 @@
 import os
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -18,9 +19,17 @@ class BackendToolsClient:
         return bool(self.base_url and self.api_key)
 
     async def get_fund_snapshot(self, isin: str) -> dict[str, Any]:
+        encoded_isin = quote(isin.strip(), safe="")
         return await self._request(
             "GET",
-            f"/internal/assistant/tools/funds/{isin}/snapshot",
+            f"/internal/assistant/tools/funds/{encoded_isin}/snapshot",
+        )
+
+    async def get_score_breakdown(self, isin: str) -> dict[str, Any]:
+        encoded_isin = quote(isin.strip(), safe="")
+        return await self._request(
+            "GET",
+            f"/internal/assistant/tools/funds/{encoded_isin}/score-breakdown",
         )
 
     async def compare_funds(self, isins: list[str]) -> dict[str, Any]:
@@ -28,6 +37,23 @@ class BackendToolsClient:
             "POST",
             "/internal/assistant/tools/funds/compare",
             json={"isins": isins},
+        )
+
+    async def validate_comparison_fairness(
+        self,
+        isins: list[str],
+    ) -> dict[str, Any]:
+        return await self._request(
+            "POST",
+            "/internal/assistant/tools/funds/validate-comparison",
+            json={"isins": isins},
+        )
+
+    async def get_glossary_term(self, term: str) -> dict[str, Any]:
+        encoded_term = quote(term.strip(), safe="")
+        return await self._request(
+            "GET",
+            f"/internal/assistant/tools/glossary/{encoded_term}",
         )
 
     async def _request(

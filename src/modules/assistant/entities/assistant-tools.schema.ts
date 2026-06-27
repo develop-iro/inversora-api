@@ -24,3 +24,9 @@ export function parseAssistantToolCompareRequest(
 ): AssistantToolCompareRequest {
   return assistantToolCompareRequestSchema.parse(value);
 }
+
+export const assistantToolGlossaryTermSchema = z.string().trim().min(1).max(80);
+
+export function parseAssistantToolGlossaryTerm(value: unknown): string {
+  return assistantToolGlossaryTermSchema.parse(value);
+}

@@ -29,4 +29,24 @@ describe('GlossaryService', () => {
     expect(match?.matchedKeyword).toBe('comision anual');
     expect(match?.entry.term).toBe('Comisión anual');
   });
+
+  it('looks up glossary entries by term', () => {
+    expect(service.lookup('ter')?.term).toBe('TER');
+    expect(service.lookup('Benchmark')?.term).toBe('Benchmark');
+  });
+
+  it('looks up glossary entries by keyword', () => {
+    expect(service.lookup('comision anual')?.term).toBe('Comisión anual');
+  });
+
+  it('returns null when lookup term is empty or unknown', () => {
+    expect(service.lookup('   ')).toBeNull();
+    expect(service.lookup('isin inventado')).toBeNull();
+  });
+
+  it('returns the entry when lookup matches the canonical term name', () => {
+    const entry = service.lookup('Comisión anual');
+
+    expect(entry?.term).toBe('Comisión anual');
+  });
 });

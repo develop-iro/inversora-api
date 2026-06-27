@@ -203,14 +203,15 @@ Cuando el cliente manda un `sessionId` existente, NestJS recupera hasta 8 mensaj
 
 Primera fase, solo lectura:
 
-| Tool Python                  | Implementacion real en NestJS               | Valor de producto                                   |
-| ---------------------------- | ------------------------------------------- | --------------------------------------------------- |
-| `get_fund_snapshot(isin)`    | `FundsRepository.findByIsin` + DTO publico  | Responder dudas sobre una ficha                     |
-| `get_score_breakdown(isin)`  | `ScoringService.calculateScoreForFundId`    | Explicar por que un fondo puntua asi                |
-| `compare_funds(isins[])`     | Query agregada de fondos + scoring          | Comparativas educativas                             |
-| `get_glossary_term(term)`    | Reusar `ASSISTANT_GLOSSARY` o mover a tabla | Respuestas instantaneas y baratas                   |
-| `get_dataset_freshness()`    | Metadatos de sync FMP                       | Decir si los datos estan actualizados               |
-| `get_holdings_summary(isin)` | Futuro modulo de composicion FMP            | Explicar exposicion cuando exista plan FMP adecuado |
+| Tool Python                  | Implementacion real en NestJS               | Estado   | Valor de producto                                   |
+| ---------------------------- | ------------------------------------------- | -------- | --------------------------------------------------- |
+| `get_fund_snapshot(isin)`    | `FundsRepository.findByIsin` + DTO publico  | Hecho    | Responder dudas sobre una ficha                     |
+| `get_score_breakdown(isin)`  | `ScoringService.calculateScoreForFundId`    | Hecho    | Explicar por que un fondo puntua asi                |
+| `compare_funds(isins[])`     | Query agregada de fondos + scoring          | Hecho    | Comparativas educativas                             |
+| `validate_comparison_fairness(isins[])` | Reglas RN-02 en NestJS           | Hecho    | Avisar comparativas no homogeneas                   |
+| `get_glossary_term(term)`    | `GlossaryService.lookup`                    | Hecho    | Respuestas instantaneas y baratas                   |
+| `get_dataset_freshness()`    | Metadatos de sync FMP                       | Pendiente | Decir si los datos estan actualizados               |
+| `get_holdings_summary(isin)` | Futuro modulo de composicion FMP            | Pendiente | Explicar exposicion cuando exista plan FMP adecuado |
 
 Patron recomendado: el agente llama tools HTTP internas expuestas por NestJS, con token servicio-a-servicio y timeout corto. Asi Python no duplica reglas de negocio ni acceso a datos.
 
@@ -219,7 +220,10 @@ Endpoints disponibles:
 | Endpoint                                             | Uso                                                               |
 | ---------------------------------------------------- | ----------------------------------------------------------------- |
 | `GET /internal/assistant/tools/funds/:isin/snapshot` | Snapshot educativo de un fondo visible: perfil, metricas y Score. |
+| `GET /internal/assistant/tools/funds/:isin/score-breakdown` | Desglose del Score Inversora para explicaciones educativas. |
 | `POST /internal/assistant/tools/funds/compare`       | Snapshots de hasta 5 fondos para comparativa educativa.           |
+| `POST /internal/assistant/tools/funds/validate-comparison` | Valida homogeneidad de benchmark, divisa y vehiculo.        |
+| `GET /internal/assistant/tools/glossary/:term`       | Termino del glosario educativo estatico.                          |
 
 Ambos requieren `X-Sora-Internal-Api-Key` o `Authorization: Bearer <token>`.
 
