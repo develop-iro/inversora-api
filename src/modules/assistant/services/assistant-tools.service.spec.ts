@@ -105,6 +105,123 @@ describe('AssistantToolsService', () => {
     });
   });
 
+  it('throws when glossary term is not found', () => {
+    glossaryService.lookup.mockReturnValue(null);
+
+    expect(() => service.getGlossaryTerm('desconocido')).toThrow(
+      NotFoundException,
+    );
+  });
+
+  it('validates fair comparisons for homogeneous funds', async () => {
+    const first = buildFund({
+      id: 'fund-1',
+      isin: 'US78462F1030',
+      benchmark: 'S&P 500',
+      currency: 'USD',
+      vehicle: 'etf',
+    });
+    const second = buildFund({
+      id: 'fund-2',
+      isin: 'US46090E1038',
+      benchmark: 'S&P 500',
+      currency: 'USD',
+      vehicle: 'etf',
+    });
+    fundsRepository.findByIsins.mockResolvedValue(
+      new Map([
+        ['US78462F1030', first],
+        ['US46090E1038', second],
+      ]),
+    );
+
+    await expect(
+      service.validateComparisonFairness(['US78462F1030', 'US46090E1038']),
+    ).resolves.toMatchObject({
+      isFair: true,
+      warnings: [],
+    });
+  });
+
+  it('returns a fair result when no visible funds are found for comparison', async () => {
+    fundsRepository.findByIsins.mockResolvedValue(new Map());
+
+    await expect(
+      service.validateComparisonFairness(['US0000000000', 'US0000000001']),
+    ).resolves.toEqual({
+      isFair: true,
+      warnings: [],
+      funds: [],
+    });
+  });
+
+  it('returns score breakdown with null score when scoring is unavailable', async () => {
+    fundsRepository.findByIsin.mockResolvedValue(buildFund());
+    scoringService.calculateScoreForFundId.mockResolvedValue(null);
+
+    await expect(service.getScoreBreakdown('us78462f1030')).resolves.toEqual({
+      isin: 'US78462F1030',
+      name: 'SPDR S&P 500 ETF Trust',
+      score: null,
+    });
+  });
+
+  it('returns score breakdown with full scoring metadata', async () => {
+    fundsRepository.findByIsin.mockResolvedValue(buildFund());
+    scoringService.calculateScoreForFundId.mockResolvedValue({
+      score: 88,
+      version: 'rn-04',
+      summary: 'Coste bajo.',
+      warnings: ['Tracking error no disponible'],
+      breakdown: {
+        ter: { points: 36, maxPoints: 40, label: 'TER' },
+        tracking: { points: 34, maxPoints: 40, label: 'Tracking error' },
+        aum: { points: 8, maxPoints: 10, label: 'AUM' },
+        age: { points: 10, maxPoints: 10, label: 'Antigüedad' },
+      },
+    });
+
+    await expect(service.getScoreBreakdown('us78462f1030')).resolves.toEqual({
+      isin: 'US78462F1030',
+      name: 'SPDR S&P 500 ETF Trust',
+      score: 88,
+      version: 'rn-04',
+      summary: 'Coste bajo.',
+      warnings: ['Tracking error no disponible'],
+      breakdown: {
+        ter: { points: 36, maxPoints: 40, label: 'TER' },
+        tracking: { points: 34, maxPoints: 40, label: 'Tracking error' },
+        aum: { points: 8, maxPoints: 10, label: 'AUM' },
+        age: { points: 10, maxPoints: 10, label: 'Antigüedad' },
+      },
+    });
+  });
+
+  it('falls back to requested isin in fairness profiles', async () => {
+    fundsRepository.findByIsins.mockResolvedValue(
+      new Map([
+        ['US78462F1030', buildFund({ isin: null as unknown as string })],
+        [
+          'US46090E1038',
+          buildFund({
+            id: 'fund-2',
+            isin: 'US46090E1038',
+            benchmark: 'S&P 500',
+            currency: 'USD',
+            vehicle: 'etf',
+          }),
+        ],
+      ]),
+    );
+
+    const result = await service.validateComparisonFairness([
+      'US78462F1030',
+      'US46090E1038',
+    ]);
+
+    expect(result.funds[0]?.isin).toBe('US78462F1030');
+  });
+
   it('returns a fund snapshot with score details', async () => {
     fundsRepository.findByIsin.mockResolvedValue(buildFund());
     scoringService.calculateScoreForFundId.mockResolvedValue({

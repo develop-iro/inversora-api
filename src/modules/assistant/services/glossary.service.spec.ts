@@ -43,4 +43,10 @@ describe('GlossaryService', () => {
     expect(service.lookup('   ')).toBeNull();
     expect(service.lookup('isin inventado')).toBeNull();
   });
+
+  it('returns the entry when lookup matches the canonical term name', () => {
+    const entry = service.lookup('Comisión anual');
+
+    expect(entry?.term).toBe('Comisión anual');
+  });
 });
