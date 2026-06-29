@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { AppConfigService } from '../../../shared/config/config.service';
 import type { Fund } from '../../funds/entities/fund.schema';
 import { FundsRepository } from '../../funds/repositories/funds.repository';
 import * as featuredFundsMapper from '../entities/featured-funds.mapper';
@@ -10,6 +11,7 @@ const fund: Fund = {
   symbol: 'SPY',
   isin: 'US78462F1030',
   name: 'State Street SPDR S&P 500 ETF Trust',
+  issuer: 'State Street',
   provider: 'financial-modeling-prep',
   category: 'index',
   vehicle: 'etf',
@@ -47,6 +49,10 @@ describe('FeaturedFundsService', () => {
         {
           provide: FundsRepository,
           useValue: fundsRepository,
+        },
+        {
+          provide: AppConfigService,
+          useValue: { brandfetchClientId: undefined },
         },
       ],
     }).compile();

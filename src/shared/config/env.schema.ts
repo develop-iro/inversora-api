@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import {
+  applyAppEnvironmentDefaults,
+  requiresLiveFmpDataSource,
+} from './app-environment';
 
 /**
  * Zod schema for environment variables.
@@ -6,6 +10,7 @@ import { z } from 'zod';
  */
 export const envSchema = z
   .object({
+    APP_ENV: z.enum(['local', 'qa', 'pro']).default('local'),
     PORT: z.coerce.number().int().positive().default(3000),
     NODE_ENV: z
       .enum(['development', 'production', 'test'])
@@ -116,6 +121,25 @@ export const envSchema = z
           'OPENAI_API_KEY is required when ASSISTANT_ENABLED is true and ASSISTANT_RUNTIME is nestjs',
       });
     }
+
+    if (requiresLiveFmpDataSource(env.APP_ENV)) {
+      if (env.FMP_DATA_SOURCE !== 'live') {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['FMP_DATA_SOURCE'],
+          message:
+            'FMP_DATA_SOURCE must be "live" when APP_ENV is qa or pro (remove explicit mock override or switch APP_ENV to local)',
+        });
+      }
+
+      if (env.FMP_SAVE_FIXTURES) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['FMP_SAVE_FIXTURES'],
+          message: 'FMP_SAVE_FIXTURES must be false when APP_ENV is qa or pro',
+        });
+      }
+    }
   });
 
 /**
@@ -155,7 +179,8 @@ export type Env = z.infer<typeof envSchema>;
  * @throws {Error} When validation fails.
  */
 export function validateEnv(config: Record<string, unknown>): Env {
-  const parsed = envSchema.safeParse(config);
+  const prepared = applyAppEnvironmentDefaults(config);
+  const parsed = envSchema.safeParse(prepared);
 
   if (!parsed.success) {
     const message = parsed.error.issues

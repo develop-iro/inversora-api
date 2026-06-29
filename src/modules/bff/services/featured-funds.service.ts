@@ -15,6 +15,7 @@ import {
 } from '../entities/featured-funds.schema';
 import { isCatalogVisible } from '../../funds/entities/catalog-visibility.schema';
 import { FundsRepository } from '../../funds/repositories/funds.repository';
+import { AppConfigService } from '../../../shared/config/config.service';
 
 const FEATURED_FUNDS_CACHE_TTL_MS = 5 * 60 * 1000;
 
@@ -30,7 +31,10 @@ type FeaturedFundsCacheEntry = {
 export class FeaturedFundsService {
   private readonly cache = new Map<string, FeaturedFundsCacheEntry>();
 
-  constructor(private readonly fundsRepository: FundsRepository) {}
+  constructor(
+    private readonly fundsRepository: FundsRepository,
+    private readonly configService: AppConfigService,
+  ) {}
 
   /**
    * Returns featured funds for the requested quarter, hydrated from PostgreSQL.
@@ -74,6 +78,7 @@ export class FeaturedFundsService {
           fund,
           editorial,
           quarter,
+          brandfetchClientId: this.configService.brandfetchClientId,
         }),
       ];
     });

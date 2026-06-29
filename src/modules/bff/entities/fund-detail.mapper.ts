@@ -1,5 +1,6 @@
 import type { FundAllocation } from '../../funds/entities/fund-composition.schema';
 import type { FundHolding } from '../../funds/entities/fund-composition.schema';
+import { mapFundCardBranding } from '../../funds/entities/fund-api.mapper';
 import {
   mapFundPricesToChartPoints,
   resolveChartDateRange,
@@ -78,6 +79,7 @@ export type FundDetailBuildInput = {
   fund: Fund;
   score: InvesoraScore;
   rank?: number;
+  brandfetchClientId?: string;
   charts: Record<'1Y' | '3Y' | '5Y', FundChartResponse>;
   ytdPrices: readonly FundPrice[];
   maxPrices: readonly FundPrice[];
@@ -512,6 +514,7 @@ export function buildFundDetailResponse(
   const terPercent = fund.metrics.ter ?? 0;
   const riskLevel = mapRiskLevelToApp(fund.riskLevel);
   const { badge, themeLabel } = resolveEditorialLabels(fund);
+  const branding = mapFundCardBranding(fund, input.brandfetchClientId);
   const profileAsOf =
     input.holdings.asOf ??
     input.sectors.asOf ??
@@ -523,7 +526,7 @@ export function buildFundDetailResponse(
     asOf: `${profileAsOf}T00:00:00.000Z`,
     sourceLabel: DATA_SOURCE_LABEL,
     description: buildProductDescription(fund),
-    manager: '—',
+    manager: fund.issuer ?? '—',
     benchmark: fund.benchmark ?? '—',
     vehicleType: fund.vehicle,
     tracksIndex: fund.category === 'index',
@@ -602,6 +605,9 @@ export function buildFundDetailResponse(
     fund: {
       id: fund.id,
       isin: fund.isin,
+      symbol: branding.symbol,
+      issuer: branding.issuer,
+      logoUrl: branding.logoUrl,
       name: fund.name,
       vehicleType: fund.vehicle,
       categoryLabel: buildCategoryLabel(fund),

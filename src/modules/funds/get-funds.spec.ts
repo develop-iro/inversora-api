@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { AppConfigService } from '../../shared/config/config.service';
 import { FundsRepository } from './repositories/funds.repository';
 import { GetFundsUseCase } from './get-funds';
 
@@ -8,6 +9,7 @@ const fund = {
   symbol: 'SPY',
   isin: 'US78462F1030',
   name: 'State Street SPDR S&P 500 ETF Trust',
+  issuer: 'State Street',
   provider: 'financial-modeling-prep',
   category: 'index',
   vehicle: 'etf',
@@ -33,6 +35,7 @@ const fund = {
 describe('GetFundsUseCase', () => {
   let useCase: GetFundsUseCase;
   let repository: { findMany: jest.Mock };
+  let configService: { brandfetchClientId: string | undefined };
 
   beforeEach(async () => {
     repository = {
@@ -41,6 +44,9 @@ describe('GetFundsUseCase', () => {
         total: 1,
       }),
     };
+    configService = {
+      brandfetchClientId: 'test-client-id',
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -48,6 +54,10 @@ describe('GetFundsUseCase', () => {
         {
           provide: FundsRepository,
           useValue: repository,
+        },
+        {
+          provide: AppConfigService,
+          useValue: configService,
         },
       ],
     }).compile();
@@ -64,7 +74,13 @@ describe('GetFundsUseCase', () => {
         sortOrder: 'desc',
       }),
     ).resolves.toEqual({
-      data: [fund],
+      data: [
+        {
+          ...fund,
+          logoUrl:
+            'https://cdn.brandfetch.io/domain/ssga.com/w/64/h/64/theme/dark/fallback/404?c=test-client-id',
+        },
+      ],
       meta: {
         page: 1,
         limit: 20,

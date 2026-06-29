@@ -15,6 +15,7 @@ const validEnv = {
 describe('validateEnv', () => {
   it('should parse and return typed environment variables', () => {
     expect(validateEnv(validEnv)).toEqual({
+      APP_ENV: 'local',
       PORT: 3000,
       NODE_ENV: 'development',
       POSTGRES_USER: 'inversora',
@@ -66,6 +67,7 @@ describe('validateEnv', () => {
     };
 
     expect(validateEnv(required)).toEqual({
+      APP_ENV: 'local',
       PORT: 3000,
       NODE_ENV: 'development',
       POSTGRES_USER: 'inversora',

@@ -22,6 +22,7 @@ import {
   filterPricesForYtd,
 } from './entities/fund-detail.mapper';
 import { normalizeFundIsin } from './entities/fund-isin.utils';
+import { AppConfigService } from '../../shared/config/config.service';
 
 /**
  * Use case for aggregated mobile fund detail reads (`GET /funds/:isin`).
@@ -35,6 +36,7 @@ export class GetFundByIsinUseCase {
     private readonly fundPricesService: FundPricesService,
     private readonly fundCompositionService: FundCompositionService,
     private readonly scoringService: ScoringService,
+    private readonly configService: AppConfigService,
   ) {}
 
   /**
@@ -121,6 +123,7 @@ export class GetFundByIsinUseCase {
         fund,
         score,
         rank,
+        brandfetchClientId: this.configService.brandfetchClientId,
         charts: {
           '1Y': chart1Y,
           '3Y': chart3Y,

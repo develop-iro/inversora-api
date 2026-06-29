@@ -19,6 +19,7 @@ const prismaFundRow = {
   vehicle: FundVehicleType.ETF,
   currency: 'USD',
   benchmark: 'S&P 500',
+  issuer: null,
   volatility: null,
   drawdown: null,
   ter: new Decimal('0.0945'),

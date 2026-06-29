@@ -35,6 +35,9 @@ describe('AppConfigService', () => {
 
   it('should expose typed environment values', () => {
     expect(service.port).toBe(3000);
+    expect(service.appEnv).toBe('local');
+    expect(service.isProductionDeployment).toBe(false);
+    expect(service.isQaDeployment).toBe(false);
     expect(service.nodeEnv).toBe('development');
     expect(service.postgresUser).toBe('inversora');
     expect(service.postgresPassword).toBe('inversora');
@@ -96,6 +99,36 @@ describe('AppConfigService', () => {
     expect(service.adminCatalogEnabled).toBe(true);
     expect(service.adminApiEnabled).toBe(true);
     expect(service.adminApiKey).toBe('local-dev-admin-key');
+  });
+
+  it('should expose production deployment profile flags', async () => {
+    const proBaseEnv = { ...validEnv };
+    delete proBaseEnv.NODE_ENV;
+
+    const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        ConfigModule.forRoot({
+          isGlobal: true,
+          ignoreEnvFile: true,
+          load: [
+            () =>
+              validateEnv({
+                ...proBaseEnv,
+                APP_ENV: 'pro',
+              }),
+          ],
+        }),
+      ],
+      providers: [AppConfigService],
+    }).compile();
+
+    service = module.get(AppConfigService);
+    expect(service.appEnv).toBe('pro');
+    expect(service.isProductionDeployment).toBe(true);
+    expect(service.isQaDeployment).toBe(false);
+    expect(service.isProduction).toBe(true);
+    expect(service.syncSchedulerEnabled).toBe(true);
+    expect(service.adminSyncEnabled).toBe(false);
   });
 
   it('should expose production mode from node env', async () => {

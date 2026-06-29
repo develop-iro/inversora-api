@@ -18,6 +18,7 @@ const fund = {
   vehicle: 'etf',
   currency: 'USD',
   benchmark: 'S&P 500',
+  issuer: null,
   metrics: {
     volatility: null,
     drawdown: null,

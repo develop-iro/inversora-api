@@ -7,6 +7,7 @@ const baseTimestamps = {
   catalogVisibility: 'visible' as const,
   editorial: DEFAULT_FUND_EDITORIAL,
   vehicle: 'etf' as const,
+  issuer: null as string | null,
 };
 
 const baseMetrics = {
@@ -34,6 +35,7 @@ export const RANKING_FIXTURE_FUNDS: readonly Fund[] = [
     riskLevel: 4,
     score: 88,
     ...baseTimestamps,
+    issuer: 'State Street',
   },
   {
     id: '22222222-2222-4222-8222-222222222222',
@@ -48,6 +50,7 @@ export const RANKING_FIXTURE_FUNDS: readonly Fund[] = [
     riskLevel: 4,
     score: 92,
     ...baseTimestamps,
+    issuer: 'iShares',
   },
   {
     id: '33333333-3333-4333-8333-333333333333',
@@ -62,6 +65,7 @@ export const RANKING_FIXTURE_FUNDS: readonly Fund[] = [
     riskLevel: 5,
     score: 75,
     ...baseTimestamps,
+    issuer: 'iShares',
   },
   {
     id: '44444444-4444-4444-8444-444444444444',
@@ -76,6 +80,7 @@ export const RANKING_FIXTURE_FUNDS: readonly Fund[] = [
     riskLevel: 5,
     score: 80,
     ...baseTimestamps,
+    issuer: 'iShares',
   },
   {
     id: '55555555-5555-4555-8555-555555555555',

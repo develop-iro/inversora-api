@@ -26,6 +26,7 @@ describe('fundSchema', () => {
     vehicle: 'etf',
     currency: 'USD',
     benchmark: 'S&P 500',
+    issuer: null,
     metrics: validMetrics,
     riskLevel: 4,
     score: 82.5,

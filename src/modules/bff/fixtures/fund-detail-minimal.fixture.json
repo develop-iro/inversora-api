@@ -2,6 +2,9 @@
   "fund": {
     "id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
     "isin": "IE00B4L5Y983",
+    "symbol": "IWDA",
+    "issuer": null,
+    "logoUrl": null,
     "name": "MSCI World Index Core",
     "vehicleType": "mutual-fund",
     "categoryLabel": "Fondo indexado · MSCI World",

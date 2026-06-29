@@ -34,6 +34,7 @@ const prismaFundRow = {
   vehicle: PrismaFundVehicleType.ETF,
   currency: 'USD',
   benchmark: 'S&P 500',
+  issuer: null,
   volatility: new Decimal('14.2500'),
   drawdown: new Decimal('-8.5000'),
   ter: new Decimal('0.0945'),
@@ -102,6 +103,7 @@ describe('mapPrismaFundToFund', () => {
       vehicle: 'etf',
       currency: 'USD',
       benchmark: 'S&P 500',
+      issuer: null,
       metrics: {
         volatility: 14.25,
         drawdown: -8.5,
@@ -207,11 +209,13 @@ describe('mapProviderFundProfileToUpsertFundInput', () => {
         assetsUnderManagement: 520_000_000_000,
         currency: 'USD',
         benchmark: 'S&P 500',
+        issuer: 'State Street',
       }),
     ).toEqual({
       symbol: 'SPY',
       isin: 'US78462F1030',
       name: 'State Street SPDR S&P 500 ETF Trust',
+      issuer: 'State Street',
       provider: 'financial-modeling-prep',
       category: 'index',
       vehicle: 'etf',
@@ -245,6 +249,7 @@ describe('mapProviderFundProfileToUpsertFundInput', () => {
       vehicle: 'etf',
       currency: 'USD',
       benchmark: null,
+      issuer: null,
       metrics: {
         ter: null,
         aum: null,
@@ -298,6 +303,7 @@ describe('mapUpsertFundInputToPrismaCreateData', () => {
       vehicle: PrismaFundVehicleType.ETF,
       currency: 'USD',
       benchmark: 'S&P 500',
+      issuer: null,
       catalogVisibility: PrismaCatalogVisibility.VISIBLE,
       badge: '',
       themeLabel: '',
@@ -350,6 +356,7 @@ describe('mapUpsertFundInputToPrismaUpdateData', () => {
     ).toEqual({
       isin: null,
       name: 'Updated Fund Name',
+      issuer: null,
       category: PrismaFundCategory.INDEX,
       vehicle: PrismaFundVehicleType.ETF,
       currency: 'USD',

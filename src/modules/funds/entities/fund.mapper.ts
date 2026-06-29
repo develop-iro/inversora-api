@@ -182,6 +182,7 @@ export function mapPrismaFundToFund(record: PrismaFund): Fund {
     symbol: record.symbol,
     isin: record.isin,
     name: record.name,
+    issuer: record.issuer,
     provider: mapPrismaFundProvider(record.provider),
     category: mapPrismaFundCategory(record.category),
     vehicle: mapPrismaFundVehicle(record.vehicle),
@@ -314,6 +315,7 @@ export function mapProviderFundProfileToUpsertFundInput(
     vehicle: profile.vehicle,
     currency: resolveFundCurrencyFromProfile(profile),
     benchmark: profile.benchmark ?? null,
+    issuer: profile.issuer?.trim() || null,
     metrics: {
       ter: profile.expenseRatio ?? null,
       aum: profile.assetsUnderManagement ?? null,
@@ -368,6 +370,7 @@ export function mapUpsertFundInputToPrismaCreateData(
     symbol: input.symbol.trim().toUpperCase(),
     isin: input.isin ?? null,
     name: input.name,
+    issuer: input.issuer ?? null,
     provider: mapDomainFundProviderToPrisma(input.provider),
     category: mapDomainFundCategoryToPrisma(input.category),
     vehicle: mapDomainFundVehicleToPrisma(input.vehicle),
@@ -401,6 +404,7 @@ export function mapUpsertFundInputToPrismaUpdateData(
   return {
     isin: input.isin ?? null,
     name: input.name,
+    issuer: input.issuer ?? null,
     category: mapDomainFundCategoryToPrisma(input.category),
     vehicle: mapDomainFundVehicleToPrisma(input.vehicle),
     currency: input.currency,

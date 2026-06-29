@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { FundsRepository } from '../../funds/repositories/funds.repository';
 import { CatalogVisibilityService } from '../../funds/services/catalog-visibility.service';
 import { FundEditorialService } from '../../funds/services/fund-editorial.service';
+import { AppConfigService } from '../../../shared/config/config.service';
 import { AdminApiKeyGuard } from '../guards/admin-api-key.guard';
 import { AdminCatalogEnabledGuard } from '../guards/admin-catalog-enabled.guard';
 import { AdminFundsController } from './admin-funds.controller';
@@ -17,6 +18,7 @@ const fund = {
   vehicle: 'etf',
   currency: 'USD',
   benchmark: 'S&P 500',
+  issuer: null,
   metrics: {
     volatility: null,
     drawdown: null,
@@ -64,6 +66,10 @@ describe('AdminFundsController', () => {
           useValue: catalogVisibilityService,
         },
         { provide: FundEditorialService, useValue: fundEditorialService },
+        {
+          provide: AppConfigService,
+          useValue: { brandfetchClientId: undefined },
+        },
       ],
     })
       .overrideGuard(AdminApiKeyGuard)

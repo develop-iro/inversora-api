@@ -9,11 +9,13 @@ import type {
   FundListQuery,
   FundListResponse,
 } from '../../core/api/schemas/fund-list.schema';
+import { AppConfigService } from '../../shared/config/config.service';
 import {
   buildFundListMeta,
   buildFundListOrderByInput,
   buildFundListWhereInput,
 } from './entities/fund-list.mapper';
+import { mapFundsToApiFunds } from './entities/fund-api.mapper';
 import { FundsRepository } from './repositories/funds.repository';
 
 /**
@@ -21,7 +23,10 @@ import { FundsRepository } from './repositories/funds.repository';
  */
 @Injectable()
 export class GetFundsUseCase {
-  constructor(private readonly fundsRepository: FundsRepository) {}
+  constructor(
+    private readonly fundsRepository: FundsRepository,
+    private readonly configService: AppConfigService,
+  ) {}
 
   /**
    * Returns a paginated, filtered, and sorted fund list.
@@ -44,7 +49,7 @@ export class GetFundsUseCase {
     return parseApiResponse(
       fundListResponseSchema,
       {
-        data: items,
+        data: mapFundsToApiFunds(items, this.configService.brandfetchClientId),
         meta: buildFundListMeta(query.page, query.limit, total),
       },
       'get-funds',

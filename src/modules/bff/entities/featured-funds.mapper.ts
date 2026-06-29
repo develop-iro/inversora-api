@@ -1,4 +1,5 @@
 import type { Fund } from '../../funds/entities/fund.schema';
+import { mapFundCardBranding } from '../../funds/entities/fund-api.mapper';
 import { resolveIdealForBeginners } from '../../funds/entities/fund-editorial.utils';
 import {
   buildCategoryLabel,
@@ -19,6 +20,7 @@ export type FeaturedFundHydrationInput = {
   fund: Fund;
   editorial: FeaturedFundEditorial;
   quarter: QuarterMetadata;
+  brandfetchClientId?: string;
 };
 
 /**
@@ -29,14 +31,18 @@ export type FeaturedFundHydrationInput = {
 export function mapFundToFeaturedFund(
   input: FeaturedFundHydrationInput,
 ): FeaturedFundsResponse['data'][number] {
-  const { fund, editorial, quarter } = input;
+  const { fund, editorial, quarter, brandfetchClientId } = input;
   const terPercent = fund.metrics.ter ?? 0;
   const riskLevel = mapRiskLevelToApp(fund.riskLevel);
   const efficiencyScore = Math.round(fund.score ?? 0);
+  const branding = mapFundCardBranding(fund, brandfetchClientId);
 
   return {
     id: fund.id,
     isin: fund.isin ?? editorial.isin,
+    symbol: branding.symbol,
+    issuer: branding.issuer,
+    logoUrl: branding.logoUrl,
     name: fund.name,
     vehicleType: fund.vehicle,
     categoryLabel: buildCategoryLabel(fund),

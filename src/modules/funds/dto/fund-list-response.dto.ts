@@ -74,6 +74,17 @@ export class FundListItemResponseDto {
   @ApiProperty({ example: 'S&P 500', nullable: true })
   benchmark!: string | null;
 
+  @ApiProperty({ example: 'State Street', nullable: true })
+  issuer!: string | null;
+
+  @ApiProperty({
+    example:
+      'https://cdn.brandfetch.io/domain/ssga.com/w/64/h/64/theme/dark/fallback/404?c=client-id',
+    nullable: true,
+    description: 'Brandfetch CDN URL for the fund manager logo.',
+  })
+  logoUrl!: string | null;
+
   @ApiProperty({ type: FundMetricsResponseDto })
   metrics!: FundMetricsResponseDto;
 

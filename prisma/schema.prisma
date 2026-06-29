@@ -51,6 +51,8 @@ model Fund {
   vehicle                 FundVehicleType
   currency                String                       @db.Char(3)
   benchmark               String?
+  /// Asset manager name from FMP `etfCompany` (e.g. Vanguard, State Street).
+  issuer                  String?
   volatility              Decimal?                     @db.Decimal(8, 4)
   drawdown                Decimal?                     @db.Decimal(8, 4)
   ter                     Decimal?                     @db.Decimal(8, 4)

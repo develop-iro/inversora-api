@@ -10,6 +10,7 @@ import { FundCompositionService } from '../funds/services/fund-composition.servi
 import { FundPricesService } from '../funds/services/fund-prices.service';
 import { FundsService } from '../funds/services/funds.service';
 import { ScoringService } from '../scoring/services/scoring.service';
+import { AppConfigService } from '../../shared/config/config.service';
 import { GetFundByIsinUseCase } from './get-fund-by-isin';
 
 const fund = {
@@ -22,6 +23,7 @@ const fund = {
   vehicle: 'etf' as const,
   currency: 'USD',
   benchmark: 'S&P 500',
+  issuer: 'State Street',
   metrics: {
     volatility: 14.2,
     drawdown: 8.5,
@@ -147,6 +149,10 @@ describe('GetFundByIsinUseCase', () => {
         { provide: FundPricesService, useValue: fundPricesService },
         { provide: FundCompositionService, useValue: fundCompositionService },
         { provide: ScoringService, useValue: scoringService },
+        {
+          provide: AppConfigService,
+          useValue: { brandfetchClientId: undefined },
+        },
       ],
     }).compile();
 

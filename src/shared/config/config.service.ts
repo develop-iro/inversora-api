@@ -20,6 +20,21 @@ export class AppConfigService {
     return this.configService.get('NODE_ENV', { infer: true });
   }
 
+  /** Deployment profile (`local`, `qa`, `pro`). */
+  get appEnv(): Env['APP_ENV'] {
+    return this.configService.get('APP_ENV', { infer: true });
+  }
+
+  /** Whether the API runs under the production deployment profile. */
+  get isProductionDeployment(): boolean {
+    return this.appEnv === 'pro';
+  }
+
+  /** Whether the API runs under the QA/staging deployment profile. */
+  get isQaDeployment(): boolean {
+    return this.appEnv === 'qa';
+  }
+
   /** PostgreSQL username. */
   get postgresUser(): string {
     return this.configService.get('POSTGRES_USER', { infer: true });
@@ -228,5 +243,10 @@ export class AppConfigService {
   /** TTL in days for persisted assistant response cache entries. */
   get assistantCacheTtlDays(): number {
     return this.configService.get('ASSISTANT_CACHE_TTL_DAYS', { infer: true });
+  }
+
+  /** Brandfetch Logo API client ID for fund manager logo URLs. */
+  get brandfetchClientId(): string | undefined {
+    return this.configService.get('BRANDFETCH_CLIENT_ID', { infer: true });
   }
 }

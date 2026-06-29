@@ -53,7 +53,10 @@ export const fundDetailRatioHorizonSchema = z.enum(['12m', '3y', '5y']);
 export const featuredFundSchema = z.object({
   id: z.uuid(),
   isin: z.string().regex(/^[A-Z]{2}[A-Z0-9]{9}[0-9]$/),
+  symbol: z.string().min(1),
   name: z.string().min(1),
+  issuer: z.string().min(1).nullable(),
+  logoUrl: z.string().nullable(),
   vehicleType: fundVehicleTypeSchema,
   categoryLabel: z.string(),
   themeLabel: z.string(),

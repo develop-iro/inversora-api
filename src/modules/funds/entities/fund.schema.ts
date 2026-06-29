@@ -51,6 +51,7 @@ export const fundSchema = z.object({
     .length(3)
     .regex(/^[A-Z]{3}$/, 'Currency must be a 3-letter ISO 4217 code'),
   benchmark: z.string().min(1).nullable(),
+  issuer: z.string().min(1).nullable(),
   metrics: fundMetricsSchema,
   riskLevel: z.number().int().min(1).max(7).nullable(),
   score: z.number().min(0).max(100).nullable(),
@@ -86,6 +87,7 @@ export const createFundInputSchema = fundSchema
     score: fundSchema.shape.score.optional(),
     editorial: fundEditorialSchema.partial().optional(),
     catalogVisibility: fundSchema.shape.catalogVisibility.optional(),
+    issuer: fundSchema.shape.issuer.optional(),
   });
 
 /** Input type for creating a fund. */

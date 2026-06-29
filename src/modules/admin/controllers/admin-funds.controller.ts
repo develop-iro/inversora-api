@@ -25,6 +25,7 @@ import {
   buildFundListOrderByInput,
   buildFundListWhereInput,
 } from '../../funds/entities/fund-list.mapper';
+import { mapFundsToApiFunds } from '../../funds/entities/fund-api.mapper';
 import { fundIdParamSchema } from '../../funds/entities/fund.schema';
 import type { FundListResponse } from '../../funds/entities/fund-list.schema';
 import { fundListResponseSchema } from '../../funds/entities/fund-list.schema';
@@ -46,6 +47,7 @@ import {
   type AdminFundListQuery,
 } from '../schemas/admin-funds.schema';
 import { FundEditorialService } from '../../funds/services/fund-editorial.service';
+import { AppConfigService } from '../../../shared/config/config.service';
 
 @ApiTags('admin')
 @ApiSecurity('admin-api-key')
@@ -56,6 +58,7 @@ export class AdminFundsController {
     private readonly fundsRepository: FundsRepository,
     private readonly catalogVisibilityService: CatalogVisibilityService,
     private readonly fundEditorialService: FundEditorialService,
+    private readonly configService: AppConfigService,
   ) {}
 
   @Get()
@@ -105,7 +108,10 @@ export class AdminFundsController {
       })
       .then(({ items, total }) =>
         fundListResponseSchema.parse({
-          data: items,
+          data: mapFundsToApiFunds(
+            items,
+            this.configService.brandfetchClientId,
+          ),
           meta: buildFundListMeta(parsedQuery.page, parsedQuery.limit, total),
         }),
       );

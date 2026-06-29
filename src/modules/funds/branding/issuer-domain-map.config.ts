@@ -1,0 +1,42 @@
+/**
+ * Maps normalized FMP `etfCompany` issuer labels to Brandfetch domain identifiers.
+ *
+ * Keys are lowercase trimmed issuer names or recognizable substrings.
+ */
+export const ISSUER_DOMAIN_ALIASES: Readonly<Record<string, string>> = {
+  'state street': 'ssga.com',
+  'state street global advisors': 'ssga.com',
+  spdr: 'ssga.com',
+  ssga: 'ssga.com',
+  vanguard: 'vanguard.com',
+  blackrock: 'blackrock.com',
+  ishares: 'ishares.com',
+  invesco: 'invesco.com',
+  fidelity: 'fidelity.com',
+  'charles schwab': 'schwab.com',
+  schwab: 'schwab.com',
+  amundi: 'amundi.com',
+  dws: 'dws.com',
+  xtrackers: 'xtrackers.com',
+  vaneck: 'vaneck.com',
+  'global x': 'globalxetfs.com',
+  wisdomtree: 'wisdomtree.com',
+  'first trust': 'ftportfolios.com',
+  proshares: 'proshares.com',
+  direxion: 'direxion.com',
+  'franklin templeton': 'franklintempleton.com',
+  pimco: 'pimco.com',
+  jpmorgan: 'jpmorganchase.com',
+  'j.p. morgan': 'jpmorganchase.com',
+  'goldman sachs': 'goldmansachs.com',
+  'morgan stanley': 'morganstanley.com',
+  'bank of america': 'bankofamerica.com',
+  'northern trust': 'northerntrust.com',
+  'capital group': 'capitalgroup.com',
+  abrdn: 'abrdn.com',
+  lyxor: 'amundi.com',
+  'bnp paribas': 'bnpparibas.com',
+  hsbc: 'hsbc.com',
+  ubs: 'ubs.com',
+  'credit suisse': 'ubs.com',
+};

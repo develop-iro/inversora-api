@@ -16,6 +16,7 @@ const fund = {
   vehicle: 'etf' as const,
   currency: 'USD',
   benchmark: 'S&P 500',
+  issuer: 'State Street',
   metrics: {
     volatility: 14.25,
     drawdown: -8.5,

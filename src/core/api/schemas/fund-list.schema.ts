@@ -1,8 +1,8 @@
 import { z } from 'zod';
+import { fundApiSchema } from '../../../modules/funds/entities/fund-api.schema';
 import {
   fundCategorySchema,
   fundProviderSchema,
-  fundSchema,
   fundVehicleTypeSchema,
 } from '../../../modules/funds/entities/fund.schema';
 
@@ -72,7 +72,7 @@ export type FundListMeta = z.infer<typeof fundListMetaSchema>;
 
 /** Response schema for `GET /funds`. */
 export const fundListResponseSchema = z.object({
-  data: z.array(fundSchema),
+  data: z.array(fundApiSchema),
   meta: fundListMetaSchema,
 });
 
