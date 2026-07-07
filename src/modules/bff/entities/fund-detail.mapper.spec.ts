@@ -5,6 +5,7 @@ import {
   buildCategoryLabel,
   buildCurrentQuarterMetadata,
   buildFundDetailResponse,
+  buildMarketSnapshot,
   buildPerformanceSeries,
   buildReturnsByPeriod,
   buildReturnsByYear,
@@ -254,6 +255,12 @@ describe('fund-detail.mapper', () => {
     expect(response.fund.isin).toBe('US78462F1030');
     expect(response.inversoraScore).toBe(82);
     expect(response.rank).toBe(2);
+    expect(response.fund.returns).toEqual({
+      ytd: 0,
+      oneYear: 0,
+      threeYear: 0,
+      asOf: '2024-01-02',
+    });
     expect(response.market.performanceByTimeframe['1y'].points).toHaveLength(1);
     expect(response.profile.exposureByTab.sectorial[0]?.label).toBe(
       'Technology',
@@ -274,6 +281,50 @@ describe('fund-detail.mapper', () => {
     expect(resolveStabilityLabel(14)).toBe('Volatilidad media');
     expect(resolveStabilityLabel(22)).toBe('Volatilidad alta');
     expect(buildCurrentQuarterMetadata().quarterTag).toMatch(/^Q[1-4] \d{4}$/);
+  });
+
+  it('should build a market snapshot with empty YTD and max price series', () => {
+    const snapshot = buildMarketSnapshot({
+      charts: {
+        '1Y': {
+          fundId: fund.id,
+          period: '1Y',
+          from: '2025-01-01',
+          to: '2026-01-01',
+          asOf: '2026-01-01',
+          points: [],
+        },
+        '3Y': {
+          fundId: fund.id,
+          period: '3Y',
+          from: '2023-01-01',
+          to: '2026-01-01',
+          asOf: '2026-01-01',
+          points: [],
+        },
+        '5Y': {
+          fundId: fund.id,
+          period: '5Y',
+          from: '2021-01-01',
+          to: '2026-01-01',
+          asOf: '2026-01-01',
+          points: [],
+        },
+      },
+      ytdPrices: [],
+      maxPrices: [],
+      countries: {
+        fundId: fund.id,
+        asOf: '2026-01-01',
+        countries: [{ label: 'United States', weight: 99.1, sortOrder: 0 }],
+      },
+      volatility: null,
+    });
+
+    expect(snapshot.performanceByTimeframe.ytd.asOf).toContain('T');
+    expect(snapshot.performanceByTimeframe.max.asOf).toContain('T');
+    expect(snapshot.regions[0]?.label).toBe('United States');
+    expect(snapshot.stabilityLabel).toBe('Volatilidad no disponible');
   });
 
   it('should map allocations and diversification thresholds', () => {

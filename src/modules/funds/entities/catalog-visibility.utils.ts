@@ -8,7 +8,6 @@ export type CatalogVisibilityEvaluationReason =
   | 'missing-isin'
   | 'missing-benchmark'
   | 'missing-ter'
-  | 'missing-score'
   | 'missing-name'
   | 'catalog-ready';
 
@@ -32,10 +31,6 @@ export function collectCatalogDataQualityIssues(fund: Fund): string[] {
 
   if (fund.metrics.ter === null) {
     issues.push('missing-ter');
-  }
-
-  if (fund.score === null) {
-    issues.push('missing-score');
   }
 
   if (fund.name.trim().length === 0) {

@@ -1,10 +1,11 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import type { Fund } from '../entities/fund.schema';
+import { buildFundTestFixture } from '../test-utils/fund.entity.fixtures';
 import { FundsRepository } from '../repositories/funds.repository';
 import { CatalogVisibilityService } from './catalog-visibility.service';
 
-const fund: Fund = {
+const fund: Fund = buildFundTestFixture({
   id: '550e8400-e29b-41d4-a716-446655440000',
   symbol: 'SPY',
   isin: 'US78462F1030',
@@ -29,7 +30,7 @@ const fund: Fund = {
   editorial: { badge: '', themeLabel: '', idealForBeginners: false },
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   updatedAt: new Date('2024-02-01T00:00:00.000Z'),
-};
+});
 
 describe('CatalogVisibilityService', () => {
   let service: CatalogVisibilityService;
@@ -64,17 +65,17 @@ describe('CatalogVisibilityService', () => {
     service = module.get(CatalogVisibilityService);
   });
 
-  it('should hide non-visible funds from public endpoints', () => {
+  it('should hide blocked funds from public endpoints', () => {
     expect(() =>
       service.assertPublicCatalogVisible({
         ...fund,
-        catalogVisibility: 'quarantined',
+        catalogVisibility: 'blocked',
       }),
     ).toThrow(NotFoundException);
   });
 
   it('should quarantine visible funds with incomplete data after sync', async () => {
-    const incompleteFund = { ...fund, score: null };
+    const incompleteFund = { ...fund, isin: null };
 
     await service.applyAutomaticVisibilityRules(incompleteFund);
 

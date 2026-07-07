@@ -31,6 +31,22 @@ export class RankedFundEntryResponseDto {
 
   @ApiProperty({ example: 0.03 })
   ter!: number;
+
+  @ApiProperty({
+    description: 'Historical returns derived from persisted end-of-day prices.',
+    example: {
+      ytd: 8.4,
+      oneYear: 12.1,
+      threeYear: 28.5,
+      asOf: '2026-06-27',
+    },
+  })
+  returns!: {
+    ytd: number | null;
+    oneYear: number | null;
+    threeYear: number | null;
+    asOf: string | null;
+  };
 }
 
 /** Swagger schema for a benchmark-scoped ranking group. */

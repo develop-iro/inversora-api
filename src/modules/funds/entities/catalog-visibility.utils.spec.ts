@@ -42,7 +42,7 @@ describe('catalog-visibility.utils', () => {
         benchmark: null,
         score: null,
       }),
-    ).toEqual(['missing-isin', 'missing-benchmark', 'missing-score']);
+    ).toEqual(['missing-isin', 'missing-benchmark']);
 
     expect(
       collectCatalogDataQualityIssues({
@@ -55,12 +55,18 @@ describe('catalog-visibility.utils', () => {
   it('should mark complete visible funds as catalog-ready', () => {
     expect(isCatalogDataComplete(completeFund)).toBe(true);
     expect(resolveAutomaticCatalogVisibility(completeFund)).toBe('visible');
+    expect(
+      resolveAutomaticCatalogVisibility({
+        ...completeFund,
+        score: null,
+      }),
+    ).toBe('visible');
   });
 
   it('should auto-quarantine visible funds with incomplete data', () => {
     const incompleteFund = {
       ...completeFund,
-      score: null,
+      metrics: { ...completeFund.metrics, ter: null },
     };
 
     expect(resolveAutomaticCatalogVisibility(incompleteFund)).toBe(
@@ -68,7 +74,7 @@ describe('catalog-visibility.utils', () => {
     );
     expect(
       buildAutomaticCatalogVisibilityReason(incompleteFund, 'quarantined'),
-    ).toContain('missing-score');
+    ).toContain('missing-ter');
   });
 
   it('should detect a blank fund name as missing catalog data', () => {
@@ -109,7 +115,7 @@ describe('catalog-visibility.utils', () => {
       resolveAutomaticCatalogVisibility({
         ...completeFund,
         catalogVisibility: 'quarantined',
-        score: null,
+        metrics: { ...completeFund.metrics, ter: null },
       }),
     ).toBe('quarantined');
   });

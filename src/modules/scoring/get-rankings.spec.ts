@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { FundPricesService } from '../funds/services/fund-prices.service';
 import { FundsRepository } from '../funds/repositories/funds.repository';
 import { RANKING_FIXTURE_FUNDS } from './entities/ranking.fixtures';
 import { GetRankingsUseCase } from './get-rankings';
@@ -7,10 +8,14 @@ import { GetRankingsUseCase } from './get-rankings';
 describe('GetRankingsUseCase', () => {
   let useCase: GetRankingsUseCase;
   let fundsRepository: { findAll: jest.Mock };
+  let fundPricesService: { getHistoriesByFundIds: jest.Mock };
 
   beforeEach(async () => {
     fundsRepository = {
       findAll: jest.fn().mockResolvedValue(RANKING_FIXTURE_FUNDS),
+    };
+    fundPricesService = {
+      getHistoriesByFundIds: jest.fn().mockResolvedValue(new Map()),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -19,6 +24,10 @@ describe('GetRankingsUseCase', () => {
         {
           provide: FundsRepository,
           useValue: fundsRepository,
+        },
+        {
+          provide: FundPricesService,
+          useValue: fundPricesService,
         },
       ],
     }).compile();
@@ -30,8 +39,15 @@ describe('GetRankingsUseCase', () => {
     const response = await useCase.execute({});
 
     expect(fundsRepository.findAll).toHaveBeenCalled();
+    expect(fundPricesService.getHistoriesByFundIds).toHaveBeenCalled();
     expect(response.data).toHaveLength(2);
     expect(response.data[1]?.benchmarkKey).toBe('s&p 500');
+    expect(response.data[0]?.funds[0]?.returns).toEqual({
+      ytd: null,
+      oneYear: null,
+      threeYear: null,
+      asOf: null,
+    });
   });
 
   it('should filter rankings by benchmark', async () => {

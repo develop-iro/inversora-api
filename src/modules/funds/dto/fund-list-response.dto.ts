@@ -74,12 +74,36 @@ export class FundListItemResponseDto {
   @ApiProperty({ example: 'S&P 500', nullable: true })
   benchmark!: string | null;
 
+  @ApiProperty({
+    example: 'us-equity',
+    nullable: true,
+    enum: [
+      'global-equity',
+      'us-equity',
+      'europe-equity',
+      'emerging-equity',
+      'fixed-income',
+      'multi-asset',
+      'technology',
+      'esg',
+      'sector-other',
+      'unclassified',
+    ],
+  })
+  investmentTheme!: string | null;
+
+  @ApiProperty({ example: 'Equity', nullable: true })
+  assetClass!: string | null;
+
+  @ApiProperty({ example: 'US', nullable: true })
+  domicile!: string | null;
+
   @ApiProperty({ example: 'State Street', nullable: true })
   issuer!: string | null;
 
   @ApiProperty({
     example:
-      'https://cdn.brandfetch.io/domain/ssga.com/w/64/h/64/theme/dark/fallback/404?c=client-id',
+      'https://cdn.brandfetch.io/domain/ssga.com/w/64/h/64/theme/dark/fallback/lettermark?c=client-id',
     nullable: true,
     description: 'Brandfetch CDN URL for the fund manager logo.',
   })

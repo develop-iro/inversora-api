@@ -201,4 +201,54 @@ describe('FinancialModelingPrepClient', () => {
       },
     );
   });
+
+  it('should fetch full and short quote payloads for a symbol', async () => {
+    const fullQuote = [
+      {
+        symbol: 'SPY',
+        name: 'State Street SPDR S&P 500 ETF',
+        price: 740.93,
+        changePercentage: 1.63788,
+        change: 11.94,
+        volume: 11195261,
+        previousClose: 728.99,
+        timestamp: 1782763200,
+      },
+    ];
+    const shortQuote = [
+      {
+        symbol: 'SPY',
+        price: 740.93,
+        change: 11.94,
+        volume: 11195261,
+      },
+    ];
+    httpClient.get
+      .mockResolvedValueOnce({ data: fullQuote })
+      .mockResolvedValueOnce({ data: shortQuote });
+
+    await expect(client.fetchQuote('SPY')).resolves.toEqual(fullQuote);
+    await expect(client.fetchQuoteShort('SPY')).resolves.toEqual(shortQuote);
+
+    expect(httpClient.get).toHaveBeenNthCalledWith(
+      1,
+      `${FMP_DEFAULT_BASE_URL}/stable/quote`,
+      expect.objectContaining({
+        params: {
+          symbol: 'SPY',
+          apikey: 'test-api-key',
+        },
+      }),
+    );
+    expect(httpClient.get).toHaveBeenNthCalledWith(
+      2,
+      `${FMP_DEFAULT_BASE_URL}/stable/quote-short`,
+      expect.objectContaining({
+        params: {
+          symbol: 'SPY',
+          apikey: 'test-api-key',
+        },
+      }),
+    );
+  });
 });

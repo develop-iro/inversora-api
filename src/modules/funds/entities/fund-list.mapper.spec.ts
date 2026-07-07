@@ -3,17 +3,19 @@ import {
   FundCategory,
   FundProvider,
   FundVehicleType,
+  InvestmentTheme,
 } from '@prisma/client';
 import {
   buildFundListMeta,
   buildFundListOrderByInput,
   buildFundListWhereInput,
+  buildPublicCatalogVisibilityWhereInput,
 } from './fund-list.mapper';
 
 describe('fund-list.mapper', () => {
-  it('should default to visible-only catalog filtering', () => {
+  it('should default to public catalog visibility filtering', () => {
     expect(buildFundListWhereInput({})).toEqual({
-      AND: [{ catalogVisibility: { in: [CatalogVisibility.VISIBLE] } }],
+      AND: [buildPublicCatalogVisibilityWhereInput()],
     });
   });
 
@@ -55,7 +57,7 @@ describe('fund-list.mapper', () => {
       }),
     ).toEqual({
       AND: [
-        { catalogVisibility: { in: [CatalogVisibility.VISIBLE] } },
+        buildPublicCatalogVisibilityWhereInput(),
         {
           OR: [
             { symbol: { contains: 'spy', mode: 'insensitive' } },
@@ -82,7 +84,7 @@ describe('fund-list.mapper', () => {
         minScore: 80,
       }).AND,
     ).toEqual([
-      { catalogVisibility: { in: [CatalogVisibility.VISIBLE] } },
+      buildPublicCatalogVisibilityWhereInput(),
       { score: { gte: 80 } },
     ]);
 
@@ -91,7 +93,7 @@ describe('fund-list.mapper', () => {
         maxTer: 0.2,
       }).AND,
     ).toEqual([
-      { catalogVisibility: { in: [CatalogVisibility.VISIBLE] } },
+      buildPublicCatalogVisibilityWhereInput(),
       { ter: { lte: 0.2 } },
     ]);
   });
@@ -103,8 +105,21 @@ describe('fund-list.mapper', () => {
       }),
     ).toEqual({
       AND: [
-        { catalogVisibility: { in: [CatalogVisibility.VISIBLE] } },
+        buildPublicCatalogVisibilityWhereInput(),
         { idealForBeginners: true },
+      ],
+    });
+  });
+
+  it('should filter by investment theme when requested', () => {
+    expect(
+      buildFundListWhereInput({
+        investmentTheme: 'technology',
+      }),
+    ).toEqual({
+      AND: [
+        buildPublicCatalogVisibilityWhereInput(),
+        { investmentTheme: InvestmentTheme.TECHNOLOGY },
       ],
     });
   });

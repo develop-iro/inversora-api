@@ -7,8 +7,9 @@ import { AppConfigService } from '../../../shared/config/config.service';
 import { AdminApiKeyGuard } from '../guards/admin-api-key.guard';
 import { AdminCatalogEnabledGuard } from '../guards/admin-catalog-enabled.guard';
 import { AdminFundsController } from './admin-funds.controller';
+import { buildFundTestFixture } from '../../funds/test-utils/fund.entity.fixtures';
 
-const fund = {
+const fund = buildFundTestFixture({
   id: '550e8400-e29b-41d4-a716-446655440000',
   symbol: 'SPY',
   isin: 'US78462F1030',
@@ -34,7 +35,7 @@ const fund = {
   editorial: { badge: '', themeLabel: '', idealForBeginners: false },
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   updatedAt: new Date('2024-02-01T00:00:00.000Z'),
-};
+});
 
 describe('AdminFundsController', () => {
   let controller: AdminFundsController;

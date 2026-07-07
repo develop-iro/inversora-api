@@ -13,6 +13,8 @@ export const FMP_FIXTURE_FILES = {
   etfSectorWeightings: 'etf-sector-weightings.symbol-spy.json',
   etfCountryWeightings: 'etf-country-weightings.symbol-spy.json',
   etfList: 'etf-list.dev.json',
+  quoteShort: 'quote-short.symbol-spy.json',
+  quoteFull: 'quote.symbol-spy.json',
 } as const;
 
 /**

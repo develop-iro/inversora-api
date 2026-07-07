@@ -124,4 +124,51 @@ export class FundPricesRepository {
 
     return record === null ? null : formatFundPriceDate(record.date);
   }
+
+  /**
+   * Reads price history for multiple funds in a single query, grouped by fund id.
+   *
+   * @param fundIds - Persisted fund identifiers.
+   * @param query - Optional date range filters applied to every fund.
+   * @returns Map of fund id to ascending price rows.
+   */
+  async findHistoriesByFundIds(
+    fundIds: readonly string[],
+    query: FundPriceHistoryQuery = {},
+  ): Promise<Map<string, FundPrice[]>> {
+    if (fundIds.length === 0) {
+      return new Map();
+    }
+
+    const where: Prisma.FundPriceWhereInput = {
+      fundId: { in: [...fundIds] },
+      ...(query.from !== undefined || query.to !== undefined
+        ? {
+            date: {
+              ...(query.from !== undefined
+                ? { gte: parseFundPriceDate(query.from) }
+                : {}),
+              ...(query.to !== undefined
+                ? { lte: parseFundPriceDate(query.to) }
+                : {}),
+            },
+          }
+        : {}),
+    };
+
+    const records = await this.prisma.fundPrice.findMany({
+      where,
+      orderBy: [{ fundId: 'asc' }, { date: 'asc' }],
+    });
+
+    const grouped = new Map<string, FundPrice[]>();
+
+    for (const record of records) {
+      const prices = grouped.get(record.fundId) ?? [];
+      prices.push(mapPrismaFundPriceToFundPrice(record));
+      grouped.set(record.fundId, prices);
+    }
+
+    return grouped;
+  }
 }

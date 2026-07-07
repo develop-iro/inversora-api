@@ -20,7 +20,13 @@
     "periodEnd": "2026-06-30",
     "benefitSummary": "Fondo indexado con referencia MSCI World.",
     "featuredReason": "",
-    "isFeatured": false
+    "isFeatured": false,
+    "returns": {
+      "ytd": null,
+      "oneYear": null,
+      "threeYear": null,
+      "asOf": null
+    }
   },
   "inversoraScore": 72,
   "scoredBreakdown": [

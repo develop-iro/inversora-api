@@ -7,6 +7,7 @@ import type {
   ProviderFundDetail,
   ProviderFundHistoricalPrice,
   ProviderFundProfile,
+  ProviderFundQuote,
   ProviderFundSearchResult,
 } from './financial-modeling-prep.domain.schemas';
 import { FinancialModelingPrepClient } from './financial-modeling-prep.client';
@@ -21,6 +22,8 @@ import {
   normalizeProviderFundHistoricalPrices,
   normalizeProviderFundProfile,
   normalizeProviderFundProfileFromSearch,
+  normalizeProviderFundFullQuote,
+  normalizeProviderFundQuote,
   normalizeProviderFundSearchResults,
 } from './financial-modeling-prep.normalizers';
 import {
@@ -29,6 +32,8 @@ import {
   fmpFundHoldingSchema,
   fmpFundProfileSchema,
   fmpHistoricalPriceSchema,
+  fmpQuoteSchema,
+  fmpQuoteShortSchema,
   fmpSearchResultSchema,
   fmpSectorWeightingSchema,
 } from './financial-modeling-prep.raw.schemas';
@@ -153,6 +158,88 @@ export class FinancialModelingPrepProvider {
     const rawPrices = await this.loadHistoricalPrices(symbol, options);
 
     return normalizeProviderFundHistoricalPrices(rawPrices);
+  }
+
+  /**
+   * Returns a recent quote snapshot for a listed symbol when FMP supports it.
+   *
+   * @param symbol - Fund ticker symbol.
+   * @returns Normalized quote snapshot or `null` when unavailable.
+   */
+  async getFundQuote(symbol: string): Promise<ProviderFundQuote | null> {
+    const normalizedSymbol = symbol.trim().toUpperCase();
+
+    if (!normalizedSymbol) {
+      return null;
+    }
+
+    const fullQuote = await this.tryResolveFullQuote(normalizedSymbol);
+
+    if (fullQuote !== null) {
+      return fullQuote;
+    }
+
+    return this.tryResolveShortQuote(normalizedSymbol);
+  }
+
+  private async tryResolveFullQuote(
+    symbol: string,
+  ): Promise<ProviderFundQuote | null> {
+    try {
+      const rows = this.config.fmpUsesMocks
+        ? await this.getFixtureArray(
+            FMP_FIXTURE_FILES.quoteFull,
+            fmpQuoteSchema,
+            'quote',
+          )
+        : await this.client.fetchQuote(symbol);
+
+      const row =
+        rows.find((entry) => entry.symbol.trim().toUpperCase() === symbol) ??
+        rows[0];
+
+      if (row === undefined) {
+        return null;
+      }
+
+      return normalizeProviderFundFullQuote(row);
+    } catch (error) {
+      if (this.isPaidEndpointError(error)) {
+        return null;
+      }
+
+      throw error;
+    }
+  }
+
+  private async tryResolveShortQuote(
+    symbol: string,
+  ): Promise<ProviderFundQuote | null> {
+    try {
+      const rows = this.config.fmpUsesMocks
+        ? await this.getFixtureArray(
+            FMP_FIXTURE_FILES.quoteShort,
+            fmpQuoteShortSchema,
+            'quote-short',
+          )
+        : await this.client.fetchQuoteShort(symbol);
+
+      const row =
+        rows.find((entry) => entry.symbol.trim().toUpperCase() === symbol) ??
+        rows[0];
+
+      if (row === undefined) {
+        return null;
+      }
+
+      return normalizeProviderFundQuote(row);
+    } catch (error) {
+      if (this.isPaidEndpointError(error)) {
+        return null;
+      }
+
+      throw error;
+    }
   }
 
   /**

@@ -76,6 +76,18 @@ export type ProviderFundPriceSummary = z.infer<
   typeof providerFundPriceSummarySchema
 >;
 
+/** Zod schema for a normalized live or delayed quote snapshot from FMP. */
+export const providerFundQuoteSchema = z.object({
+  symbol: z.string(),
+  price: z.number(),
+  changePercent: z.number().nullable(),
+  volume: z.number().nullable(),
+  asOf: z.string().datetime(),
+});
+
+/** Inferred type for a normalized provider quote snapshot. */
+export type ProviderFundQuote = z.infer<typeof providerFundQuoteSchema>;
+
 /** Zod schema for a provider fund detail aggregate. */
 export const providerFundDetailSchema = providerFundProfileSchema.extend({
   priceSummary: providerFundPriceSummarySchema,

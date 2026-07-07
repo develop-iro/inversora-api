@@ -14,7 +14,12 @@ import {
   type FeaturedFundsResponse,
 } from '../entities/featured-funds.schema';
 import { isCatalogVisible } from '../../funds/entities/catalog-visibility.schema';
+import {
+  loadReturnSnapshotsByFundIds,
+  resolveFundReturnSnapshot,
+} from '../../funds/entities/fund-returns.enricher';
 import { FundsRepository } from '../../funds/repositories/funds.repository';
+import { FundPricesService } from '../../funds/services/fund-prices.service';
 import { AppConfigService } from '../../../shared/config/config.service';
 
 const FEATURED_FUNDS_CACHE_TTL_MS = 5 * 60 * 1000;
@@ -34,6 +39,7 @@ export class FeaturedFundsService {
   constructor(
     private readonly fundsRepository: FundsRepository,
     private readonly configService: AppConfigService,
+    private readonly fundPricesService: FundPricesService,
   ) {}
 
   /**
@@ -83,10 +89,18 @@ export class FeaturedFundsService {
       ];
     });
 
-    const response = buildFeaturedFundsResponse(
-      quarter,
-      filterFeaturedFunds(hydrated, query),
+    const filtered = filterFeaturedFunds(hydrated, query);
+    const fundIds = filtered.map((entry) => entry.id);
+    const returnSnapshots = await loadReturnSnapshotsByFundIds(
+      this.fundPricesService,
+      fundIds,
     );
+    const enriched = filtered.map((entry) => ({
+      ...entry,
+      returns: resolveFundReturnSnapshot(returnSnapshots, entry.id),
+    }));
+
+    const response = buildFeaturedFundsResponse(quarter, enriched);
     this.storeCacheEntry(cacheKey, response);
     return response;
   }

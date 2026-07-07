@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { fundReturnSnapshotSchema } from '../../../modules/funds/entities/fund-return-snapshot.schema';
 import { fundVehicleTypeSchema } from '../../../modules/funds/entities/fund.schema';
 
 /** App-aligned risk level labels. */
@@ -72,6 +73,7 @@ export const featuredFundSchema = z.object({
   benefitSummary: z.string(),
   featuredReason: z.string(),
   isFeatured: z.boolean(),
+  returns: fundReturnSnapshotSchema,
 });
 
 /** Single score criterion row for the mobile breakdown UI. */

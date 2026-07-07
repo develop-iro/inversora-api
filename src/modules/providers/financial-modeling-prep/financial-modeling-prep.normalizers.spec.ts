@@ -13,6 +13,10 @@ import {
   resolveFundBenchmark,
   extractBenchmarkFromDescription,
   deriveBenchmarkLabelFromName,
+  normalizeProviderFundFullQuote,
+  normalizeProviderFundQuote,
+  resolveQuoteAsOf,
+  resolveQuoteChangePercent,
 } from './financial-modeling-prep.normalizers';
 import { isIndexedProductSearchResult } from './indexed-product.filters';
 
@@ -518,5 +522,60 @@ describe('FinancialModelingPrep normalizers', () => {
         history,
       ).history,
     ).toBeUndefined();
+  });
+
+  it('should derive change percent from quote-short when FMP omits percentage fields', () => {
+    const snapshot = normalizeProviderFundQuote({
+      symbol: 'SPY',
+      price: 740.93,
+      change: 11.94,
+      volume: 11195261,
+    });
+
+    expect(snapshot.changePercent).toBeCloseTo(1.63788, 2);
+  });
+
+  it('should preserve changePercentage from full quote rows', () => {
+    const snapshot = normalizeProviderFundFullQuote({
+      symbol: 'SPY',
+      price: 740.93,
+      changePercentage: 1.63788,
+      change: 11.94,
+      previousClose: 728.99,
+      timestamp: 1782763200,
+    });
+
+    expect(snapshot.changePercent).toBeCloseTo(1.63788, 4);
+    expect(snapshot.asOf).toBe(new Date(1782763200 * 1000).toISOString());
+  });
+
+  it('should compute change percent from previousClose when percentage is missing', () => {
+    expect(
+      resolveQuoteChangePercent({
+        price: 740.93,
+        change: 11.94,
+        previousClose: 728.99,
+      }),
+    ).toBeCloseTo(1.63788, 2);
+  });
+
+  it('should resolve alternate quote change and timestamp shapes', () => {
+    expect(
+      resolveQuoteChangePercent({
+        price: 100,
+        changesPercentage: 2.5,
+      }),
+    ).toBe(2.5);
+    expect(resolveQuoteChangePercent({ price: 100 })).toBeNull();
+    expect(
+      resolveQuoteChangePercent({
+        price: 100,
+        change: 100,
+      }),
+    ).toBeNull();
+    expect(resolveQuoteAsOf()).toMatch(/T/);
+    expect(resolveQuoteAsOf(1_782_763_200_000)).toBe(
+      new Date(1_782_763_200_000).toISOString(),
+    );
   });
 });

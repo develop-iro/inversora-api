@@ -3,6 +3,7 @@ import {
   FundCategory as PrismaFundCategory,
   FundProvider as PrismaFundProvider,
   FundVehicleType as PrismaFundVehicleType,
+  InvestmentTheme as PrismaInvestmentTheme,
 } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import type { FundCategory, FundProvider } from './fund.schema';
@@ -11,12 +12,18 @@ import {
   mapProviderFundProfileToUpsertFundInput,
   mapDomainFundCategoryToPrisma,
   mapDomainFundProviderToPrisma,
+  mapDomainFundVehicleToPrisma,
   mapDomainCatalogVisibilityToPrisma,
+  mapDomainInvestmentThemeToPrisma,
   mapPrismaCatalogVisibility,
   mapPrismaFundCategory,
   mapPrismaFundMetrics,
   mapPrismaFundProvider,
   mapPrismaFundToFund,
+  mapPrismaFundVehicle,
+  mapPrismaInvestmentTheme,
+  normalizeOptionalFundDomicile,
+  normalizeOptionalProviderText,
   mapUpdateFundEditorialInputToPrismaData,
   mapUpsertFundInputToPrismaCreateData,
   mapUpsertFundInputToPrismaUpdateData,
@@ -34,6 +41,9 @@ const prismaFundRow = {
   vehicle: PrismaFundVehicleType.ETF,
   currency: 'USD',
   benchmark: 'S&P 500',
+  assetClass: 'Equity',
+  domicile: 'US',
+  investmentTheme: PrismaInvestmentTheme.US_EQUITY,
   issuer: null,
   volatility: new Decimal('14.2500'),
   drawdown: new Decimal('-8.5000'),
@@ -103,6 +113,9 @@ describe('mapPrismaFundToFund', () => {
       vehicle: 'etf',
       currency: 'USD',
       benchmark: 'S&P 500',
+      assetClass: 'Equity',
+      domicile: 'US',
+      investmentTheme: 'us-equity',
       issuer: null,
       metrics: {
         volatility: 14.25,
@@ -153,6 +166,29 @@ describe('catalog visibility mappers', () => {
   });
 });
 
+describe('investment theme mappers', () => {
+  const themePairs = [
+    [PrismaInvestmentTheme.GLOBAL_EQUITY, 'global-equity'],
+    [PrismaInvestmentTheme.US_EQUITY, 'us-equity'],
+    [PrismaInvestmentTheme.EUROPE_EQUITY, 'europe-equity'],
+    [PrismaInvestmentTheme.EMERGING_EQUITY, 'emerging-equity'],
+    [PrismaInvestmentTheme.FIXED_INCOME, 'fixed-income'],
+    [PrismaInvestmentTheme.MULTI_ASSET, 'multi-asset'],
+    [PrismaInvestmentTheme.TECHNOLOGY, 'technology'],
+    [PrismaInvestmentTheme.ESG, 'esg'],
+    [PrismaInvestmentTheme.SECTOR_OTHER, 'sector-other'],
+    [PrismaInvestmentTheme.UNCLASSIFIED, 'unclassified'],
+  ] as const;
+
+  it.each(themePairs)(
+    'should map Prisma investment theme %s to domain value %s',
+    (prismaTheme, domainTheme) => {
+      expect(mapPrismaInvestmentTheme(prismaTheme)).toBe(domainTheme);
+      expect(mapDomainInvestmentThemeToPrisma(domainTheme)).toBe(prismaTheme);
+    },
+  );
+});
+
 describe('resolveFundCurrencyFromProfile', () => {
   it('should prefer profile currency and fall back to navCurrency or USD', () => {
     expect(
@@ -197,6 +233,29 @@ describe('normalizeOptionalFundIsin', () => {
   });
 });
 
+describe('fund vehicle mappers', () => {
+  it('should map Prisma and domain fund vehicle values', () => {
+    expect(mapPrismaFundVehicle(PrismaFundVehicleType.ETF)).toBe('etf');
+    expect(mapPrismaFundVehicle(PrismaFundVehicleType.MUTUAL_FUND)).toBe(
+      'mutual-fund',
+    );
+    expect(mapDomainFundVehicleToPrisma('etf')).toBe(PrismaFundVehicleType.ETF);
+    expect(mapDomainFundVehicleToPrisma('mutual-fund')).toBe(
+      PrismaFundVehicleType.MUTUAL_FUND,
+    );
+  });
+});
+
+describe('provider text normalizers', () => {
+  it('should normalize optional provider text and domicile values', () => {
+    expect(normalizeOptionalProviderText('  Equity ')).toBe('Equity');
+    expect(normalizeOptionalProviderText('   ')).toBeNull();
+    expect(normalizeOptionalFundDomicile(' ie ')).toBe('IE');
+    expect(normalizeOptionalFundDomicile('INVALID')).toBeNull();
+    expect(normalizeOptionalFundDomicile('')).toBeNull();
+  });
+});
+
 describe('mapProviderFundProfileToUpsertFundInput', () => {
   it('should map a normalized provider profile into an upsert input', () => {
     expect(
@@ -220,6 +279,8 @@ describe('mapProviderFundProfileToUpsertFundInput', () => {
       category: 'index',
       vehicle: 'etf',
       currency: 'USD',
+      assetClass: null,
+      domicile: null,
       benchmark: 'S&P 500',
       metrics: {
         ter: 0.0945,
@@ -248,6 +309,8 @@ describe('mapProviderFundProfileToUpsertFundInput', () => {
       category: 'index',
       vehicle: 'etf',
       currency: 'USD',
+      assetClass: null,
+      domicile: null,
       benchmark: null,
       issuer: null,
       metrics: {
@@ -259,6 +322,23 @@ describe('mapProviderFundProfileToUpsertFundInput', () => {
         dividendYield: null,
         trackingError: null,
       },
+    });
+  });
+
+  it('should map asset class, domicile, and mutual-fund vehicle fields', () => {
+    expect(
+      mapProviderFundProfileToUpsertFundInput({
+        symbol: 'vtsax',
+        name: 'Vanguard Total Stock Market Index Fund',
+        vehicle: 'mutual-fund',
+        assetClass: 'Equity',
+        domicile: 'us',
+      }),
+    ).toMatchObject({
+      symbol: 'VTSAX',
+      vehicle: 'mutual-fund',
+      assetClass: 'Equity',
+      domicile: 'US',
     });
   });
 });
@@ -302,6 +382,8 @@ describe('mapUpsertFundInputToPrismaCreateData', () => {
       category: PrismaFundCategory.INDEX,
       vehicle: PrismaFundVehicleType.ETF,
       currency: 'USD',
+      assetClass: null,
+      domicile: null,
       benchmark: 'S&P 500',
       issuer: null,
       catalogVisibility: PrismaCatalogVisibility.VISIBLE,
@@ -360,6 +442,8 @@ describe('mapUpsertFundInputToPrismaUpdateData', () => {
       category: PrismaFundCategory.INDEX,
       vehicle: PrismaFundVehicleType.ETF,
       currency: 'USD',
+      assetClass: null,
+      domicile: null,
       benchmark: null,
       ter: 0.1,
       volatility: null,

@@ -77,4 +77,18 @@ export class FundPricesService {
   async getLatestDate(fundId: string): Promise<string | null> {
     return this.fundPricesRepository.findLatestDate(fundId);
   }
+
+  /**
+   * Returns persisted price history for multiple funds in one query.
+   *
+   * @param fundIds - Persisted fund identifiers.
+   * @param query - Optional date range filters.
+   * @returns Map of fund id to ascending price rows.
+   */
+  async getHistoriesByFundIds(
+    fundIds: readonly string[],
+    query: FundPriceHistoryQuery = {},
+  ): Promise<Map<string, FundPrice[]>> {
+    return this.fundPricesRepository.findHistoriesByFundIds(fundIds, query);
+  }
 }

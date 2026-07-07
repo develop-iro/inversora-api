@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { catalogVisibilitySchema } from './catalog-visibility.schema';
 import { fundEditorialSchema } from './fund-editorial.schema';
+import { investmentThemeSchema } from './investment-theme.schema';
 
 /** Supported external providers for persisted fund records. */
 export const fundProviderSchema = z.enum(['financial-modeling-prep']);
@@ -19,6 +20,10 @@ export const fundVehicleTypeSchema = z.enum(['etf', 'mutual-fund']);
 
 /** Inferred type for fund vehicle types. */
 export type FundVehicleType = z.infer<typeof fundVehicleTypeSchema>;
+
+/** Re-export investment theme schema for fund entity consumers. */
+export { investmentThemeSchema };
+export type { InvestmentTheme } from './investment-theme.schema';
 
 /** Zod schema for persisted calculated fund metrics. */
 export const fundMetricsSchema = z.object({
@@ -51,6 +56,13 @@ export const fundSchema = z.object({
     .length(3)
     .regex(/^[A-Z]{3}$/, 'Currency must be a 3-letter ISO 4217 code'),
   benchmark: z.string().min(1).nullable(),
+  assetClass: z.string().min(1).nullable(),
+  domicile: z
+    .string()
+    .length(2)
+    .regex(/^[A-Z]{2}$/, 'Domicile must be a 2-letter ISO country code')
+    .nullable(),
+  investmentTheme: investmentThemeSchema.nullable(),
   issuer: z.string().min(1).nullable(),
   metrics: fundMetricsSchema,
   riskLevel: z.number().int().min(1).max(7).nullable(),
@@ -82,6 +94,10 @@ export const createFundInputSchema = fundSchema
   .extend({
     isin: fundSchema.shape.isin.optional(),
     benchmark: fundSchema.shape.benchmark.optional(),
+    assetClass: fundSchema.shape.assetClass.optional(),
+    domicile: fundSchema.shape.domicile.optional(),
+    investmentTheme: fundSchema.shape.investmentTheme.optional(),
+    themeClassificationDescription: z.string().optional(),
     metrics: fundMetricsSchema.partial().optional(),
     riskLevel: fundSchema.shape.riskLevel.optional(),
     score: fundSchema.shape.score.optional(),

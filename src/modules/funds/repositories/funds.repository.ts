@@ -4,16 +4,19 @@ import { PrismaService } from '../../../shared/database/prisma.service';
 import {
   mapDomainFundProviderToPrisma,
   mapDomainCatalogVisibilityToPrisma,
+  mapDomainInvestmentThemeToPrisma,
   mapPrismaCatalogVisibility,
   mapPrismaFundToFund,
   mapUpdateFundEditorialInputToPrismaData,
   mapUpsertFundInputToPrismaCreateData,
   mapUpsertFundInputToPrismaUpdateData,
 } from '../entities/fund.mapper';
+import { resolveFundThemeSyncFields } from '../entities/fund-theme.sync';
 import { upsertFundInputSchema } from '../entities/fund.schema';
 import type {
   Fund,
   FundProvider,
+  InvestmentTheme,
   UpsertFundInput,
 } from '../entities/fund.schema';
 import type { UpdateFundEditorialInput } from '../entities/fund-editorial.schema';
@@ -175,20 +178,49 @@ export class FundsRepository {
     input: UpsertFundInput,
   ): Promise<{ fund: Fund; created: boolean }> {
     const validatedInput = upsertFundInputSchema.parse(input);
-    const normalizedSymbol = validatedInput.symbol.trim().toUpperCase();
+    const {
+      themeClassificationDescription,
+      investmentTheme,
+      ...persistedInput
+    } = validatedInput;
+    void investmentTheme;
+    const normalizedSymbol = persistedInput.symbol.trim().toUpperCase();
     const existing = await this.findBySymbolAndProvider(
       normalizedSymbol,
-      validatedInput.provider,
+      persistedInput.provider,
+    );
+    const themeFields = resolveFundThemeSyncFields(
+      {
+        name: persistedInput.name,
+        benchmark: persistedInput.benchmark,
+        assetClass: persistedInput.assetClass,
+        description: themeClassificationDescription,
+      },
+      existing?.editorial.themeLabel,
     );
     const record = await this.prisma.fund.upsert({
       where: {
         symbol_provider: {
           symbol: normalizedSymbol,
-          provider: mapDomainFundProviderToPrisma(validatedInput.provider),
+          provider: mapDomainFundProviderToPrisma(persistedInput.provider),
         },
       },
-      create: mapUpsertFundInputToPrismaCreateData(validatedInput),
-      update: mapUpsertFundInputToPrismaUpdateData(validatedInput),
+      create: {
+        ...mapUpsertFundInputToPrismaCreateData(persistedInput),
+        investmentTheme: mapDomainInvestmentThemeToPrisma(
+          themeFields.investmentTheme,
+        ),
+        themeLabel: themeFields.themeLabel,
+      },
+      update: {
+        ...mapUpsertFundInputToPrismaUpdateData(persistedInput),
+        investmentTheme: mapDomainInvestmentThemeToPrisma(
+          themeFields.investmentTheme,
+        ),
+        ...(existing?.editorial.themeLabel.trim() === ''
+          ? { themeLabel: themeFields.themeLabel }
+          : {}),
+      },
     });
 
     return {
@@ -208,6 +240,34 @@ export class FundsRepository {
     const record = await this.prisma.fund.update({
       where: { id },
       data: { score },
+    });
+
+    return mapPrismaFundToFund(record);
+  }
+
+  /**
+   * Persists an inferred investment theme and optional editorial label.
+   *
+   * @param id - Fund identifier.
+   * @param input - Theme classification payload.
+   */
+  async applyInvestmentTheme(
+    id: string,
+    input: {
+      investmentTheme: InvestmentTheme;
+      themeLabel?: string;
+    },
+  ): Promise<Fund> {
+    const record = await this.prisma.fund.update({
+      where: { id },
+      data: {
+        investmentTheme: mapDomainInvestmentThemeToPrisma(
+          input.investmentTheme,
+        ),
+        ...(input.themeLabel !== undefined
+          ? { themeLabel: input.themeLabel }
+          : {}),
+      },
     });
 
     return mapPrismaFundToFund(record);

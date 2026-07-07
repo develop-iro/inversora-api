@@ -1,7 +1,10 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FinancialModelingPrepProvider } from '../../providers/financial-modeling-prep/financial-modeling-prep.provider';
-import { getTodayIsoDate } from '../entities/fund-price.mapper';
+import {
+  getTodayIsoDate,
+  addDaysToIsoDate,
+} from '../entities/fund-price.mapper';
 import { FundsRepository } from '../repositories/funds.repository';
 import { FundPriceSyncService } from './fund-price-sync.service';
 import { FundPricesService } from './fund-prices.service';
@@ -88,6 +91,17 @@ describe('FundPriceSyncService', () => {
     service = module.get<FundPriceSyncService>(FundPriceSyncService);
   });
 
+  it('should default first-time incremental syncs to the return lookback window', async () => {
+    const expectedFrom = addDaysToIsoDate(getTodayIsoDate(), -365 * 5);
+
+    await service.syncFromFmp('SPY');
+
+    expect(fmpProvider.getFundHistory).toHaveBeenCalledWith('SPY', {
+      from: expectedFrom,
+      to: getTodayIsoDate(),
+    });
+  });
+
   it('should sync normalized provider prices into PostgreSQL', async () => {
     await expect(
       service.syncFromFmp('spy', {
@@ -167,7 +181,7 @@ describe('FundPriceSyncService', () => {
       fundId: persistedFund.id,
       symbol: 'SPY',
       pricesSynced: 0,
-      from: undefined,
+      from: addDaysToIsoDate(getTodayIsoDate(), -365 * 5),
       to: getTodayIsoDate(),
       upToDate: true,
     });

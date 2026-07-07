@@ -30,6 +30,20 @@ enum CatalogVisibility {
   BLOCKED     @map("blocked")
 }
 
+/// Canonical investment theme used for catalog grouping and filters.
+enum InvestmentTheme {
+  GLOBAL_EQUITY    @map("global-equity")
+  US_EQUITY        @map("us-equity")
+  EUROPE_EQUITY    @map("europe-equity")
+  EMERGING_EQUITY  @map("emerging-equity")
+  FIXED_INCOME     @map("fixed-income")
+  MULTI_ASSET      @map("multi-asset")
+  TECHNOLOGY       @map("technology")
+  ESG              @map("esg")
+  SECTOR_OTHER     @map("sector-other")
+  UNCLASSIFIED     @map("unclassified")
+}
+
 /// Exposure dimension used to group persisted allocation slices.
 enum FundAllocationCategory {
   SECTORIAL        @map("sectorial")
@@ -51,6 +65,12 @@ model Fund {
   vehicle                 FundVehicleType
   currency                String                       @db.Char(3)
   benchmark               String?
+  /// FMP `assetClass` (e.g. Equity, Fixed Income).
+  assetClass              String?
+  /// FMP `domicile` ISO country code (e.g. IE, US).
+  domicile                String?
+  /// Canonical investment theme inferred during sync.
+  investmentTheme         InvestmentTheme?
   /// Asset manager name from FMP `etfCompany` (e.g. Vanguard, State Street).
   issuer                  String?
   volatility              Decimal?                     @db.Decimal(8, 4)
@@ -79,6 +99,7 @@ model Fund {
   @@unique([symbol, provider])
   @@index([catalogVisibility])
   @@index([idealForBeginners])
+  @@index([investmentTheme])
   @@map("funds")
 }
 

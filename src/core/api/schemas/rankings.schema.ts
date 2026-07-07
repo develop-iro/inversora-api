@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { fundReturnSnapshotSchema } from '../../../modules/funds/entities/fund-return-snapshot.schema';
 
 /** Query schema for `GET /rankings`. */
 export const rankingsQuerySchema = z.object({
@@ -24,6 +25,7 @@ export const rankedFundEntrySchema = z.object({
     .regex(/^[A-Z]{3}$/, 'Currency must be a 3-letter ISO 4217 code'),
   riskLevel: z.number().int().min(1).max(7).nullable(),
   ter: z.number().nonnegative(),
+  returns: fundReturnSnapshotSchema,
 });
 
 /** Inferred type for a ranked fund entry. */

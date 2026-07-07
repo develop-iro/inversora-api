@@ -54,6 +54,20 @@ export const fundListQuerySchema = z.object({
     .enum(['true', 'false'])
     .optional()
     .transform((value) => (value === undefined ? undefined : value === 'true')),
+  investmentTheme: z
+    .enum([
+      'global-equity',
+      'us-equity',
+      'europe-equity',
+      'emerging-equity',
+      'fixed-income',
+      'multi-asset',
+      'technology',
+      'esg',
+      'sector-other',
+      'unclassified',
+    ])
+    .optional(),
 });
 
 /** Parsed query type for `GET /funds`. */

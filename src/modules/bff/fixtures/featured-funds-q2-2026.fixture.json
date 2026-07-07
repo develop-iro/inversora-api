@@ -25,7 +25,13 @@
       "periodEnd": "2026-06-30",
       "benefitSummary": "Replica el índice S&P 500 con alta liquidez y costes competitivos.",
       "featuredReason": "Referencia global + datos verificados en catálogo",
-      "isFeatured": true
+      "isFeatured": true,
+      "returns": {
+        "ytd": null,
+        "oneYear": null,
+        "threeYear": null,
+        "asOf": null
+      }
     }
   ]
 }

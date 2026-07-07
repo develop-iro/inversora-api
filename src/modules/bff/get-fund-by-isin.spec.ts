@@ -181,10 +181,10 @@ describe('GetFundByIsinUseCase', () => {
     );
   });
 
-  it('should return 404 when the fund is not publicly visible', async () => {
+  it('should return 404 when the fund is blocked from the public catalog', async () => {
     fundsRepository.findByIsin.mockResolvedValue({
       ...fund,
-      catalogVisibility: 'quarantined',
+      catalogVisibility: 'blocked',
     });
 
     await expect(useCase.execute('US78462F1030')).rejects.toBeInstanceOf(

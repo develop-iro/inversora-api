@@ -17,6 +17,8 @@ describe('FinancialModelingPrepProvider', () => {
     fetchEtfSectorWeightings: jest.Mock;
     fetchEtfCountryWeightings: jest.Mock;
     fetchEtfList: jest.Mock;
+    fetchQuote: jest.Mock;
+    fetchQuoteShort: jest.Mock;
   };
   let fixtures: {
     readFixture: jest.Mock;
@@ -38,6 +40,8 @@ describe('FinancialModelingPrepProvider', () => {
       fetchEtfSectorWeightings: jest.fn(),
       fetchEtfCountryWeightings: jest.fn(),
       fetchEtfList: jest.fn(),
+      fetchQuote: jest.fn(),
+      fetchQuoteShort: jest.fn(),
     };
 
     fixtures = {
@@ -605,5 +609,95 @@ describe('FinancialModelingPrepProvider', () => {
 
     expect(client.fetchEtfList).toHaveBeenCalledTimes(1);
     configMock.fmpUsesMocks = true;
+  });
+
+  it('should return null for blank quote symbols', async () => {
+    await expect(provider.getFundQuote('   ')).resolves.toBeNull();
+  });
+
+  it('should return a normalized full quote from fixtures', async () => {
+    fixtures.readFixture.mockResolvedValue([
+      {
+        symbol: 'SPY',
+        name: 'State Street SPDR S&P 500 ETF',
+        price: 740.93,
+        changePercentage: 1.63788,
+        change: 11.94,
+        volume: 11195261,
+        previousClose: 728.99,
+        timestamp: 1782763200,
+      },
+    ]);
+
+    await expect(provider.getFundQuote('spy')).resolves.toMatchObject({
+      symbol: 'SPY',
+      price: 740.93,
+      changePercent: 1.63788,
+    });
+  });
+
+  it('should fall back to quote-short fixtures when full quote is empty', async () => {
+    fixtures.readFixture.mockResolvedValueOnce([]).mockResolvedValueOnce([
+      {
+        symbol: 'SPY',
+        price: 740.93,
+        change: 11.94,
+        volume: 11195261,
+      },
+    ]);
+
+    await expect(provider.getFundQuote('SPY')).resolves.toMatchObject({
+      symbol: 'SPY',
+      price: 740.93,
+    });
+  });
+
+  it('should fall back to quote-short when the full quote endpoint is paid-only', async () => {
+    configMock.fmpUsesMocks = false;
+    client.fetchQuote.mockRejectedValue(
+      new ExternalHttpError({
+        message: 'Paid endpoint unavailable',
+        provider: FMP_PROVIDER_NAME,
+        statusCode: 402,
+      }),
+    );
+    client.fetchQuoteShort.mockResolvedValue([
+      {
+        symbol: 'SPY',
+        price: 740.93,
+        change: 11.94,
+        volume: 11195261,
+      },
+    ]);
+
+    await expect(provider.getFundQuote('SPY')).resolves.toMatchObject({
+      symbol: 'SPY',
+      price: 740.93,
+    });
+
+    configMock.fmpUsesMocks = true;
+  });
+
+  it('should rethrow non-paid quote errors from the live client', async () => {
+    configMock.fmpUsesMocks = false;
+    client.fetchQuote.mockRejectedValue(
+      new ExternalHttpError({
+        message: 'Provider unavailable',
+        provider: FMP_PROVIDER_NAME,
+        statusCode: 500,
+      }),
+    );
+
+    await expect(provider.getFundQuote('SPY')).rejects.toMatchObject({
+      statusCode: 500,
+    });
+
+    configMock.fmpUsesMocks = true;
+  });
+
+  it('should return null when both quote endpoints are empty', async () => {
+    fixtures.readFixture.mockResolvedValue([]);
+
+    await expect(provider.getFundQuote('SPY')).resolves.toBeNull();
   });
 });
