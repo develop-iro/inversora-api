@@ -75,7 +75,7 @@ describe('Catalog visibility (integration)', () => {
     await deleteFundBySymbol(prisma, 'VISQA');
   });
 
-  it('should exclude quarantined funds from public listings and allow admin retrieval', async () => {
+  it('should expose quarantined funds with complete metadata on public endpoints', async () => {
     if (skipSuite) {
       return;
     }
@@ -85,11 +85,16 @@ describe('Catalog visibility (integration)', () => {
     });
 
     const publicList = await fundsService.listFunds({ q: 'VISQA' });
-    expect(publicList.data).toEqual([]);
+    expect(publicList.data).toEqual([
+      expect.objectContaining({
+        id: created.id,
+        symbol: 'VISQA',
+        catalogVisibility: 'quarantined',
+      }),
+    ]);
 
-    await expect(fundsService.getFundById(created.id)).rejects.toBeInstanceOf(
-      NotFoundException,
-    );
+    const publicFund = await fundsService.getFundById(created.id);
+    expect(publicFund.catalogVisibility).toBe('quarantined');
 
     const adminList = await fundsRepository.findMany({
       where: buildFundListWhereInput(
@@ -107,6 +112,26 @@ describe('Catalog visibility (integration)', () => {
         catalogVisibility: 'quarantined',
       }),
     ]);
+  });
+
+  it('should hide quarantined funds with incomplete metadata from public listings', async () => {
+    if (skipSuite) {
+      return;
+    }
+
+    const created = await prisma.fund.create({
+      data: {
+        ...visibilityQaFundData,
+        ter: null,
+      },
+    });
+
+    const publicList = await fundsService.listFunds({ q: 'VISQA' });
+    expect(publicList.data).toEqual([]);
+
+    await expect(fundsService.getFundById(created.id)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
   });
 
   it('should persist manual visibility changes with audit history', async () => {
