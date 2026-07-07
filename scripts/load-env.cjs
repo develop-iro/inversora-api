@@ -152,14 +152,20 @@ function loadEnv(options = {}) {
   const envPath = resolve(root, '.env');
   const profilePath = resolve(root, 'env', `${profile}.env`);
   const profileOverridePath = resolve(root, `.env.${profile}`);
+  const hasDotEnv = existsSync(envPath);
+  const hasShellDatabaseUrl =
+    shellEnvKeys.has('DATABASE_URL') || process.env.DATABASE_URL !== undefined;
+  const isCi = process.env.CI === 'true';
 
-  if (!existsSync(envPath)) {
+  if (!hasDotEnv && !isCi && !hasShellDatabaseUrl) {
     throw new Error(
       `Missing ${envPath}. Copy .env.example and add your secrets (FMP_API_KEY, etc.).`,
     );
   }
 
-  applyEnvFile(envPath, 'fill');
+  if (hasDotEnv) {
+    applyEnvFile(envPath, 'fill');
+  }
   applyEnvFile(profilePath, 'override');
   applyEnvFile(profileOverridePath, 'override');
 

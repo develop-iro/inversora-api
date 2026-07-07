@@ -83,4 +83,20 @@ describe('loadEnv', () => {
     assert.equal(process.env.DATABASE_URL, 'postgresql://personal-neon');
     assert.equal(process.env.FMP_DATA_SOURCE, 'live');
   });
+
+  it('skips .env when CI provides DATABASE_URL via the shell environment', () => {
+    process.env.CI = 'true';
+    process.env.DATABASE_URL = 'postgresql://ci-host/inversora';
+    process.env.FMP_API_KEY = 'integration-test-fmp-key';
+    rmSync(join(tempRoot, '.env'));
+
+    const profile = loadEnv({ projectRoot: tempRoot, profile: 'local' });
+
+    assert.equal(profile, 'local');
+    assert.equal(process.env.DATABASE_URL, 'postgresql://ci-host/inversora');
+    assert.equal(process.env.FMP_API_KEY, 'integration-test-fmp-key');
+    assert.equal(process.env.FMP_DATA_SOURCE, 'mock');
+
+    delete process.env.CI;
+  });
 });
