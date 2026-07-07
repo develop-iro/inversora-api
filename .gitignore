@@ -38,6 +38,8 @@ lerna-debug.log*
 # environment
 .env
 .env.local
+.env.qa
+.env.pro
 .env.*.local
 
 # local MCP client configs may contain API keys

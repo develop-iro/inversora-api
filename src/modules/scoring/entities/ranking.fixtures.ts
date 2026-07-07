@@ -1,5 +1,6 @@
 import type { Fund } from '../../funds/entities/fund.schema';
 import { DEFAULT_FUND_EDITORIAL } from '../../funds/entities/fund-editorial.schema';
+import { FUND_PROFILE_FIELD_DEFAULTS } from '../../funds/test-utils/fund.entity.fixtures';
 
 const baseTimestamps = {
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
@@ -8,6 +9,7 @@ const baseTimestamps = {
   editorial: DEFAULT_FUND_EDITORIAL,
   vehicle: 'etf' as const,
   issuer: null as string | null,
+  ...FUND_PROFILE_FIELD_DEFAULTS,
 };
 
 const baseMetrics = {

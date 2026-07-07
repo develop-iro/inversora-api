@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { FinancialModelingPrepProvider } from '../../providers/financial-modeling-prep/financial-modeling-prep.provider';
 import type { ProviderFundHistoricalPrice } from '../../providers/financial-modeling-prep/financial-modeling-prep.domain.schemas';
+import { FUND_RETURN_HISTORY_LOOKBACK_DAYS } from '../entities/fund-returns.enricher';
 import {
   addDaysToIsoDate,
   compareIsoDates,
@@ -139,6 +140,13 @@ export class FundPriceSyncService {
 
     if (incremental && from === undefined && latestDate !== null) {
       from = addDaysToIsoDate(latestDate, 1);
+    }
+
+    if (from === undefined && latestDate === null) {
+      from = addDaysToIsoDate(
+        getTodayIsoDate(),
+        -FUND_RETURN_HISTORY_LOOKBACK_DAYS,
+      );
     }
 
     if (

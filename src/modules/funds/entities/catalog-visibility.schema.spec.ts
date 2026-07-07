@@ -3,6 +3,14 @@ import {
   isCatalogVisible,
 } from './catalog-visibility.schema';
 
+const completeFund = {
+  catalogVisibility: 'visible' as const,
+  isin: 'US78462F1030',
+  benchmark: 'S&P 500',
+  name: 'State Street SPDR S&P 500 ETF Trust',
+  metrics: { ter: 0.0945 },
+};
+
 describe('catalogVisibilitySchema', () => {
   it('should validate supported catalog visibility states', () => {
     expect(catalogVisibilitySchema.parse('visible')).toBe('visible');
@@ -12,9 +20,37 @@ describe('catalogVisibilitySchema', () => {
 });
 
 describe('isCatalogVisible', () => {
-  it('should allow only visible funds in the public catalog', () => {
-    expect(isCatalogVisible({ catalogVisibility: 'visible' })).toBe(true);
-    expect(isCatalogVisible({ catalogVisibility: 'quarantined' })).toBe(false);
-    expect(isCatalogVisible({ catalogVisibility: 'blocked' })).toBe(false);
+  it('should allow visible funds in the public catalog', () => {
+    expect(isCatalogVisible(completeFund)).toBe(true);
+  });
+
+  it('should hide blocked funds', () => {
+    expect(
+      isCatalogVisible({
+        ...completeFund,
+        catalogVisibility: 'blocked',
+      }),
+    ).toBe(false);
+  });
+
+  it('should expose quarantined funds when catalog metadata is complete', () => {
+    expect(
+      isCatalogVisible({
+        ...completeFund,
+        catalogVisibility: 'quarantined',
+      }),
+    ).toBe(true);
+  });
+
+  it('should hide quarantined funds with incomplete catalog metadata', () => {
+    expect(
+      isCatalogVisible({
+        catalogVisibility: 'quarantined',
+        isin: null,
+        benchmark: 'S&P 500',
+        name: 'Incomplete fund',
+        metrics: { ter: 0.1 },
+      }),
+    ).toBe(false);
   });
 });

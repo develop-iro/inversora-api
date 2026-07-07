@@ -4,6 +4,7 @@ import {
   mapDomainFundProviderToPrisma,
   mapDomainFundVehicleToPrisma,
   mapDomainCatalogVisibilityToPrisma,
+  mapDomainInvestmentThemeToPrisma,
 } from './fund.mapper';
 import { CatalogVisibility as PrismaCatalogVisibility } from '@prisma/client';
 import type {
@@ -29,6 +30,31 @@ const SORT_FIELD_TO_PRISMA_COLUMN: Record<
 };
 
 /**
+ * Builds the default public catalog visibility filter.
+ *
+ * Matches {@link isCatalogVisible}: visible funds plus quarantined funds with
+ * complete catalog metadata.
+ */
+export function buildPublicCatalogVisibilityWhereInput(): Prisma.FundWhereInput {
+  return {
+    OR: [
+      { catalogVisibility: PrismaCatalogVisibility.VISIBLE },
+      {
+        AND: [
+          { catalogVisibility: PrismaCatalogVisibility.QUARANTINED },
+          { isin: { not: null } },
+          { NOT: { isin: '' } },
+          { benchmark: { not: null } },
+          { NOT: { benchmark: '' } },
+          { ter: { not: null } },
+          { NOT: { name: '' } },
+        ],
+      },
+    ],
+  };
+}
+
+/**
  * Builds a Prisma filter from validated fund list query parameters.
  *
  * @param query - Validated list query.
@@ -42,16 +68,16 @@ export function buildFundListWhereInput(
   } = {},
 ): Prisma.FundWhereInput {
   const conditions: Prisma.FundWhereInput[] = [];
-  const visibilityFilter =
-    options.catalogVisibility === undefined
-      ? [PrismaCatalogVisibility.VISIBLE]
-      : options.catalogVisibility.map(mapDomainCatalogVisibilityToPrisma);
 
-  conditions.push({
-    catalogVisibility: {
-      in: visibilityFilter,
-    },
-  });
+  if (options.catalogVisibility === undefined) {
+    conditions.push(buildPublicCatalogVisibilityWhereInput());
+  } else {
+    conditions.push({
+      catalogVisibility: {
+        in: options.catalogVisibility.map(mapDomainCatalogVisibilityToPrisma),
+      },
+    });
+  }
 
   if (query.q !== undefined) {
     conditions.push({
@@ -117,6 +143,12 @@ export function buildFundListWhereInput(
   if (query.idealForBeginnersOnly !== undefined) {
     conditions.push({
       idealForBeginners: query.idealForBeginnersOnly,
+    });
+  }
+
+  if (query.investmentTheme !== undefined) {
+    conditions.push({
+      investmentTheme: mapDomainInvestmentThemeToPrisma(query.investmentTheme),
     });
   }
 

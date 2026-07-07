@@ -20,7 +20,13 @@
     "periodEnd": "2026-06-30",
     "benefitSummary": "ETF con referencia S&P 500.",
     "featuredReason": "",
-    "isFeatured": false
+    "isFeatured": false,
+    "returns": {
+      "ytd": null,
+      "oneYear": null,
+      "threeYear": null,
+      "asOf": null
+    }
   },
   "inversoraScore": 84,
   "rank": 1,

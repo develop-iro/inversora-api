@@ -1,4 +1,6 @@
+import type { FundPrice } from '../../funds/entities/fund-price.schema';
 import type { Fund } from '../../funds/entities/fund.schema';
+import { buildFundReturnSnapshot } from '../../funds/entities/fund-return-snapshot.builder';
 import { isCatalogVisible } from '../../funds/entities/catalog-visibility.schema';
 import { resolveScoringPeerGroupKey } from './fund-scoring-metrics.builder';
 import type {
@@ -76,7 +78,34 @@ export function mapFundToRankedEntry(
     currency: fund.currency,
     riskLevel: fund.riskLevel,
     ter: fund.metrics.ter!,
+    returns: {
+      ytd: null,
+      oneYear: null,
+      threeYear: null,
+      asOf: null,
+    },
   };
+}
+
+/**
+ * Replaces placeholder returns on ranked entries using persisted price history.
+ *
+ * @param response - Rankings response with null return placeholders.
+ * @param pricesByFundId - Price rows grouped by fund id.
+ */
+export function enrichRankingsResponseWithReturns(
+  response: RankingsResponse,
+  pricesByFundId: ReadonlyMap<string, readonly FundPrice[]>,
+): RankingsResponse {
+  const data: BenchmarkRankingGroup[] = response.data.map((group) => ({
+    ...group,
+    funds: group.funds.map((entry) => ({
+      ...entry,
+      returns: buildFundReturnSnapshot(pricesByFundId.get(entry.id) ?? []),
+    })),
+  }));
+
+  return rankingsResponseSchema.parse({ data });
 }
 
 /**

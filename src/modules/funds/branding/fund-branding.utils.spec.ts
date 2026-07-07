@@ -10,7 +10,7 @@ import {
   resolveIssuerDomain,
 } from './fund-branding.utils';
 
-const BRANDFETCH_RENDER_PATH = '/w/64/h/64/theme/dark/fallback/404';
+const BRANDFETCH_RENDER_PATH = '/w/64/h/64/theme/dark/fallback/lettermark';
 
 describe('brandfetch-logo-url.builder', () => {
   it('should build a domain logo URL with size, theme, and fallback segments', () => {

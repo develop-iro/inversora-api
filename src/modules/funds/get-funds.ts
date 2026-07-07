@@ -16,7 +16,10 @@ import {
   buildFundListWhereInput,
 } from './entities/fund-list.mapper';
 import { mapFundsToApiFunds } from './entities/fund-api.mapper';
+import { enrichFundApiPayloadsWithReturns } from './entities/fund-returns.enricher.mapper';
+import { loadReturnSnapshotsByFundIds } from './entities/fund-returns.enricher';
 import { FundsRepository } from './repositories/funds.repository';
+import { FundPricesService } from './services/fund-prices.service';
 
 /**
  * Use case for paginated public fund catalog reads (`GET /funds`).
@@ -26,6 +29,7 @@ export class GetFundsUseCase {
   constructor(
     private readonly fundsRepository: FundsRepository,
     private readonly configService: AppConfigService,
+    private readonly fundPricesService: FundPricesService,
   ) {}
 
   /**
@@ -45,11 +49,24 @@ export class GetFundsUseCase {
       skip,
       take: query.limit,
     });
+    const apiFunds = mapFundsToApiFunds(
+      items,
+      this.configService.brandfetchClientId,
+    );
+    const fundIds = items.map((item) => item.id);
+    const returnSnapshots = await loadReturnSnapshotsByFundIds(
+      this.fundPricesService,
+      fundIds,
+    );
 
     return parseApiResponse(
       fundListResponseSchema,
       {
-        data: mapFundsToApiFunds(items, this.configService.brandfetchClientId),
+        data: enrichFundApiPayloadsWithReturns(
+          apiFunds,
+          fundIds,
+          returnSnapshots,
+        ),
         meta: buildFundListMeta(query.page, query.limit, total),
       },
       'get-funds',

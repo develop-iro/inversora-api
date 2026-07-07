@@ -10,6 +10,7 @@ import type { FundCountryExposureResponse } from '../../funds/entities/fund-coun
 import type { FundHoldingsResponse } from '../../funds/entities/fund-holdings.schema';
 import { formatFundPriceDate } from '../../funds/entities/fund-price.mapper';
 import type { FundPrice } from '../../funds/entities/fund-price.schema';
+import { buildFundReturnSnapshot } from '../../funds/entities/fund-return-snapshot.builder';
 import type { FundSectorExposureResponse } from '../../funds/entities/fund-sector-exposure.schema';
 import type { Fund } from '../../funds/entities/fund.schema';
 import {
@@ -624,6 +625,7 @@ export function buildFundDetailResponse(
       benefitSummary: buildBenefitSummary(fund),
       featuredReason: '',
       isFeatured: false,
+      returns: buildFundReturnSnapshot(input.allPrices),
     },
     inversoraScore,
     rank: input.rank,

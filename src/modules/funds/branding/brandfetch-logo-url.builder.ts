@@ -14,7 +14,7 @@ export type BrandfetchLogoUrlOptions = {
 
 const DEFAULT_LOGO_SIZE = 64;
 const DEFAULT_LOGO_THEME = 'dark';
-const DEFAULT_LOGO_FALLBACK = '404';
+const DEFAULT_LOGO_FALLBACK = 'lettermark';
 
 /**
  * Builds shared Brandfetch render path segments for hotlinked logo URLs.

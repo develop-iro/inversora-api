@@ -6,6 +6,7 @@ import {
   providerFundHoldingSchema,
   providerFundPriceSummarySchema,
   providerFundProfileSchema,
+  providerFundQuoteSchema,
   providerFundSearchResultSchema,
   providerFundSectorWeightingSchema,
 } from './financial-modeling-prep.domain.schemas';
@@ -17,6 +18,7 @@ import type {
   ProviderFundHolding,
   ProviderFundPriceSummary,
   ProviderFundProfile,
+  ProviderFundQuote,
   ProviderFundSearchResult,
   ProviderFundSectorWeighting,
 } from './financial-modeling-prep.domain.schemas';
@@ -27,6 +29,8 @@ import type {
   FmpFundHolding,
   FmpFundProfile,
   FmpHistoricalPrice,
+  FmpQuote,
+  FmpQuoteShort,
   FmpSearchResult,
   FmpSectorWeighting,
 } from './financial-modeling-prep.raw.schemas';
@@ -533,5 +537,111 @@ export function buildProviderFundDetail(
     ...profile,
     priceSummary: buildProviderFundPriceSummary(prices),
     history: includeHistory ? [...prices] : undefined,
+  });
+}
+
+/**
+ * Resolves a day change percentage from raw FMP quote fields.
+ *
+ * FMP `quote-short` returns `change` but not `changePercentage`; the full `quote`
+ * endpoint exposes `changePercentage` and `previousClose`.
+ *
+ * @param input - Raw quote fields.
+ */
+export function resolveQuoteChangePercent(input: {
+  price: number;
+  change?: number;
+  changePercent?: number;
+  changesPercentage?: number;
+  previousClose?: number;
+}): number | null {
+  if (input.changePercent !== undefined) {
+    return input.changePercent;
+  }
+
+  if (input.changesPercentage !== undefined) {
+    return input.changesPercentage;
+  }
+
+  if (
+    input.previousClose !== undefined &&
+    input.previousClose !== 0 &&
+    input.change !== undefined
+  ) {
+    return (input.change / input.previousClose) * 100;
+  }
+
+  if (input.change === undefined) {
+    return null;
+  }
+
+  const previousClose = input.price - input.change;
+
+  if (previousClose === 0) {
+    return null;
+  }
+
+  return (input.change / previousClose) * 100;
+}
+
+/**
+ * Converts an FMP quote timestamp into an ISO datetime string.
+ *
+ * @param timestamp - Unix timestamp in seconds or milliseconds.
+ */
+export function resolveQuoteAsOf(timestamp?: number): string {
+  if (timestamp === undefined) {
+    return new Date().toISOString();
+  }
+
+  const milliseconds =
+    timestamp > 1_000_000_000_000 ? timestamp : timestamp * 1000;
+
+  return new Date(milliseconds).toISOString();
+}
+
+/**
+ * Normalizes a raw FMP quote row into a provider quote snapshot.
+ *
+ * @param quote - Raw FMP full quote row.
+ * @returns Normalized provider quote snapshot.
+ */
+export function normalizeProviderFundFullQuote(
+  quote: FmpQuote,
+): ProviderFundQuote {
+  return providerFundQuoteSchema.parse({
+    symbol: quote.symbol,
+    price: quote.price,
+    changePercent: resolveQuoteChangePercent({
+      price: quote.price,
+      change: quote.change,
+      changePercent: quote.changePercentage,
+      changesPercentage: quote.changesPercentage,
+      previousClose: quote.previousClose,
+    }),
+    volume: quote.volume ?? null,
+    asOf: resolveQuoteAsOf(quote.timestamp),
+  });
+}
+
+/**
+ * Normalizes a raw FMP quote-short row into a provider quote snapshot.
+ *
+ * @param quote - Raw FMP quote-short row.
+ * @returns Normalized provider quote snapshot.
+ */
+export function normalizeProviderFundQuote(
+  quote: FmpQuoteShort,
+): ProviderFundQuote {
+  return providerFundQuoteSchema.parse({
+    symbol: quote.symbol,
+    price: quote.price,
+    changePercent: resolveQuoteChangePercent({
+      price: quote.price,
+      change: quote.change,
+      changesPercentage: quote.changesPercentage,
+    }),
+    volume: quote.volume ?? null,
+    asOf: new Date().toISOString(),
   });
 }

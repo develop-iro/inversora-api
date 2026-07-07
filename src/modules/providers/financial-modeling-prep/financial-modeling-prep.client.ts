@@ -18,6 +18,8 @@ import {
   fmpFundHoldingSchema,
   fmpFundProfileSchema,
   fmpHistoricalPriceSchema,
+  fmpQuoteSchema,
+  fmpQuoteShortSchema,
   fmpSearchResultSchema,
   fmpSectorWeightingSchema,
 } from './financial-modeling-prep.raw.schemas';
@@ -27,6 +29,8 @@ import type {
   FmpFundHolding,
   FmpFundProfile,
   FmpHistoricalPrice,
+  FmpQuote,
+  FmpQuoteShort,
   FmpSearchResult,
   FmpSectorWeighting,
 } from './financial-modeling-prep.raw.schemas';
@@ -185,6 +189,38 @@ export class FinancialModelingPrepClient {
       fmpHistoricalPriceSchema,
       'historical-price-eod/full',
       FMP_FIXTURE_FILES.historicalPriceEod,
+    );
+  }
+
+  /**
+   * Fetches a concise real-time quote for a listed symbol.
+   *
+   * @param symbol - Fund or ETF ticker symbol.
+   * @returns Raw FMP quote-short rows.
+   */
+  async fetchQuoteShort(symbol: string): Promise<FmpQuoteShort[]> {
+    return this.fetchArray(
+      '/stable/quote-short',
+      { symbol },
+      fmpQuoteShortSchema,
+      'quote-short',
+      FMP_FIXTURE_FILES.quoteShort,
+    );
+  }
+
+  /**
+   * Fetches a full real-time quote for a listed symbol.
+   *
+   * @param symbol - Fund or ETF ticker symbol.
+   * @returns Raw FMP quote rows.
+   */
+  async fetchQuote(symbol: string): Promise<FmpQuote[]> {
+    return this.fetchArray(
+      '/stable/quote',
+      { symbol },
+      fmpQuoteSchema,
+      'quote',
+      FMP_FIXTURE_FILES.quoteFull,
     );
   }
 

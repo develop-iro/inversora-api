@@ -1,4 +1,4 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Param } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiNotFoundResponse,
@@ -11,8 +11,10 @@ import {
 import type { Fund } from '../../funds/entities/fund.schema';
 import { FundsService } from '../../funds/services/funds.service';
 import { FundDetailResponseDto } from '../dto/fund-detail-response.dto';
+import { FundLiveMarketSnapshotResponseDto } from '../dto/fund-live-market-snapshot.dto';
 import { isFundIsinIdentifier } from '../entities/fund-isin.utils';
 import type { FundDetailResponse } from '../entities/fund-detail.schema';
+import { GetFundLiveMarketSnapshotUseCase } from '../get-fund-live-market-snapshot';
 import { FundDetailService } from '../services/fund-detail.service';
 
 @ApiTags('bff')
@@ -21,7 +23,37 @@ export class FundDetailController {
   constructor(
     private readonly fundDetailService: FundDetailService,
     private readonly fundsService: FundsService,
+    private readonly getFundLiveMarketSnapshotUseCase: GetFundLiveMarketSnapshotUseCase,
   ) {}
+
+  @Get(':identifier/market-snapshot')
+  @ApiOperation({
+    summary: 'Get live or latest EOD market snapshot for a fund',
+    description:
+      'Fetches a recent quote from FMP when available, otherwise falls back to the latest persisted end-of-day price. Intended for fund detail screens; not cached with catalog or ranking payloads.',
+  })
+  @ApiParam({
+    name: 'identifier',
+    description: 'Fund ISIN (ISO 6166)',
+    example: 'US78462F1030',
+  })
+  @ApiOkResponse({
+    description: 'Live or latest EOD market snapshot.',
+    type: FundLiveMarketSnapshotResponseDto,
+  })
+  @ApiBadRequestResponse({ description: 'Invalid ISIN format.' })
+  @ApiNotFoundResponse({ description: 'Fund not found.' })
+  getFundMarketSnapshot(@Param('identifier') identifier: string) {
+    if (!isFundIsinIdentifier(identifier)) {
+      throw new BadRequestException({
+        message: 'Market snapshot is only available for ISIN routes',
+        error: 'Bad Request',
+        statusCode: 400,
+      });
+    }
+
+    return this.getFundLiveMarketSnapshotUseCase.execute(identifier);
+  }
 
   @Get(':identifier')
   @ApiOperation({

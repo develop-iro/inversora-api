@@ -33,7 +33,10 @@ export class FundSyncService {
   ): Promise<FundSyncResult> {
     const normalizedSymbol = symbol.trim().toUpperCase();
     const profile = await this.fmpProvider.getFundProfile(normalizedSymbol);
-    const upsertInput = mapProviderFundProfileToUpsertFundInput(profile);
+    const upsertInput = {
+      ...mapProviderFundProfileToUpsertFundInput(profile),
+      themeClassificationDescription: profile.description,
+    };
     const { fund, created } = await this.fundsRepository.upsert(upsertInput);
     const fundWithVisibility =
       await this.catalogVisibilityService.applyAutomaticVisibilityRules(fund);
@@ -47,7 +50,7 @@ export class FundSyncService {
       {
         from: options.historyFrom,
         to: options.historyTo,
-        incremental: options.incrementalPrices ?? false,
+        incremental: options.incrementalPrices ?? true,
       },
     );
 

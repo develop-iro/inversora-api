@@ -3,10 +3,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AppConfigService } from '../../../shared/config/config.service';
 import type { Fund } from '../../funds/entities/fund.schema';
 import { FundsRepository } from '../../funds/repositories/funds.repository';
+import { FundPricesService } from '../../funds/services/fund-prices.service';
+import { buildFundTestFixture } from '../../funds/test-utils/fund.entity.fixtures';
 import * as featuredFundsMapper from '../entities/featured-funds.mapper';
 import { FeaturedFundsService } from './featured-funds.service';
 
-const fund: Fund = {
+const fund: Fund = buildFundTestFixture({
   id: '550e8400-e29b-41d4-a716-446655440000',
   symbol: 'SPY',
   isin: 'US78462F1030',
@@ -32,7 +34,7 @@ const fund: Fund = {
   editorial: { badge: '', themeLabel: '', idealForBeginners: false },
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   updatedAt: new Date('2024-02-01T00:00:00.000Z'),
-};
+});
 
 describe('FeaturedFundsService', () => {
   let service: FeaturedFundsService;
@@ -53,6 +55,12 @@ describe('FeaturedFundsService', () => {
         {
           provide: AppConfigService,
           useValue: { brandfetchClientId: undefined },
+        },
+        {
+          provide: FundPricesService,
+          useValue: {
+            getHistoriesByFundIds: jest.fn().mockResolvedValue(new Map()),
+          },
         },
       ],
     }).compile();
@@ -130,14 +138,14 @@ describe('FeaturedFundsService', () => {
     expect(response.data).toEqual([]);
   });
 
-  it('should skip non-visible catalog funds', async () => {
+  it('should skip blocked catalog funds', async () => {
     fundsRepository.findByIsins.mockResolvedValue(
       new Map([
         [
           'US78462F1030',
           {
             ...fund,
-            catalogVisibility: 'quarantined' as const,
+            catalogVisibility: 'blocked' as const,
           },
         ],
       ]),

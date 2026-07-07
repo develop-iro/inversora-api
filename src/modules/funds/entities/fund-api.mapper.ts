@@ -1,5 +1,6 @@
 import { mapFundBrandingFields } from '../branding/fund-branding.utils';
 import { fundApiSchema, type FundApi } from './fund-api.schema';
+import { EMPTY_FUND_RETURN_SNAPSHOT } from './fund-returns.enricher';
 import type { Fund } from './fund.schema';
 
 /**
@@ -17,6 +18,7 @@ export function mapFundToApiFund(
   return fundApiSchema.parse({
     ...fund,
     logoUrl: branding.logoUrl,
+    returns: EMPTY_FUND_RETURN_SNAPSHOT,
   });
 }
 

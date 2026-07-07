@@ -3,6 +3,7 @@ import {
   FundCategory as PrismaFundCategory,
   FundProvider as PrismaFundProvider,
   FundVehicleType as PrismaFundVehicleType,
+  InvestmentTheme as PrismaInvestmentTheme,
 } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import type { FundCategory, FundProvider } from './fund.schema';
@@ -34,6 +35,9 @@ const prismaFundRow = {
   vehicle: PrismaFundVehicleType.ETF,
   currency: 'USD',
   benchmark: 'S&P 500',
+  assetClass: 'Equity',
+  domicile: 'US',
+  investmentTheme: PrismaInvestmentTheme.US_EQUITY,
   issuer: null,
   volatility: new Decimal('14.2500'),
   drawdown: new Decimal('-8.5000'),
@@ -103,6 +107,9 @@ describe('mapPrismaFundToFund', () => {
       vehicle: 'etf',
       currency: 'USD',
       benchmark: 'S&P 500',
+      assetClass: 'Equity',
+      domicile: 'US',
+      investmentTheme: 'us-equity',
       issuer: null,
       metrics: {
         volatility: 14.25,
@@ -220,6 +227,8 @@ describe('mapProviderFundProfileToUpsertFundInput', () => {
       category: 'index',
       vehicle: 'etf',
       currency: 'USD',
+      assetClass: null,
+      domicile: null,
       benchmark: 'S&P 500',
       metrics: {
         ter: 0.0945,
@@ -248,6 +257,8 @@ describe('mapProviderFundProfileToUpsertFundInput', () => {
       category: 'index',
       vehicle: 'etf',
       currency: 'USD',
+      assetClass: null,
+      domicile: null,
       benchmark: null,
       issuer: null,
       metrics: {
@@ -302,6 +313,8 @@ describe('mapUpsertFundInputToPrismaCreateData', () => {
       category: PrismaFundCategory.INDEX,
       vehicle: PrismaFundVehicleType.ETF,
       currency: 'USD',
+      assetClass: null,
+      domicile: null,
       benchmark: 'S&P 500',
       issuer: null,
       catalogVisibility: PrismaCatalogVisibility.VISIBLE,
@@ -360,6 +373,8 @@ describe('mapUpsertFundInputToPrismaUpdateData', () => {
       category: PrismaFundCategory.INDEX,
       vehicle: PrismaFundVehicleType.ETF,
       currency: 'USD',
+      assetClass: null,
+      domicile: null,
       benchmark: null,
       ter: 0.1,
       volatility: null,

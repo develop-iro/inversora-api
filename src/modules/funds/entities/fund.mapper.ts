@@ -3,6 +3,7 @@ import {
   FundCategory as PrismaFundCategory,
   FundProvider as PrismaFundProvider,
   FundVehicleType as PrismaFundVehicleType,
+  InvestmentTheme as PrismaInvestmentTheme,
   type Fund as PrismaFund,
   type Prisma,
 } from '@prisma/client';
@@ -15,6 +16,7 @@ import type {
   FundMetrics,
   FundProvider,
   FundVehicleType,
+  InvestmentTheme,
   UpsertFundInput,
 } from './fund.schema';
 import type { UpdateFundEditorialInput } from './fund-editorial.schema';
@@ -66,6 +68,78 @@ export function mapDomainCatalogVisibilityToPrisma(
       return PrismaCatalogVisibility.BLOCKED;
     default: {
       const exhaustiveCheck: never = visibility;
+      return exhaustiveCheck;
+    }
+  }
+}
+
+/**
+ * Maps a Prisma investment theme enum to the domain value.
+ *
+ * @param theme - Prisma investment theme enum.
+ */
+export function mapPrismaInvestmentTheme(
+  theme: PrismaInvestmentTheme,
+): InvestmentTheme {
+  switch (theme) {
+    case PrismaInvestmentTheme.GLOBAL_EQUITY:
+      return 'global-equity';
+    case PrismaInvestmentTheme.US_EQUITY:
+      return 'us-equity';
+    case PrismaInvestmentTheme.EUROPE_EQUITY:
+      return 'europe-equity';
+    case PrismaInvestmentTheme.EMERGING_EQUITY:
+      return 'emerging-equity';
+    case PrismaInvestmentTheme.FIXED_INCOME:
+      return 'fixed-income';
+    case PrismaInvestmentTheme.MULTI_ASSET:
+      return 'multi-asset';
+    case PrismaInvestmentTheme.TECHNOLOGY:
+      return 'technology';
+    case PrismaInvestmentTheme.ESG:
+      return 'esg';
+    case PrismaInvestmentTheme.SECTOR_OTHER:
+      return 'sector-other';
+    case PrismaInvestmentTheme.UNCLASSIFIED:
+      return 'unclassified';
+    default: {
+      const exhaustiveCheck: never = theme;
+      return exhaustiveCheck;
+    }
+  }
+}
+
+/**
+ * Maps a domain investment theme value to the Prisma enum.
+ *
+ * @param theme - Domain investment theme value.
+ */
+export function mapDomainInvestmentThemeToPrisma(
+  theme: InvestmentTheme,
+): PrismaInvestmentTheme {
+  switch (theme) {
+    case 'global-equity':
+      return PrismaInvestmentTheme.GLOBAL_EQUITY;
+    case 'us-equity':
+      return PrismaInvestmentTheme.US_EQUITY;
+    case 'europe-equity':
+      return PrismaInvestmentTheme.EUROPE_EQUITY;
+    case 'emerging-equity':
+      return PrismaInvestmentTheme.EMERGING_EQUITY;
+    case 'fixed-income':
+      return PrismaInvestmentTheme.FIXED_INCOME;
+    case 'multi-asset':
+      return PrismaInvestmentTheme.MULTI_ASSET;
+    case 'technology':
+      return PrismaInvestmentTheme.TECHNOLOGY;
+    case 'esg':
+      return PrismaInvestmentTheme.ESG;
+    case 'sector-other':
+      return PrismaInvestmentTheme.SECTOR_OTHER;
+    case 'unclassified':
+      return PrismaInvestmentTheme.UNCLASSIFIED;
+    default: {
+      const exhaustiveCheck: never = theme;
       return exhaustiveCheck;
     }
   }
@@ -188,6 +262,12 @@ export function mapPrismaFundToFund(record: PrismaFund): Fund {
     vehicle: mapPrismaFundVehicle(record.vehicle),
     currency: record.currency,
     benchmark: record.benchmark,
+    assetClass: record.assetClass,
+    domicile: record.domicile,
+    investmentTheme:
+      record.investmentTheme === null
+        ? null
+        : mapPrismaInvestmentTheme(record.investmentTheme),
     metrics: mapPrismaFundMetrics(record),
     riskLevel: record.riskLevel,
     score: mapNullableDecimal(record.score),
@@ -298,6 +378,34 @@ export function normalizeOptionalFundIsin(
 }
 
 /**
+ * Normalizes optional provider text fields for persistence.
+ *
+ * @param value - Optional provider text value.
+ */
+export function normalizeOptionalProviderText(value?: string): string | null {
+  const normalized = value?.trim() ?? '';
+
+  return normalized.length > 0 ? normalized : null;
+}
+
+/**
+ * Normalizes an optional domicile country code for persistence.
+ *
+ * @param domicile - Optional provider domicile value.
+ */
+export function normalizeOptionalFundDomicile(
+  domicile?: string,
+): string | null {
+  const normalized = domicile?.trim().toUpperCase() ?? '';
+
+  if (normalized.length !== 2) {
+    return null;
+  }
+
+  return /^[A-Z]{2}$/.test(normalized) ? normalized : null;
+}
+
+/**
  * Maps a normalized provider profile to a fund upsert input.
  *
  * @param profile - Normalized provider fund profile from FMP.
@@ -315,6 +423,8 @@ export function mapProviderFundProfileToUpsertFundInput(
     vehicle: profile.vehicle,
     currency: resolveFundCurrencyFromProfile(profile),
     benchmark: profile.benchmark ?? null,
+    assetClass: normalizeOptionalProviderText(profile.assetClass),
+    domicile: normalizeOptionalFundDomicile(profile.domicile),
     issuer: profile.issuer?.trim() || null,
     metrics: {
       ter: profile.expenseRatio ?? null,
@@ -376,6 +486,8 @@ export function mapUpsertFundInputToPrismaCreateData(
     vehicle: mapDomainFundVehicleToPrisma(input.vehicle),
     currency: input.currency,
     benchmark: input.benchmark ?? null,
+    assetClass: input.assetClass ?? null,
+    domicile: input.domicile ?? null,
     ...mapFundMetricsToPrismaFields(input.metrics ?? {}),
     riskLevel: input.riskLevel ?? null,
     score: input.score ?? null,
@@ -409,6 +521,8 @@ export function mapUpsertFundInputToPrismaUpdateData(
     vehicle: mapDomainFundVehicleToPrisma(input.vehicle),
     currency: input.currency,
     benchmark: input.benchmark ?? null,
+    assetClass: input.assetClass ?? null,
+    domicile: input.domicile ?? null,
     ...mapFundMetricsToPrismaFields(input.metrics ?? {}),
     riskLevel: input.riskLevel ?? null,
     score: input.score ?? null,

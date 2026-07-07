@@ -11,7 +11,7 @@ import { validateEnv } from './env.schema';
   imports: [
     NestConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      ignoreEnvFile: true,
       validate: validateEnv,
     }),
   ],

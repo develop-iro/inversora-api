@@ -1,0 +1,12 @@
+[
+  {
+    "symbol": "SPY",
+    "name": "State Street SPDR S&P 500 ETF",
+    "price": 740.93,
+    "changePercentage": 1.63788,
+    "change": 11.94,
+    "volume": 11195261,
+    "previousClose": 728.99,
+    "timestamp": 1782763200
+  }
+]

@@ -110,3 +110,34 @@ export const fmpCountryWeightingSchema = z
 
 /** Inferred type for a raw ETF country weighting. */
 export type FmpCountryWeighting = z.infer<typeof fmpCountryWeightingSchema>;
+
+/** Zod schema for a raw FMP `quote-short` row. */
+export const fmpQuoteShortSchema = z
+  .object({
+    symbol: z.string(),
+    price: z.coerce.number(),
+    volume: z.coerce.number().optional(),
+    change: z.coerce.number().optional(),
+    changesPercentage: z.coerce.number().optional(),
+  })
+  .passthrough();
+
+/** Inferred type for a raw FMP quote-short row. */
+export type FmpQuoteShort = z.infer<typeof fmpQuoteShortSchema>;
+
+/** Zod schema for a raw FMP `quote` row. */
+export const fmpQuoteSchema = z
+  .object({
+    symbol: z.string(),
+    price: z.coerce.number(),
+    change: z.coerce.number().optional(),
+    changePercentage: z.coerce.number().optional(),
+    changesPercentage: z.coerce.number().optional(),
+    previousClose: z.coerce.number().optional(),
+    volume: z.coerce.number().optional(),
+    timestamp: z.coerce.number().optional(),
+  })
+  .passthrough();
+
+/** Inferred type for a raw FMP quote row. */
+export type FmpQuote = z.infer<typeof fmpQuoteSchema>;

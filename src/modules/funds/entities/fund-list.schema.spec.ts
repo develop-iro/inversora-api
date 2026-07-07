@@ -1,8 +1,9 @@
-import { CatalogVisibility } from '@prisma/client';
+import { InvestmentTheme } from '@prisma/client';
 import {
   buildFundListMeta,
   buildFundListOrderByInput,
   buildFundListWhereInput,
+  buildPublicCatalogVisibilityWhereInput,
 } from './fund-list.mapper';
 import { fundListQuerySchema } from './fund-list.schema';
 
@@ -57,6 +58,12 @@ describe('fundListQuerySchema', () => {
       fundListQuerySchema.parse({ idealForBeginnersOnly: 'false' }),
     ).toMatchObject({ idealForBeginnersOnly: false });
   });
+
+  it('should parse investmentTheme filter', () => {
+    expect(
+      fundListQuerySchema.parse({ investmentTheme: 'us-equity' }),
+    ).toMatchObject({ investmentTheme: 'us-equity' });
+  });
 });
 
 describe('buildFundListWhereInput', () => {
@@ -72,7 +79,7 @@ describe('buildFundListWhereInput', () => {
       ),
     ).toEqual({
       AND: [
-        { catalogVisibility: { in: [CatalogVisibility.VISIBLE] } },
+        buildPublicCatalogVisibilityWhereInput(),
         {
           OR: [
             { symbol: { contains: 'SPY', mode: 'insensitive' } },
@@ -84,6 +91,18 @@ describe('buildFundListWhereInput', () => {
         { riskLevel: 4 },
         { score: { gte: 70 } },
         { ter: { lte: 0.2 } },
+      ],
+    });
+  });
+  it('should build investment theme filters', () => {
+    expect(
+      buildFundListWhereInput(
+        fundListQuerySchema.parse({ investmentTheme: 'technology' }),
+      ),
+    ).toEqual({
+      AND: [
+        buildPublicCatalogVisibilityWhereInput(),
+        { investmentTheme: InvestmentTheme.TECHNOLOGY },
       ],
     });
   });
