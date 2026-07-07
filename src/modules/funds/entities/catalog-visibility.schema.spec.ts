@@ -53,4 +53,35 @@ describe('isCatalogVisible', () => {
       }),
     ).toBe(false);
   });
+
+  it('should hide quarantined funds with blank ISIN, benchmark, name, or TER', () => {
+    expect(
+      isCatalogVisible({
+        ...completeFund,
+        catalogVisibility: 'quarantined',
+        isin: '   ',
+      }),
+    ).toBe(false);
+    expect(
+      isCatalogVisible({
+        ...completeFund,
+        catalogVisibility: 'quarantined',
+        benchmark: ' ',
+      }),
+    ).toBe(false);
+    expect(
+      isCatalogVisible({
+        ...completeFund,
+        catalogVisibility: 'quarantined',
+        name: '   ',
+      }),
+    ).toBe(false);
+    expect(
+      isCatalogVisible({
+        ...completeFund,
+        catalogVisibility: 'quarantined',
+        metrics: { ter: null },
+      }),
+    ).toBe(false);
+  });
 });

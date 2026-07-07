@@ -3,6 +3,7 @@ import {
   FundCategory,
   FundProvider,
   FundVehicleType,
+  InvestmentTheme,
 } from '@prisma/client';
 import {
   buildFundListMeta,
@@ -106,6 +107,19 @@ describe('fund-list.mapper', () => {
       AND: [
         buildPublicCatalogVisibilityWhereInput(),
         { idealForBeginners: true },
+      ],
+    });
+  });
+
+  it('should filter by investment theme when requested', () => {
+    expect(
+      buildFundListWhereInput({
+        investmentTheme: 'technology',
+      }),
+    ).toEqual({
+      AND: [
+        buildPublicCatalogVisibilityWhereInput(),
+        { investmentTheme: InvestmentTheme.TECHNOLOGY },
       ],
     });
   });

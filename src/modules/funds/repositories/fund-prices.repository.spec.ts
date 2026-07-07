@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { Decimal } from '@prisma/client/runtime/library';
 import { PrismaService } from '../../../shared/database/prisma.service';
 import { parseFundPriceDate } from '../entities/fund-price.mapper';
 import { FundPricesRepository } from './fund-prices.repository';
@@ -147,5 +148,106 @@ describe('FundPricesRepository', () => {
     await expect(
       repository.findLatestDate('550e8400-e29b-41d4-a716-446655440000'),
     ).resolves.toBeNull();
+  });
+
+  it('should return an empty map when batch history is requested for no funds', async () => {
+    await expect(repository.findHistoriesByFundIds([])).resolves.toEqual(
+      new Map(),
+    );
+    expect(prisma.fundPrice.findMany).not.toHaveBeenCalled();
+  });
+
+  it('should group batch price history by fund id', async () => {
+    const fundId = '550e8400-e29b-41d4-a716-446655440000';
+    const otherFundId = '660e8400-e29b-41d4-a716-446655440001';
+    prisma.fundPrice.findMany.mockResolvedValueOnce([
+      {
+        id: '770e8400-e29b-41d4-a716-446655440000',
+        fundId,
+        date: parseFundPriceDate('2024-01-02'),
+        open: new Decimal('100'),
+        high: new Decimal('101'),
+        low: new Decimal('99'),
+        close: new Decimal('100.5'),
+        volume: null,
+        change: null,
+        changePercent: null,
+        vwap: null,
+        createdAt: new Date('2024-01-02T00:00:00.000Z'),
+        updatedAt: new Date('2024-01-02T00:00:00.000Z'),
+      },
+      {
+        id: '880e8400-e29b-41d4-a716-446655440000',
+        fundId: otherFundId,
+        date: parseFundPriceDate('2024-01-03'),
+        open: new Decimal('200'),
+        high: new Decimal('201'),
+        low: new Decimal('199'),
+        close: new Decimal('200.5'),
+        volume: null,
+        change: null,
+        changePercent: null,
+        vwap: null,
+        createdAt: new Date('2024-01-03T00:00:00.000Z'),
+        updatedAt: new Date('2024-01-03T00:00:00.000Z'),
+      },
+    ]);
+
+    const histories = await repository.findHistoriesByFundIds(
+      [fundId, otherFundId],
+      { from: '2024-01-01', to: '2024-01-31' },
+    );
+
+    expect(histories.get(fundId)).toHaveLength(1);
+    expect(histories.get(otherFundId)?.[0]?.close).toBe(200.5);
+    expect(prisma.fundPrice.findMany).toHaveBeenCalledWith({
+      where: {
+        fundId: { in: [fundId, otherFundId] },
+        date: {
+          gte: parseFundPriceDate('2024-01-01'),
+          lte: parseFundPriceDate('2024-01-31'),
+        },
+      },
+      orderBy: [{ fundId: 'asc' }, { date: 'asc' }],
+    });
+  });
+
+  it('should query batch history with only a start date', async () => {
+    const fundId = '550e8400-e29b-41d4-a716-446655440000';
+
+    await repository.findHistoriesByFundIds([fundId], { from: '2024-01-01' });
+
+    expect(prisma.fundPrice.findMany).toHaveBeenCalledWith({
+      where: {
+        fundId: { in: [fundId] },
+        date: { gte: parseFundPriceDate('2024-01-01') },
+      },
+      orderBy: [{ fundId: 'asc' }, { date: 'asc' }],
+    });
+  });
+
+  it('should query batch history with only an end date', async () => {
+    const fundId = '550e8400-e29b-41d4-a716-446655440000';
+
+    await repository.findHistoriesByFundIds([fundId], { to: '2024-01-31' });
+
+    expect(prisma.fundPrice.findMany).toHaveBeenCalledWith({
+      where: {
+        fundId: { in: [fundId] },
+        date: { lte: parseFundPriceDate('2024-01-31') },
+      },
+      orderBy: [{ fundId: 'asc' }, { date: 'asc' }],
+    });
+  });
+
+  it('should query batch history without date filters', async () => {
+    const fundId = '550e8400-e29b-41d4-a716-446655440000';
+
+    await repository.findHistoriesByFundIds([fundId]);
+
+    expect(prisma.fundPrice.findMany).toHaveBeenCalledWith({
+      where: { fundId: { in: [fundId] } },
+      orderBy: [{ fundId: 'asc' }, { date: 'asc' }],
+    });
   });
 });

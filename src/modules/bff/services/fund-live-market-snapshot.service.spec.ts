@@ -103,4 +103,52 @@ describe('FundLiveMarketSnapshotService', () => {
       NotFoundException,
     );
   });
+
+  it('should return not found when the persisted fund has no ISIN', async () => {
+    fundsRepository.findByIsin.mockResolvedValue({
+      ...fund,
+      isin: null,
+    });
+
+    await expect(service.getByIsin(fund.isin!)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+  });
+
+  it('should reuse cached snapshots within the TTL window', async () => {
+    await service.getByIsin(fund.isin!);
+    await service.getByIsin(fund.isin!);
+
+    expect(fmpProvider.getFundQuote).toHaveBeenCalledTimes(1);
+  });
+
+  it('should fall back to EOD when the live quote request fails', async () => {
+    fmpProvider.getFundQuote.mockRejectedValue(new Error('provider timeout'));
+
+    const snapshot = await service.getByIsin(fund.isin!);
+
+    expect(snapshot.freshness).toBe('eod');
+    expect(snapshot.price).toBe(545);
+  });
+
+  it('should return unavailable when no live quote or EOD price exists', async () => {
+    fmpProvider.getFundQuote.mockResolvedValue(null);
+    fundPricesService.getLatestDate.mockResolvedValue(null);
+
+    const snapshot = await service.getByIsin(fund.isin!);
+
+    expect(snapshot.freshness).toBe('unavailable');
+    expect(snapshot.price).toBeNull();
+    expect(snapshot.changePercent).toBeNull();
+  });
+
+  it('should return unavailable when EOD history is empty despite a latest date', async () => {
+    fmpProvider.getFundQuote.mockResolvedValue(null);
+    fundPricesService.getLatestDate.mockResolvedValue('2026-06-27');
+    fundPricesService.getHistory.mockResolvedValue([]);
+
+    const snapshot = await service.getByIsin(fund.isin!);
+
+    expect(snapshot.freshness).toBe('unavailable');
+  });
 });

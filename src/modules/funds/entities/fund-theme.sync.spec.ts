@@ -32,4 +32,20 @@ describe('resolveFundThemeSyncFields', () => {
       themeLabel: 'Referencia S&P 500',
     });
   });
+
+  it('should treat blank theme labels as empty editorial copy', () => {
+    expect(
+      resolveFundThemeSyncFields(
+        {
+          name: 'State Street SPDR S&P 500 ETF',
+          benchmark: 'S&P 500',
+          assetClass: 'Equity',
+        },
+        '   ',
+      ),
+    ).toMatchObject({
+      investmentTheme: 'us-equity',
+      themeLabel: 'Renta variable USA',
+    });
+  });
 });

@@ -15,6 +15,7 @@ import {
   deriveBenchmarkLabelFromName,
   normalizeProviderFundFullQuote,
   normalizeProviderFundQuote,
+  resolveQuoteAsOf,
   resolveQuoteChangePercent,
 } from './financial-modeling-prep.normalizers';
 import { isIndexedProductSearchResult } from './indexed-product.filters';
@@ -556,5 +557,25 @@ describe('FinancialModelingPrep normalizers', () => {
         previousClose: 728.99,
       }),
     ).toBeCloseTo(1.63788, 2);
+  });
+
+  it('should resolve alternate quote change and timestamp shapes', () => {
+    expect(
+      resolveQuoteChangePercent({
+        price: 100,
+        changesPercentage: 2.5,
+      }),
+    ).toBe(2.5);
+    expect(resolveQuoteChangePercent({ price: 100 })).toBeNull();
+    expect(
+      resolveQuoteChangePercent({
+        price: 100,
+        change: 100,
+      }),
+    ).toBeNull();
+    expect(resolveQuoteAsOf()).toMatch(/T/);
+    expect(resolveQuoteAsOf(1_782_763_200_000)).toBe(
+      new Date(1_782_763_200_000).toISOString(),
+    );
   });
 });

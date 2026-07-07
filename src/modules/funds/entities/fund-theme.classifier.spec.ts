@@ -85,4 +85,24 @@ describe('classifyFundInvestmentTheme', () => {
       matchedRule: 'no-rule-match',
     });
   });
+
+  it('should return unclassified when classifier input is empty', () => {
+    expect(classifyFundInvestmentTheme({})).toMatchObject({
+      theme: 'unclassified',
+      matchedRule: 'empty-corpus',
+    });
+  });
+
+  it('should fall back to global equity for generic equity asset class', () => {
+    expect(
+      classifyFundInvestmentTheme({
+        name: 'Generic Equity ETF',
+        benchmark: 'Custom Index',
+        assetClass: 'Equity',
+      }),
+    ).toMatchObject({
+      theme: 'global-equity',
+      matchedRule: 'equity-asset-class-fallback',
+    });
+  });
 });

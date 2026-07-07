@@ -3,6 +3,7 @@ import {
   FundCategory,
   FundProvider,
   FundVehicleType,
+  InvestmentTheme,
 } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -428,6 +429,48 @@ describe('FundsRepository', () => {
         badge: 'Ideal para empezar',
         themeLabel: 'Multisector global',
         idealForBeginners: true,
+      },
+    });
+  });
+
+  it('should persist an inferred investment theme without changing the label', async () => {
+    prisma.fund.update.mockResolvedValueOnce({
+      ...prismaFundRow,
+      investmentTheme: InvestmentTheme.TECHNOLOGY,
+    });
+
+    await expect(
+      repository.applyInvestmentTheme(prismaFundRow.id, {
+        investmentTheme: 'technology',
+      }),
+    ).resolves.toMatchObject({
+      investmentTheme: 'technology',
+    });
+
+    expect(prisma.fund.update).toHaveBeenCalledWith({
+      where: { id: prismaFundRow.id },
+      data: {
+        investmentTheme: InvestmentTheme.TECHNOLOGY,
+      },
+    });
+  });
+
+  it('should persist an inferred investment theme and optional editorial label', async () => {
+    prisma.fund.update.mockResolvedValueOnce({
+      ...prismaFundRow,
+      investmentTheme: InvestmentTheme.ESG,
+      themeLabel: 'Inversión sostenible',
+    });
+
+    await expect(
+      repository.applyInvestmentTheme(prismaFundRow.id, {
+        investmentTheme: 'esg',
+        themeLabel: 'Inversión sostenible',
+      }),
+    ).resolves.toMatchObject({
+      investmentTheme: 'esg',
+      editorial: {
+        themeLabel: 'Inversión sostenible',
       },
     });
   });

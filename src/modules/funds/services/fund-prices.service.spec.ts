@@ -8,6 +8,7 @@ describe('FundPricesService', () => {
     upsertMany: jest.Mock;
     findHistory: jest.Mock;
     findLatestDate: jest.Mock;
+    findHistoriesByFundIds: jest.Mock;
   };
 
   beforeEach(async () => {
@@ -15,6 +16,7 @@ describe('FundPricesService', () => {
       upsertMany: jest.fn().mockResolvedValue(2),
       findHistory: jest.fn().mockResolvedValue([]),
       findLatestDate: jest.fn().mockResolvedValue('2024-01-31'),
+      findHistoriesByFundIds: jest.fn().mockResolvedValue(new Map()),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -87,5 +89,20 @@ describe('FundPricesService', () => {
     expect(repository.findHistory).toHaveBeenCalledWith(fundId, {});
     expect(repository.findLatestDate).toHaveBeenCalledWith(fundId);
     expect(repository.upsertMany).toHaveBeenCalled();
+  });
+
+  it('should delegate batch history reads to the repository', async () => {
+    const fundIds = [
+      '550e8400-e29b-41d4-a716-446655440000',
+      '660e8400-e29b-41d4-a716-446655440001',
+    ];
+
+    await service.getHistoriesByFundIds(fundIds, { from: '2024-01-01' });
+    await service.getHistoriesByFundIds(fundIds);
+
+    expect(repository.findHistoriesByFundIds).toHaveBeenCalledWith(fundIds, {
+      from: '2024-01-01',
+    });
+    expect(repository.findHistoriesByFundIds).toHaveBeenCalledWith(fundIds, {});
   });
 });

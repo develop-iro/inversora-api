@@ -12,12 +12,18 @@ import {
   mapProviderFundProfileToUpsertFundInput,
   mapDomainFundCategoryToPrisma,
   mapDomainFundProviderToPrisma,
+  mapDomainFundVehicleToPrisma,
   mapDomainCatalogVisibilityToPrisma,
+  mapDomainInvestmentThemeToPrisma,
   mapPrismaCatalogVisibility,
   mapPrismaFundCategory,
   mapPrismaFundMetrics,
   mapPrismaFundProvider,
   mapPrismaFundToFund,
+  mapPrismaFundVehicle,
+  mapPrismaInvestmentTheme,
+  normalizeOptionalFundDomicile,
+  normalizeOptionalProviderText,
   mapUpdateFundEditorialInputToPrismaData,
   mapUpsertFundInputToPrismaCreateData,
   mapUpsertFundInputToPrismaUpdateData,
@@ -160,6 +166,29 @@ describe('catalog visibility mappers', () => {
   });
 });
 
+describe('investment theme mappers', () => {
+  const themePairs = [
+    [PrismaInvestmentTheme.GLOBAL_EQUITY, 'global-equity'],
+    [PrismaInvestmentTheme.US_EQUITY, 'us-equity'],
+    [PrismaInvestmentTheme.EUROPE_EQUITY, 'europe-equity'],
+    [PrismaInvestmentTheme.EMERGING_EQUITY, 'emerging-equity'],
+    [PrismaInvestmentTheme.FIXED_INCOME, 'fixed-income'],
+    [PrismaInvestmentTheme.MULTI_ASSET, 'multi-asset'],
+    [PrismaInvestmentTheme.TECHNOLOGY, 'technology'],
+    [PrismaInvestmentTheme.ESG, 'esg'],
+    [PrismaInvestmentTheme.SECTOR_OTHER, 'sector-other'],
+    [PrismaInvestmentTheme.UNCLASSIFIED, 'unclassified'],
+  ] as const;
+
+  it.each(themePairs)(
+    'should map Prisma investment theme %s to domain value %s',
+    (prismaTheme, domainTheme) => {
+      expect(mapPrismaInvestmentTheme(prismaTheme)).toBe(domainTheme);
+      expect(mapDomainInvestmentThemeToPrisma(domainTheme)).toBe(prismaTheme);
+    },
+  );
+});
+
 describe('resolveFundCurrencyFromProfile', () => {
   it('should prefer profile currency and fall back to navCurrency or USD', () => {
     expect(
@@ -201,6 +230,29 @@ describe('normalizeOptionalFundIsin', () => {
     expect(normalizeOptionalFundIsin('INVALID')).toBeNull();
     expect(normalizeOptionalFundIsin('')).toBeNull();
     expect(normalizeOptionalFundIsin(undefined)).toBeUndefined();
+  });
+});
+
+describe('fund vehicle mappers', () => {
+  it('should map Prisma and domain fund vehicle values', () => {
+    expect(mapPrismaFundVehicle(PrismaFundVehicleType.ETF)).toBe('etf');
+    expect(mapPrismaFundVehicle(PrismaFundVehicleType.MUTUAL_FUND)).toBe(
+      'mutual-fund',
+    );
+    expect(mapDomainFundVehicleToPrisma('etf')).toBe(PrismaFundVehicleType.ETF);
+    expect(mapDomainFundVehicleToPrisma('mutual-fund')).toBe(
+      PrismaFundVehicleType.MUTUAL_FUND,
+    );
+  });
+});
+
+describe('provider text normalizers', () => {
+  it('should normalize optional provider text and domicile values', () => {
+    expect(normalizeOptionalProviderText('  Equity ')).toBe('Equity');
+    expect(normalizeOptionalProviderText('   ')).toBeNull();
+    expect(normalizeOptionalFundDomicile(' ie ')).toBe('IE');
+    expect(normalizeOptionalFundDomicile('INVALID')).toBeNull();
+    expect(normalizeOptionalFundDomicile('')).toBeNull();
   });
 });
 
@@ -270,6 +322,23 @@ describe('mapProviderFundProfileToUpsertFundInput', () => {
         dividendYield: null,
         trackingError: null,
       },
+    });
+  });
+
+  it('should map asset class, domicile, and mutual-fund vehicle fields', () => {
+    expect(
+      mapProviderFundProfileToUpsertFundInput({
+        symbol: 'vtsax',
+        name: 'Vanguard Total Stock Market Index Fund',
+        vehicle: 'mutual-fund',
+        assetClass: 'Equity',
+        domicile: 'us',
+      }),
+    ).toMatchObject({
+      symbol: 'VTSAX',
+      vehicle: 'mutual-fund',
+      assetClass: 'Equity',
+      domicile: 'US',
     });
   });
 });
