@@ -4,8 +4,8 @@ import {
   Controller,
   Post,
   ServiceUnavailableException,
-  UseGuards,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import {
   ApiBadRequestResponse,
   ApiOkResponse,
@@ -30,12 +30,13 @@ import {
   parseAssistantChatRequest,
   parseAssistantExplainRequest,
 } from '../entities/assistant-context.schema';
-import { AssistantRateLimitGuard } from '../guards/assistant-rate-limit.guard';
+import { AssistantThrottle } from '../decorators/assistant-throttle.decorator';
 import { AssistantService } from '../services/assistant.service';
 
 @ApiTags('assistant')
 @Controller('assistant')
-@UseGuards(AssistantRateLimitGuard)
+@SkipThrottle({ default: true })
+@AssistantThrottle()
 export class AssistantController {
   constructor(private readonly assistantService: AssistantService) {}
 

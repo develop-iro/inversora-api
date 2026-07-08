@@ -7,6 +7,7 @@ import {
 import type { Request } from 'express';
 
 import { AppConfigService } from '../../../shared/config/config.service';
+import { secureCompareApiKey } from '../../../shared/security/api-key.utils';
 
 /**
  * Protects read-only internal SORA tool endpoints.
@@ -27,7 +28,7 @@ export class AssistantInternalApiKeyGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<Request>();
     const providedKey = extractAssistantInternalApiKey(request);
 
-    if (providedKey === undefined || providedKey !== configuredKey) {
+    if (!secureCompareApiKey(providedKey, configuredKey)) {
       throw new UnauthorizedException('Invalid SORA internal API key');
     }
 

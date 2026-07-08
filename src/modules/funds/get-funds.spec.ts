@@ -121,4 +121,69 @@ describe('GetFundsUseCase', () => {
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
   });
+
+  it('should sort by one-year return after enrichment', async () => {
+    const lowReturnFund = {
+      ...fund,
+      id: '550e8400-e29b-41d4-a716-446655440001',
+      symbol: 'LOW',
+      name: 'Low Return Fund',
+    };
+    const highReturnFund = {
+      ...fund,
+      id: '550e8400-e29b-41d4-a716-446655440002',
+      symbol: 'HIGH',
+      name: 'High Return Fund',
+    };
+
+    repository.findMany.mockResolvedValue({
+      items: [lowReturnFund, highReturnFund],
+      total: 2,
+    });
+
+    fundPricesService.getHistoriesByFundIds.mockResolvedValue(
+      new Map([
+        [
+          '550e8400-e29b-41d4-a716-446655440001',
+          [{ date: '2025-01-01', close: 100 }],
+        ],
+        [
+          '550e8400-e29b-41d4-a716-446655440002',
+          [{ date: '2025-01-01', close: 100 }],
+        ],
+      ]),
+    );
+
+    const response = await useCase.execute({
+      page: '1',
+      limit: '20',
+      sortBy: 'return1y',
+      sortOrder: 'desc',
+    });
+
+    expect(response.data).toHaveLength(2);
+    expect(repository.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        skip: 0,
+        take: 500,
+      }),
+    );
+  });
+
+  it('should sort by three-year return after enrichment', async () => {
+    repository.findMany.mockResolvedValue({
+      items: [fund],
+      total: 1,
+    });
+    fundPricesService.getHistoriesByFundIds.mockResolvedValue(new Map());
+
+    const response = await useCase.execute({
+      page: '1',
+      limit: '20',
+      sortBy: 'return3y',
+      sortOrder: 'asc',
+    });
+
+    expect(response.data).toHaveLength(1);
+  });
 });

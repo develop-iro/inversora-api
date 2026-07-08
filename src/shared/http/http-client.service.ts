@@ -4,6 +4,7 @@ import { isAxiosError } from 'axios';
 import { firstValueFrom } from 'rxjs';
 import { AppConfigService } from '../config/config.service';
 import { ExternalHttpError } from './external-http.error';
+import { sanitizeUrlForLog } from './sanitize-url-for-log';
 import type {
   HttpClientRequestOptions,
   HttpClientResponse,
@@ -77,7 +78,7 @@ export class HttpClientService {
     const resolvedOptions = this.resolveOptions(options);
     const context: RequestContext = {
       method,
-      url,
+      url: sanitizeUrlForLog(url),
       provider: options?.provider,
     };
     const startedAt = Date.now();

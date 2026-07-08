@@ -112,6 +112,28 @@ describe('buildFundListOrderByInput', () => {
   it('should map sort fields to Prisma columns', () => {
     expect(buildFundListOrderByInput('ter', 'asc')).toEqual({ ter: 'asc' });
   });
+
+  it('should fallback to score when sorting by return snapshots', () => {
+    expect(buildFundListOrderByInput('return1y', 'desc')).toEqual({
+      score: 'desc',
+    });
+  });
+});
+
+describe('buildFundListWhereInput beginner protection', () => {
+  it('should enforce minimum score 30 for idealForBeginnersOnly', () => {
+    expect(
+      buildFundListWhereInput(
+        fundListQuerySchema.parse({ idealForBeginnersOnly: 'true' }),
+      ),
+    ).toEqual({
+      AND: [
+        buildPublicCatalogVisibilityWhereInput(),
+        { score: { gte: 30 } },
+        { idealForBeginners: true },
+      ],
+    });
+  });
 });
 
 describe('buildFundListMeta', () => {

@@ -7,6 +7,22 @@ export const investmentNewsCategorySchema = z.enum([
   'regulacion',
 ]);
 
+const safeNewsUrlSchema = z
+  .string()
+  .url()
+  .refine((value) => value.startsWith('https://'), {
+    message: 'News URLs must use HTTPS',
+  });
+
+/**
+ * Validates a curated news URL before it is exposed by the API.
+ *
+ * @param url - External news URL.
+ */
+export function assertSafeNewsUrl(url: string): string {
+  return safeNewsUrlSchema.parse(url);
+}
+
 /** Single curated investment news item for the mobile home feed. */
 export const investmentNewsItemSchema = z.object({
   id: z.string().min(1),
@@ -15,7 +31,7 @@ export const investmentNewsItemSchema = z.object({
   source: z.string().min(1),
   publishedAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   category: investmentNewsCategorySchema,
-  url: z.string().url().optional(),
+  url: safeNewsUrlSchema.optional(),
 });
 
 /** Query schema for `GET /news`. */

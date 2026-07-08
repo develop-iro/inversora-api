@@ -217,4 +217,38 @@ describe('AppConfigService', () => {
     expect(service.syncDiscoveryMode).toBe('indexed');
     expect(service.syncCompositionEnabled).toBe(true);
   });
+
+  it('should expose security and throttling configuration', async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        ConfigModule.forRoot({
+          isGlobal: true,
+          ignoreEnvFile: true,
+          load: [
+            () =>
+              validateEnv({
+                ...validEnv,
+                SWAGGER_ENABLED: 'false',
+                THROTTLE_TTL_SECONDS: '30',
+                THROTTLE_LIMIT: '90',
+                THROTTLE_ASSISTANT_LIMIT: '15',
+                THROTTLE_REDIS_URL: 'redis://localhost:6379',
+                ASSISTANT_AGENT_API_KEY: 'change-me-agent-key',
+                BRANDFETCH_CLIENT_ID: 'brandfetch-id',
+              }),
+          ],
+        }),
+      ],
+      providers: [AppConfigService],
+    }).compile();
+
+    service = module.get(AppConfigService);
+    expect(service.swaggerEnabled).toBe(false);
+    expect(service.throttleTtlSeconds).toBe(30);
+    expect(service.throttleLimit).toBe(90);
+    expect(service.throttleAssistantLimit).toBe(15);
+    expect(service.throttleRedisUrl).toBe('redis://localhost:6379');
+    expect(service.assistantAgentApiKey).toBe('change-me-agent-key');
+    expect(service.brandfetchClientId).toBe('brandfetch-id');
+  });
 });

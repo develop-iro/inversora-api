@@ -91,12 +91,29 @@ npm run prisma:validate
    SYNC_CRON_EXPRESSION=0 6 * * *
    SYNC_FUND_SYMBOLS=SPY
 
-   ADMIN_SYNC_ENABLED=true
+   ADMIN_SYNC_ENABLED=false
    ADMIN_CATALOG_ENABLED=false
    ADMIN_API_KEY=genera-un-secreto-largo-min-8-chars
 
+   SWAGGER_ENABLED=false
+   THROTTLE_TTL_SECONDS=60
+   THROTTLE_LIMIT=120
+   THROTTLE_ASSISTANT_LIMIT=30
+   # THROTTLE_REDIS_URL=redis://...   # required for multi-replica deployments
+
+   ASSISTANT_ENABLED=false
+   # When enabling SORA with the Python runtime:
+   # ASSISTANT_RUNTIME=python-agent
+   # ASSISTANT_AGENT_BASE_URL=http://agent.internal:8001
+   # ASSISTANT_AGENT_API_KEY=genera-un-secreto-largo-min-16-chars
+
    CORS_ORIGINS=http://localhost:8081,http://127.0.0.1:8081
    ```
+
+   Security notes:
+   - Keep `SWAGGER_ENABLED=false` on public staging/production domains.
+   - Do not expose the Python agent (`8001`) on a public Railway service.
+   - Full checklist: [security-hardening.md](./security-hardening.md).
 
    Notas:
    - Con **FMP Starter**, usa `FMP_DATA_SOURCE=live` y la API key real. El histórico EOD es **solo US**; UCITS entran con metadata (`--no-prices`) y sync sin composición (`--no-composition`). Ver [fmp-capabilities-roadmap.md](./fmp-capabilities-roadmap.md).

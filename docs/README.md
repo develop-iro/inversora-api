@@ -20,6 +20,7 @@
 | Arranque rápido local (instalación, scripts, health check) | [README.md](../README.md) |
 | **CORS y cliente Expo** (`CORS_ORIGINS`, Expo web) | [cors-and-expo-client.md](./cors-and-expo-client.md) |
 | **Despliegue staging (Neon + Railway)** | [staging-deploy.md](./staging-deploy.md) |
+| **Endurecimiento de seguridad** (Swagger, throttling, claves, WAF) | [security-hardening.md](./security-hardening.md) |
 | Contrato HTTP vivo (endpoints, DTOs) | Swagger en `http://localhost:3000/api/docs` |
 | **Contrato BFF** `GET /funds/:isin` → `FundDetail` (app) | [bff-fund-detail-contract.md](./bff-fund-detail-contract.md) |
 | **Destacados trimestre** `GET /featured` (dashboard) | [featured-funds-endpoint.md](./featured-funds-endpoint.md) |

@@ -7,6 +7,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import {
   ApiBadRequestResponse,
   ApiNotFoundResponse,
@@ -37,6 +38,7 @@ import { AssistantToolsService } from '../services/assistant-tools.service';
 @ApiTags('assistant-internal-tools')
 @ApiSecurity('sora-internal-api-key')
 @Controller('internal/assistant/tools')
+@SkipThrottle()
 @UseGuards(AssistantInternalApiKeyGuard)
 export class AssistantToolsController {
   constructor(private readonly toolsService: AssistantToolsService) {}

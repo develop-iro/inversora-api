@@ -32,6 +32,13 @@ export class PythonAgentAssistantService {
     message: string,
   ): Promise<string> {
     const url = new URL('/agent/respond', this.config.assistantAgentBaseUrl);
+    const agentApiKey = this.config.assistantAgentApiKey;
+
+    if (agentApiKey === undefined) {
+      throw new ServiceUnavailableException(
+        'El runtime Python de SORA no está configurado correctamente.',
+      );
+    }
 
     try {
       const response = await this.httpClient.post<unknown>(
@@ -47,6 +54,9 @@ export class PythonAgentAssistantService {
           provider: 'sora-agent',
           timeout: this.config.assistantAgentTimeoutMs,
           retries: 1,
+          headers: {
+            'X-Sora-Agent-Api-Key': agentApiKey,
+          },
         },
       );
 

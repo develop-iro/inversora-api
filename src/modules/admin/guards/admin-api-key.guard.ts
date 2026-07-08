@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { AppConfigService } from '../../../shared/config/config.service';
+import { secureCompareApiKey } from '../../../shared/security/api-key.utils';
 
 /**
  * Protects admin endpoints with a shared API key and feature flag.
@@ -37,7 +38,7 @@ export class AdminApiKeyGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<Request>();
     const providedKey = extractAdminApiKey(request);
 
-    if (providedKey === undefined || providedKey !== configuredKey) {
+    if (!secureCompareApiKey(providedKey, configuredKey)) {
       throw new UnauthorizedException('Invalid admin API key');
     }
 

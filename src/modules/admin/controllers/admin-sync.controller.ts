@@ -5,6 +5,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import {
   ApiBadRequestResponse,
   ApiNotFoundResponse,
@@ -31,6 +32,7 @@ import {
 @ApiTags('admin')
 @ApiSecurity('admin-api-key')
 @Controller('admin')
+@SkipThrottle()
 @UseGuards(AdminApiKeyGuard, AdminSyncEnabledGuard)
 export class AdminSyncController {
   constructor(private readonly fundDailySyncService: FundDailySyncService) {}

@@ -48,11 +48,17 @@ describe('validateEnv', () => {
       ASSISTANT_RUNTIME: 'nestjs',
       ASSISTANT_AGENT_BASE_URL: 'http://localhost:8001',
       ASSISTANT_AGENT_TIMEOUT_MS: 10_000,
+      ASSISTANT_AGENT_API_KEY: undefined,
       ASSISTANT_INTERNAL_API_KEY: undefined,
       ASSISTANT_RATE_LIMIT_MAX_REQUESTS: 30,
       ASSISTANT_RATE_LIMIT_WINDOW_SECONDS: 60,
       ASSISTANT_PROMPT_VERSION: 'sora-v2',
       ASSISTANT_CACHE_TTL_DAYS: 90,
+      SWAGGER_ENABLED: true,
+      THROTTLE_TTL_SECONDS: 60,
+      THROTTLE_LIMIT: 120,
+      THROTTLE_ASSISTANT_LIMIT: 30,
+      THROTTLE_REDIS_URL: undefined,
     });
   });
 
@@ -100,11 +106,17 @@ describe('validateEnv', () => {
       ASSISTANT_RUNTIME: 'nestjs',
       ASSISTANT_AGENT_BASE_URL: 'http://localhost:8001',
       ASSISTANT_AGENT_TIMEOUT_MS: 10_000,
+      ASSISTANT_AGENT_API_KEY: undefined,
       ASSISTANT_INTERNAL_API_KEY: undefined,
       ASSISTANT_RATE_LIMIT_MAX_REQUESTS: 30,
       ASSISTANT_RATE_LIMIT_WINDOW_SECONDS: 60,
       ASSISTANT_PROMPT_VERSION: 'sora-v2',
       ASSISTANT_CACHE_TTL_DAYS: 90,
+      SWAGGER_ENABLED: true,
+      THROTTLE_TTL_SECONDS: 60,
+      THROTTLE_LIMIT: 120,
+      THROTTLE_ASSISTANT_LIMIT: 30,
+      THROTTLE_REDIS_URL: undefined,
     });
   });
 
@@ -182,13 +194,26 @@ describe('validateEnv', () => {
         ASSISTANT_ENABLED: 'true',
         ASSISTANT_RUNTIME: 'python-agent',
         ASSISTANT_AGENT_BASE_URL: 'http://localhost:8001',
+        ASSISTANT_AGENT_API_KEY: 'change-me-local-agent-key-16',
       }),
     ).toMatchObject({
       ASSISTANT_ENABLED: true,
       ASSISTANT_RUNTIME: 'python-agent',
       ASSISTANT_AGENT_BASE_URL: 'http://localhost:8001',
       ASSISTANT_AGENT_TIMEOUT_MS: 10_000,
+      ASSISTANT_AGENT_API_KEY: 'change-me-local-agent-key-16',
     });
+  });
+
+  it('should require ASSISTANT_AGENT_API_KEY for the Python agent runtime', () => {
+    expect(() =>
+      validateEnv({
+        ...validEnv,
+        ASSISTANT_ENABLED: 'true',
+        ASSISTANT_RUNTIME: 'python-agent',
+        ASSISTANT_AGENT_BASE_URL: 'http://localhost:8001',
+      }),
+    ).toThrow('Environment validation failed');
   });
 
   it('should parse CORS origins from a comma-separated list', () => {

@@ -106,6 +106,7 @@ describe('fund-list.mapper', () => {
     ).toEqual({
       AND: [
         buildPublicCatalogVisibilityWhereInput(),
+        { score: { gte: 30 } },
         { idealForBeginners: true },
       ],
     });
