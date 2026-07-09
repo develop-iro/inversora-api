@@ -48,6 +48,7 @@ describe('applyAppEnvironmentDefaults', () => {
       SYNC_SCHEDULER_ENABLED: 'true',
       ADMIN_SYNC_ENABLED: 'false',
       ADMIN_CATALOG_ENABLED: 'false',
+      SWAGGER_ENABLED: 'false',
     });
   });
 });
@@ -100,6 +101,18 @@ describe('validateEnv APP_ENV integration', () => {
       APP_ENV: 'pro',
       ADMIN_SYNC_ENABLED: true,
       FMP_DATA_SOURCE: 'live',
+    });
+  });
+
+  it('should disable Swagger by default on pro profile', () => {
+    expect(
+      validateEnv({
+        ...baseEnv,
+        APP_ENV: 'pro',
+      }),
+    ).toMatchObject({
+      APP_ENV: 'pro',
+      SWAGGER_ENABLED: false,
     });
   });
 });

@@ -8,6 +8,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import {
   ApiBadRequestResponse,
   ApiNotFoundResponse,
@@ -52,6 +53,7 @@ import { AppConfigService } from '../../../shared/config/config.service';
 @ApiTags('admin')
 @ApiSecurity('admin-api-key')
 @Controller('admin/funds')
+@SkipThrottle()
 @UseGuards(AdminApiKeyGuard, AdminCatalogEnabledGuard)
 export class AdminFundsController {
   constructor(

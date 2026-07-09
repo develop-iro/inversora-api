@@ -77,4 +77,42 @@ describe('parseApiResponse', () => {
       parseApiResponse(schema, oversized, 'oversized-response'),
     ).toThrow(UnprocessableEntityException);
   });
+
+  it('should omit issue details in production validation errors', () => {
+    const previousAppEnv = process.env.APP_ENV;
+    process.env.APP_ENV = 'pro';
+
+    const schema = z.object({ id: z.uuid() });
+
+    try {
+      parseApiResponse(schema, { id: 'not-a-uuid' }, 'pro-response');
+    } catch (error) {
+      expect(error).toMatchObject({
+        response: {
+          message: 'Response payload failed schema validation',
+          context: 'pro-response',
+          issues: undefined,
+        },
+      });
+    } finally {
+      process.env.APP_ENV = previousAppEnv;
+    }
+  });
+
+  it('should log issue counts outside local environments', () => {
+    const previousAppEnv = process.env.APP_ENV;
+    process.env.APP_ENV = 'qa';
+    const schema = z.object({ id: z.uuid() });
+    const errorSpy = jest.spyOn(Logger.prototype, 'error');
+
+    expect(() =>
+      parseApiResponse(schema, { id: 'not-a-uuid' }, 'qa-response'),
+    ).toThrow(UnprocessableEntityException);
+
+    expect(errorSpy).toHaveBeenCalledWith(
+      'Response validation failed for qa-response: 1 issue(s)',
+    );
+
+    process.env.APP_ENV = previousAppEnv;
+  });
 });

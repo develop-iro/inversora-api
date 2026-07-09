@@ -2,7 +2,6 @@ import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { AssistantController } from './assistant.controller';
-import { AssistantRateLimitGuard } from '../guards/assistant-rate-limit.guard';
 import { AssistantService } from '../services/assistant.service';
 
 describe('AssistantController', () => {
@@ -23,10 +22,7 @@ describe('AssistantController', () => {
           useValue: assistantService,
         },
       ],
-    })
-      .overrideGuard(AssistantRateLimitGuard)
-      .useValue({ canActivate: jest.fn(() => true) })
-      .compile();
+    }).compile();
 
     controller = module.get(AssistantController);
   });

@@ -82,6 +82,7 @@ export const envSchema = z
       .int()
       .positive()
       .default(10_000),
+    ASSISTANT_AGENT_API_KEY: z.string().min(16).optional(),
     ASSISTANT_INTERNAL_API_KEY: z.string().min(8).optional(),
     ASSISTANT_RATE_LIMIT_MAX_REQUESTS: z.coerce
       .number()
@@ -96,6 +97,14 @@ export const envSchema = z
     ASSISTANT_PROMPT_VERSION: z.string().min(1).default('sora-v2'),
     ASSISTANT_CACHE_TTL_DAYS: z.coerce.number().int().positive().default(90),
     BRANDFETCH_CLIENT_ID: z.string().min(1).optional(),
+    SWAGGER_ENABLED: z
+      .enum(['true', 'false'])
+      .default('true')
+      .transform((value) => value === 'true'),
+    THROTTLE_TTL_SECONDS: z.coerce.number().int().positive().default(60),
+    THROTTLE_LIMIT: z.coerce.number().int().positive().default(120),
+    THROTTLE_ASSISTANT_LIMIT: z.coerce.number().int().positive().default(30),
+    THROTTLE_REDIS_URL: z.string().url().optional(),
   })
   .superRefine((env, ctx) => {
     const adminApiEnabled = env.ADMIN_SYNC_ENABLED || env.ADMIN_CATALOG_ENABLED;
@@ -106,6 +115,19 @@ export const envSchema = z
         path: ['ADMIN_API_KEY'],
         message:
           'ADMIN_API_KEY is required when ADMIN_SYNC_ENABLED or ADMIN_CATALOG_ENABLED is true (minimum 8 characters)',
+      });
+    }
+
+    if (
+      env.ASSISTANT_ENABLED &&
+      env.ASSISTANT_RUNTIME === 'python-agent' &&
+      env.ASSISTANT_AGENT_API_KEY === undefined
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['ASSISTANT_AGENT_API_KEY'],
+        message:
+          'ASSISTANT_AGENT_API_KEY is required when ASSISTANT_ENABLED is true and ASSISTANT_RUNTIME is python-agent (minimum 16 characters)',
       });
     }
 

@@ -5,7 +5,6 @@ import { ScoringModule } from '../scoring/scoring.module';
 import { AssistantController } from './controllers/assistant.controller';
 import { AssistantToolsController } from './controllers/assistant-tools.controller';
 import { AssistantInternalApiKeyGuard } from './guards/assistant-internal-api-key.guard';
-import { AssistantRateLimitGuard } from './guards/assistant-rate-limit.guard';
 import { AssistantCacheRepository } from './repositories/assistant-cache.repository';
 import { AssistantConversationRepository } from './repositories/assistant-conversation.repository';
 import { AssistantContextBuilderService } from './services/assistant-context.builder';
@@ -27,7 +26,6 @@ import { PythonAgentAssistantService } from './services/python-agent-assistant.s
     AssistantService,
     AssistantToolsService,
     AssistantInternalApiKeyGuard,
-    AssistantRateLimitGuard,
     IntentClassifierService,
     GlossaryService,
     AssistantCacheRepository,

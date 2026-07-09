@@ -9,6 +9,7 @@ describe('PythonAgentAssistantService', () => {
   let config: {
     assistantAgentBaseUrl: string;
     assistantAgentTimeoutMs: number;
+    assistantAgentApiKey: string;
   };
   let httpClient: { post: jest.Mock };
 
@@ -16,6 +17,7 @@ describe('PythonAgentAssistantService', () => {
     config = {
       assistantAgentBaseUrl: 'http://localhost:8001',
       assistantAgentTimeoutMs: 5_000,
+      assistantAgentApiKey: 'change-me-local-agent-key-16',
     };
     httpClient = {
       post: jest.fn(),
@@ -66,6 +68,9 @@ describe('PythonAgentAssistantService', () => {
         provider: 'sora-agent',
         timeout: 5_000,
         retries: 1,
+        headers: {
+          'X-Sora-Agent-Api-Key': 'change-me-local-agent-key-16',
+        },
       },
     );
   });
@@ -106,5 +111,23 @@ describe('PythonAgentAssistantService', () => {
         'Hola',
       ),
     ).rejects.toBeInstanceOf(ServiceUnavailableException);
+  });
+
+  it('throws a service unavailable error when the agent API key is missing', async () => {
+    config.assistantAgentApiKey = undefined as unknown as string;
+
+    await expect(
+      service.generate(
+        {
+          surface: 'home',
+          intent: 'general',
+          locale: 'es',
+          userMessage: 'Hola',
+        },
+        'Hola',
+      ),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+
+    expect(httpClient.post).not.toHaveBeenCalled();
   });
 });

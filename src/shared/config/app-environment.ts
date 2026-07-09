@@ -14,12 +14,14 @@ const PROFILE_DEFAULTS: Readonly<Record<AppEnvironment, ProfileDefaults>> = {
     FMP_DATA_SOURCE: 'mock',
     FMP_SAVE_FIXTURES: 'false',
     SYNC_SCHEDULER_ENABLED: 'false',
+    SWAGGER_ENABLED: 'true',
   },
   qa: {
     NODE_ENV: 'production',
     FMP_DATA_SOURCE: 'live',
     FMP_SAVE_FIXTURES: 'false',
     SYNC_SCHEDULER_ENABLED: 'false',
+    SWAGGER_ENABLED: 'true',
   },
   pro: {
     NODE_ENV: 'production',
@@ -28,6 +30,7 @@ const PROFILE_DEFAULTS: Readonly<Record<AppEnvironment, ProfileDefaults>> = {
     SYNC_SCHEDULER_ENABLED: 'true',
     ADMIN_SYNC_ENABLED: 'false',
     ADMIN_CATALOG_ENABLED: 'false',
+    SWAGGER_ENABLED: 'false',
   },
 };
 

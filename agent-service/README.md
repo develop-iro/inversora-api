@@ -13,7 +13,8 @@ python -m venv .venv
 python -m pip install -e ".[dev]"
 $env:OPENAI_API_KEY = "sk-..."
 $env:SORA_BACKEND_BASE_URL = "http://localhost:3000"
-$env:SORA_INTERNAL_API_KEY = "your-internal-key"
+$env:SORA_INTERNAL_API_KEY = "change-me-local-sora-internal"
+$env:ASSISTANT_AGENT_API_KEY = "change-me-local-agent-key-16"
 uvicorn app.main:app --reload --port 8001
 ```
 
@@ -29,6 +30,7 @@ Ejemplo de respuesta:
 Invoke-RestMethod http://localhost:8001/agent/respond `
   -Method Post `
   -ContentType "application/json" `
+  -Headers @{ "X-Sora-Agent-Api-Key" = "change-me-local-agent-key-16" } `
   -Body '{"message":"Explicame que significa el TER","surface":"fund-detail","locale":"es","context":{"intent":"explain_term","fund":{"name":"Vanguard S&P 500 UCITS ETF","ter":0.07}}}'
 ```
 
@@ -42,6 +44,8 @@ Invoke-RestMethod http://localhost:8001/agent/respond `
 | `OPENAI_AGENT_MAX_TOKENS`    | Limite de tokens de salida. Por defecto `500`.                                    |
 | `SORA_BACKEND_BASE_URL`      | Base URL de NestJS para tools internas.                                           |
 | `SORA_INTERNAL_API_KEY`      | Debe coincidir con `ASSISTANT_INTERNAL_API_KEY`.                                  |
+| `ASSISTANT_AGENT_API_KEY`    | Debe coincidir con `ASSISTANT_AGENT_API_KEY` en NestJS. Requerida en `/agent/respond`. |
+| `SORA_AGENT_API_KEY`         | Alias aceptado de `ASSISTANT_AGENT_API_KEY` en Docker.                            |
 | `SORA_BACKEND_TIMEOUT_SECONDS` | Timeout HTTP de tools. Por defecto `5`.                                       |
 | `SORA_AGENT_PORT`            | Puerto sugerido con Docker/uvicorn. Por defecto `8001`.                           |
 

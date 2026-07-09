@@ -14,8 +14,15 @@ import type {
 } from './fund-list.schema';
 import type { CatalogVisibility } from './catalog-visibility.schema';
 
-const SORT_FIELD_TO_PRISMA_COLUMN: Record<
+export type PrismaFundListSortField = FundListSortField;
+
+type PrismaBackedFundListSortField = Exclude<
   FundListSortField,
+  'return1y' | 'return3y'
+>;
+
+const SORT_FIELD_TO_PRISMA_COLUMN: Record<
+  PrismaBackedFundListSortField,
   keyof Prisma.FundOrderByWithRelationInput
 > = {
   symbol: 'symbol',
@@ -122,10 +129,15 @@ export function buildFundListWhereInput(
     conditions.push({ riskLevel: query.riskLevel });
   }
 
-  if (query.minScore !== undefined || query.maxScore !== undefined) {
+  const effectiveMinScore =
+    query.idealForBeginnersOnly === true
+      ? Math.max(query.minScore ?? 0, 30)
+      : query.minScore;
+
+  if (effectiveMinScore !== undefined || query.maxScore !== undefined) {
     conditions.push({
       score: {
-        ...(query.minScore !== undefined ? { gte: query.minScore } : {}),
+        ...(effectiveMinScore !== undefined ? { gte: effectiveMinScore } : {}),
         ...(query.maxScore !== undefined ? { lte: query.maxScore } : {}),
       },
     });
@@ -155,6 +167,20 @@ export function buildFundListWhereInput(
   return conditions.length > 0 ? { AND: conditions } : {};
 }
 
+/** Maximum funds considered when sorting by enriched return snapshots (MVP). */
+export const RETURN_BASED_SORT_MAX_FUNDS = 500;
+
+/**
+ * Returns true when sorting must happen after return enrichment.
+ *
+ * @param sortBy - Requested sort field.
+ */
+export function isReturnBasedSortField(
+  sortBy: FundListSortField,
+): sortBy is 'return1y' | 'return3y' {
+  return sortBy === 'return1y' || sortBy === 'return3y';
+}
+
 /**
  * Builds a Prisma order clause from validated sort options.
  *
@@ -166,6 +192,10 @@ export function buildFundListOrderByInput(
   sortBy: FundListSortField,
   sortOrder: FundListSortOrder,
 ): Prisma.FundOrderByWithRelationInput {
+  if (isReturnBasedSortField(sortBy)) {
+    return { score: 'desc' };
+  }
+
   const field = SORT_FIELD_TO_PRISMA_COLUMN[sortBy];
 
   return {

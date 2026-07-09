@@ -79,6 +79,10 @@ export class FeaturedFundsService {
         return [];
       }
 
+      if ((fund.score ?? 0) < 30) {
+        return [];
+      }
+
       return [
         mapFundToFeaturedFund({
           fund,

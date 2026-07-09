@@ -214,6 +214,11 @@ export class AppConfigService {
     });
   }
 
+  /** Shared secret for authenticating NestJS -> Python agent calls. */
+  get assistantAgentApiKey(): string | undefined {
+    return this.configService.get('ASSISTANT_AGENT_API_KEY', { infer: true });
+  }
+
   /** Shared secret for internal SORA tool endpoints. */
   get assistantInternalApiKey(): string | undefined {
     return this.configService.get('ASSISTANT_INTERNAL_API_KEY', {
@@ -248,5 +253,30 @@ export class AppConfigService {
   /** Brandfetch Logo API client ID for fund manager logo URLs. */
   get brandfetchClientId(): string | undefined {
     return this.configService.get('BRANDFETCH_CLIENT_ID', { infer: true });
+  }
+
+  /** Whether OpenAPI/Swagger UI is registered at `/api/docs`. */
+  get swaggerEnabled(): boolean {
+    return this.configService.get('SWAGGER_ENABLED', { infer: true });
+  }
+
+  /** Global rate-limit window duration in seconds. */
+  get throttleTtlSeconds(): number {
+    return this.configService.get('THROTTLE_TTL_SECONDS', { infer: true });
+  }
+
+  /** Maximum requests per IP per window for public API routes. */
+  get throttleLimit(): number {
+    return this.configService.get('THROTTLE_LIMIT', { infer: true });
+  }
+
+  /** Maximum requests per IP per window for SORA assistant routes. */
+  get throttleAssistantLimit(): number {
+    return this.configService.get('THROTTLE_ASSISTANT_LIMIT', { infer: true });
+  }
+
+  /** Optional Redis URL for distributed rate-limit storage. */
+  get throttleRedisUrl(): string | undefined {
+    return this.configService.get('THROTTLE_REDIS_URL', { infer: true });
   }
 }

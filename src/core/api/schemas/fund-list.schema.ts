@@ -17,6 +17,8 @@ export const fundListSortFieldSchema = z.enum([
   'currency',
   'createdAt',
   'updatedAt',
+  'return1y',
+  'return3y',
 ]);
 
 /** Inferred type for fund list sort fields. */

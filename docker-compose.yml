@@ -7,7 +7,7 @@ services:
       - '${POSTGRES_PORT:-5432}:5432'
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-inversora}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-inversora}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD for local Docker Postgres}
       POSTGRES_DB: ${POSTGRES_DB:-inversora}
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -36,6 +36,8 @@ services:
       OPENAI_AGENT_MODEL: ${OPENAI_AGENT_MODEL:-gpt-4o-mini}
       SORA_BACKEND_BASE_URL: ${SORA_BACKEND_BASE_URL:-http://host.docker.internal:3000}
       SORA_INTERNAL_API_KEY: ${SORA_INTERNAL_API_KEY:-}
+      ASSISTANT_AGENT_API_KEY: ${ASSISTANT_AGENT_API_KEY:-}
+      SORA_AGENT_API_KEY: ${ASSISTANT_AGENT_API_KEY:-}
 
 volumes:
   postgres_data:

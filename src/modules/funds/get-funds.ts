@@ -14,10 +14,14 @@ import {
   buildFundListMeta,
   buildFundListOrderByInput,
   buildFundListWhereInput,
+  isReturnBasedSortField,
+  RETURN_BASED_SORT_MAX_FUNDS,
 } from './entities/fund-list.mapper';
 import { mapFundsToApiFunds } from './entities/fund-api.mapper';
+import type { FundApi } from './entities/fund-api.schema';
 import { enrichFundApiPayloadsWithReturns } from './entities/fund-returns.enricher.mapper';
 import { loadReturnSnapshotsByFundIds } from './entities/fund-returns.enricher';
+import { sortEnrichedFundsByReturn } from './entities/fund-return-sort';
 import { FundsRepository } from './repositories/funds.repository';
 import { FundPricesService } from './services/fund-prices.service';
 
@@ -40,6 +44,11 @@ export class GetFundsUseCase {
    */
   async execute(rawQuery: Record<string, unknown>): Promise<FundListResponse> {
     const query = this.parseListQuery(rawQuery);
+
+    if (isReturnBasedSortField(query.sortBy)) {
+      return this.executeReturnSorted(query);
+    }
+
     const where = buildFundListWhereInput(query);
     const orderBy = buildFundListOrderByInput(query.sortBy, query.sortOrder);
     const skip = (query.page - 1) * query.limit;
@@ -49,6 +58,51 @@ export class GetFundsUseCase {
       skip,
       take: query.limit,
     });
+    const data = await this.enrichFunds(items);
+
+    return parseApiResponse(
+      fundListResponseSchema,
+      {
+        data,
+        meta: buildFundListMeta(query.page, query.limit, total),
+      },
+      'get-funds',
+    );
+  }
+
+  private async executeReturnSorted(
+    query: FundListQuery,
+  ): Promise<FundListResponse> {
+    const where = buildFundListWhereInput(query);
+    const orderBy = buildFundListOrderByInput(query.sortBy, query.sortOrder);
+    const { items, total } = await this.fundsRepository.findMany({
+      where,
+      orderBy,
+      skip: 0,
+      take: RETURN_BASED_SORT_MAX_FUNDS,
+    });
+
+    const enriched = await this.enrichFunds(items);
+    const sorted =
+      query.sortBy === 'return1y' || query.sortBy === 'return3y'
+        ? sortEnrichedFundsByReturn(enriched, query.sortBy, query.sortOrder)
+        : enriched;
+    const skip = (query.page - 1) * query.limit;
+    const pageItems = sorted.slice(skip, skip + query.limit);
+
+    return parseApiResponse(
+      fundListResponseSchema,
+      {
+        data: pageItems,
+        meta: buildFundListMeta(query.page, query.limit, total),
+      },
+      'get-funds',
+    );
+  }
+
+  private async enrichFunds(
+    items: Awaited<ReturnType<FundsRepository['findMany']>>['items'],
+  ): Promise<FundApi[]> {
     const apiFunds = mapFundsToApiFunds(
       items,
       this.configService.brandfetchClientId,
@@ -59,18 +113,7 @@ export class GetFundsUseCase {
       fundIds,
     );
 
-    return parseApiResponse(
-      fundListResponseSchema,
-      {
-        data: enrichFundApiPayloadsWithReturns(
-          apiFunds,
-          fundIds,
-          returnSnapshots,
-        ),
-        meta: buildFundListMeta(query.page, query.limit, total),
-      },
-      'get-funds',
-    );
+    return enrichFundApiPayloadsWithReturns(apiFunds, fundIds, returnSnapshots);
   }
 
   private parseListQuery(rawQuery: Record<string, unknown>): FundListQuery {
