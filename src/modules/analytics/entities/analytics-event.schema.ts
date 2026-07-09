@@ -15,7 +15,7 @@ export const analyticsEventSchema = z.object({
   timestamp: z.string().min(1),
   sessionId: z.string().trim().min(8).max(80),
   properties: z
-    .record(z.union([z.string(), z.number(), z.boolean()]))
+    .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
     .optional(),
 });
 

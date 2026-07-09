@@ -13,7 +13,7 @@ export class IpThrottlerGuard extends ThrottlerGuard {
    * @param request - Incoming HTTP request.
    */
   protected getTracker(request: Record<string, unknown>): Promise<string> {
-    const httpRequest = request as Request;
+    const httpRequest = request as unknown as Request;
     const forwardedFor = httpRequest.header('x-forwarded-for');
     const forwardedIp = forwardedFor?.split(',')[0]?.trim();
 

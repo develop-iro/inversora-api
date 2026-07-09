@@ -16,8 +16,13 @@ import type { CatalogVisibility } from './catalog-visibility.schema';
 
 export type PrismaFundListSortField = FundListSortField;
 
+type PrismaBackedFundListSortField = Exclude<
+  FundListSortField,
+  'return1y' | 'return3y'
+>;
+
 const SORT_FIELD_TO_PRISMA_COLUMN: Record<
-  PrismaFundListSortField,
+  PrismaBackedFundListSortField,
   keyof Prisma.FundOrderByWithRelationInput
 > = {
   symbol: 'symbol',
@@ -170,7 +175,9 @@ export const RETURN_BASED_SORT_MAX_FUNDS = 500;
  *
  * @param sortBy - Requested sort field.
  */
-export function isReturnBasedSortField(sortBy: FundListSortField): boolean {
+export function isReturnBasedSortField(
+  sortBy: FundListSortField,
+): sortBy is 'return1y' | 'return3y' {
   return sortBy === 'return1y' || sortBy === 'return3y';
 }
 
