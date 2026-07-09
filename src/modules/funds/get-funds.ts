@@ -58,7 +58,6 @@ export class GetFundsUseCase {
       skip,
       take: query.limit,
     });
-
     const data = await this.enrichFunds(items);
 
     return parseApiResponse(
