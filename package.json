@@ -129,9 +129,11 @@
       "!**/*.spec.ts",
       "!**/*.module.ts",
       "!**/main.ts",
+      "!**/instrument.ts",
       "!**/cli/**",
       "!**/*.dto.ts",
       "!**/*.controller.ts",
+      "!**/decorators/**",
       "!**/schedulers/**",
       "!**/swagger.config.ts"
     ],

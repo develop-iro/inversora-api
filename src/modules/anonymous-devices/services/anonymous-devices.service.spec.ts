@@ -63,4 +63,20 @@ describe('AnonymousDevicesService', () => {
     });
     expect(result).toEqual({ saved: true, deviceId: 'device-1' });
   });
+
+  it('updates heartbeat metadata for authenticated devices', async () => {
+    const touchDevice = jest.fn().mockResolvedValue(undefined);
+
+    const repository: Pick<AnonymousDevicesRepository, 'touchDevice'> = {
+      touchDevice,
+    };
+
+    const service = new AnonymousDevicesService(
+      repository as AnonymousDevicesRepository,
+    );
+    const result = await service.heartbeat('device-1', { appVersion: '1.2.0' });
+
+    expect(touchDevice).toHaveBeenCalledWith('device-1', '1.2.0');
+    expect(result).toEqual({ ok: true });
+  });
 });

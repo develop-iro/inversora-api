@@ -64,4 +64,21 @@ describe('AnalyticsService', () => {
       'Failed to persist analytics event "screen_view": database unavailable',
     );
   });
+
+  it('should stringify non-error persistence failures', async () => {
+    repository.create.mockRejectedValue('offline');
+
+    service.recordEvent({
+      event: 'screen_view',
+      surface: 'home',
+      timestamp: '2026-07-08T10:00:00.000Z',
+      sessionId: 'session-abc',
+    });
+
+    await Promise.resolve();
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      'Failed to persist analytics event "screen_view": unknown error',
+    );
+  });
 });
