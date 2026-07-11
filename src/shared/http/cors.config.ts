@@ -13,10 +13,21 @@ export const DEFAULT_DEV_CORS_ORIGINS = [
 ] as const;
 
 /** HTTP methods exposed to browser clients (Expo web). */
-export const CORS_ALLOWED_METHODS = ['GET', 'HEAD', 'OPTIONS', 'POST'] as const;
+export const CORS_ALLOWED_METHODS = [
+  'GET',
+  'HEAD',
+  'OPTIONS',
+  'POST',
+  'PUT',
+  'PATCH',
+] as const;
 
 /** Request headers allowed on cross-origin browser calls. */
-export const CORS_ALLOWED_HEADERS = ['Content-Type', 'Accept'] as const;
+export const CORS_ALLOWED_HEADERS = [
+  'Content-Type',
+  'Accept',
+  'X-Device-Token',
+] as const;
 
 /**
  * Resolves allowed CORS origins from configured values and runtime environment.
