@@ -1,5 +1,6 @@
 import {
   buildRankingsResponse,
+  enrichRankingsResponseWithReturns,
   isRankingEligible,
   normalizeBenchmarkKey,
 } from './ranking.mapper';
@@ -73,6 +74,23 @@ describe('normalizeBenchmarkKey', () => {
 });
 
 describe('buildRankingsResponse', () => {
+  it('should preserve meta when enriching ranked entries with returns', () => {
+    const baseResponse = buildRankingsResponse(
+      RANKING_FIXTURE_FUNDS,
+      rankingsQuerySchema.parse({ benchmark: 'S&P 500', limit: 1 }),
+    );
+
+    const enriched = enrichRankingsResponseWithReturns(baseResponse, new Map());
+
+    expect(enriched.meta).toEqual(baseResponse.meta);
+    expect(enriched.data[0]?.funds[0]?.returns).toEqual({
+      ytd: null,
+      oneYear: null,
+      threeYear: null,
+      asOf: null,
+    });
+  });
+
   it('should group eligible funds by benchmark without mixing peer groups', () => {
     const response = buildRankingsResponse(
       RANKING_FIXTURE_FUNDS,

@@ -182,6 +182,33 @@ describe('FundsRepository', () => {
     });
   });
 
+  it('should return ranking-eligible funds with catalog filters applied in the query', async () => {
+    prisma.fund.findMany.mockResolvedValueOnce([
+      {
+        ...prismaFundRow,
+        score: new Decimal('87.00'),
+      },
+    ]);
+
+    await expect(repository.findRankingEligible()).resolves.toEqual([
+      expect.objectContaining({
+        symbol: 'SPY',
+        score: 87,
+      }),
+    ]);
+
+    expect(prisma.fund.findMany).toHaveBeenCalledWith({
+      where: {
+        catalogVisibility: { not: CatalogVisibility.BLOCKED },
+        benchmark: { not: null },
+        isin: { not: null },
+        score: { not: null },
+        ter: { not: null },
+      },
+      orderBy: { symbol: 'asc' },
+    });
+  });
+
   it('should query paginated funds with filters and total count', async () => {
     prisma.fund.findMany.mockResolvedValueOnce([prismaFundRow]);
     prisma.fund.count.mockResolvedValueOnce(1);
