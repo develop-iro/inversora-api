@@ -38,6 +38,24 @@ export function formatQuarterTag(year: number, quarter: number): string {
 }
 
 /**
+ * Compares two canonical quarter keys chronologically.
+ *
+ * @param left - Left quarter key (`YYYY-QN`).
+ * @param right - Right quarter key (`YYYY-QN`).
+ * @returns Negative when `left` is earlier, positive when later, zero when equal.
+ */
+export function compareQuarterKeys(left: string, right: string): number {
+  const leftParts = parseQuarterKey(left);
+  const rightParts = parseQuarterKey(right);
+
+  if (leftParts.year !== rightParts.year) {
+    return leftParts.year - rightParts.year;
+  }
+
+  return leftParts.quarter - rightParts.quarter;
+}
+
+/**
  * Parses a canonical quarter key into numeric parts.
  *
  * @param quarterKey - Quarter key in `YYYY-QN` format.

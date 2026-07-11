@@ -1,6 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { z } from 'zod';
-import { findFeaturedSelectionByQuarterKey } from '../config/featured-funds-selection.config';
+import {
+  findFeaturedSelectionByQuarterKey,
+  listFeaturedSelectionsNewestFirst,
+  resolveFeaturedSelectionForQuarter,
+} from '../config/featured-funds-selection.config';
 import {
   buildFeaturedFundsResponse,
   FeaturedQuarterParseError,
@@ -12,7 +16,12 @@ import {
   featuredFundsQuerySchema,
   type FeaturedFundsQuery,
   type FeaturedFundsResponse,
+  type FeaturedQuarterSelection,
 } from '../entities/featured-funds.schema';
+import {
+  buildQuarterMetadata,
+  parseQuarterKey,
+} from '../entities/quarter-metadata.utils';
 import { isCatalogVisible } from '../../funds/entities/catalog-visibility.schema';
 import {
   loadReturnSnapshotsByFundIds,
@@ -54,20 +63,108 @@ export class FeaturedFundsService {
     rawQuery: Record<string, unknown>,
   ): Promise<FeaturedFundsResponse> {
     const query = this.parseFeaturedFundsQuery(rawQuery);
-    const quarter = parseFeaturedQuarterQuery(query.quarter);
-    const cacheKey = this.buildCacheKey(quarter.quarterKey, query);
+    const quarterWasExplicit = this.isQuarterExplicitlyRequested(rawQuery);
+    const requestedQuarter = parseFeaturedQuarterQuery(query.quarter);
+
+    if (quarterWasExplicit) {
+      const selection = findFeaturedSelectionByQuarterKey(
+        requestedQuarter.quarterKey,
+      );
+
+      if (selection === undefined) {
+        const emptyResponse = buildFeaturedFundsResponse(requestedQuarter, []);
+        return emptyResponse;
+      }
+
+      const effectiveQuarter = buildQuarterMetadata(
+        parseQuarterKey(selection.quarterKey),
+      );
+
+      return this.buildFeaturedFundsResponse(
+        selection,
+        effectiveQuarter,
+        query,
+      );
+    }
+
+    const selectionAttempts = this.buildDefaultSelectionAttempts(
+      requestedQuarter.quarterKey,
+    );
+
+    for (const selection of selectionAttempts) {
+      const effectiveQuarter = buildQuarterMetadata(
+        parseQuarterKey(selection.quarterKey),
+      );
+      const response = await this.buildFeaturedFundsResponse(
+        selection,
+        effectiveQuarter,
+        query,
+      );
+
+      if (response.data.length > 0) {
+        return response;
+      }
+    }
+
+    const emptyResponse = buildFeaturedFundsResponse(requestedQuarter, []);
+    return emptyResponse;
+  }
+
+  /**
+   * Builds the ordered list of curated selections to try for default requests.
+   *
+   * Starts at the requested UTC quarter when configured, then walks back to
+   * older quarters until hydrated data is found.
+   *
+   * @param requestedQuarterKey - Canonical quarter key for the default request.
+   */
+  private buildDefaultSelectionAttempts(
+    requestedQuarterKey: string,
+  ): readonly FeaturedQuarterSelection[] {
+    const sortedSelections = listFeaturedSelectionsNewestFirst();
+    const requestedIndex = sortedSelections.findIndex(
+      (selection) => selection.quarterKey === requestedQuarterKey,
+    );
+
+    if (requestedIndex >= 0) {
+      return sortedSelections.slice(requestedIndex);
+    }
+
+    const fallbackSelection = resolveFeaturedSelectionForQuarter(
+      requestedQuarterKey,
+      { allowLatestFallback: true },
+    );
+
+    if (fallbackSelection === undefined) {
+      return [];
+    }
+
+    const fallbackIndex = sortedSelections.findIndex(
+      (selection) => selection.quarterKey === fallbackSelection.quarterKey,
+    );
+
+    return fallbackIndex >= 0
+      ? sortedSelections.slice(fallbackIndex)
+      : [fallbackSelection];
+  }
+
+  /**
+   * Hydrates, filters, enriches, and caches a curated quarter selection.
+   *
+   * @param selection - Manual quarter curation config.
+   * @param effectiveQuarter - Quarter metadata served to clients.
+   * @param query - Parsed featured funds query.
+   */
+  private async buildFeaturedFundsResponse(
+    selection: FeaturedQuarterSelection,
+    effectiveQuarter: ReturnType<typeof buildQuarterMetadata>,
+    query: FeaturedFundsQuery,
+  ): Promise<FeaturedFundsResponse> {
+    const cacheKey = this.buildCacheKey(effectiveQuarter.quarterKey, query);
     const cached = this.cache.get(cacheKey);
 
     if (cached !== undefined && cached.expiresAt > Date.now()) {
       return cached.response;
-    }
-
-    const selection = findFeaturedSelectionByQuarterKey(quarter.quarterKey);
-
-    if (selection === undefined) {
-      const emptyResponse = buildFeaturedFundsResponse(quarter, []);
-      this.storeCacheEntry(cacheKey, emptyResponse);
-      return emptyResponse;
     }
 
     const isins = selection.entries.map((entry) => entry.isin);
@@ -87,7 +184,7 @@ export class FeaturedFundsService {
         mapFundToFeaturedFund({
           fund,
           editorial,
-          quarter,
+          quarter: effectiveQuarter,
           brandfetchClientId: this.configService.brandfetchClientId,
         }),
       ];
@@ -104,9 +201,17 @@ export class FeaturedFundsService {
       returns: resolveFundReturnSnapshot(returnSnapshots, entry.id),
     }));
 
-    const response = buildFeaturedFundsResponse(quarter, enriched);
+    const response = buildFeaturedFundsResponse(effectiveQuarter, enriched);
     this.storeCacheEntry(cacheKey, response);
     return response;
+  }
+
+  private isQuarterExplicitlyRequested(
+    rawQuery: Record<string, unknown>,
+  ): boolean {
+    const rawQuarter = rawQuery.quarter;
+
+    return typeof rawQuarter === 'string' && rawQuarter.trim().length > 0;
   }
 
   private parseFeaturedFundsQuery(
