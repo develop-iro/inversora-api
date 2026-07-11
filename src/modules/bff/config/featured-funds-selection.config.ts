@@ -1,4 +1,5 @@
 import type { FeaturedQuarterSelection } from '../entities/featured-funds.schema';
+import { compareQuarterKeys } from '../entities/quarter-metadata.utils';
 
 /**
  * Manual quarterly featured fund selections (MVP).
@@ -84,6 +85,29 @@ export const FEATURED_FUNDS_SELECTIONS: readonly FeaturedQuarterSelection[] = [
       },
     ],
   },
+  {
+    quarterKey: '2026-Q3',
+    entries: [
+      {
+        isin: 'US4642872000',
+        themeLabel: 'Gran capitalización USA',
+        badge: 'Comisión mínima',
+        benefitSummary:
+          'ETF sobre el S&P 500 con TER muy bajo, habitual en carteras de largo plazo.',
+        featuredReason: 'Comisión mínima + referencia global',
+        marketTag: 'usa',
+      },
+      {
+        isin: 'US9229083632',
+        themeLabel: 'Referencia S&P 500',
+        badge: 'Núcleo USA',
+        benefitSummary:
+          'Replica el índice S&P 500 con alta liquidez y costes muy competitivos.',
+        featuredReason: 'Referencia global + datos verificados en catálogo',
+        marketTag: 'usa',
+      },
+    ],
+  },
 ];
 
 /**
@@ -97,4 +121,46 @@ export function findFeaturedSelectionByQuarterKey(
   return FEATURED_FUNDS_SELECTIONS.find(
     (selection) => selection.quarterKey === quarterKey,
   );
+}
+
+/**
+ * Returns the most recent configured featured selection by quarter key.
+ */
+export function findLatestFeaturedSelection():
+  | FeaturedQuarterSelection
+  | undefined {
+  if (FEATURED_FUNDS_SELECTIONS.length === 0) {
+    return undefined;
+  }
+
+  return [...FEATURED_FUNDS_SELECTIONS].sort((left, right) =>
+    compareQuarterKeys(right.quarterKey, left.quarterKey),
+  )[0];
+}
+
+/**
+ * Resolves a featured selection for the requested quarter.
+ *
+ * When `allowLatestFallback` is true and the quarter has no curation yet,
+ * returns the latest configured selection so the home carousel can show the
+ * most recent editorial pick until the new quarter is published.
+ *
+ * @param quarterKey - Canonical quarter key (`YYYY-QN`).
+ * @param options - Fallback behavior for default quarter requests.
+ */
+export function resolveFeaturedSelectionForQuarter(
+  quarterKey: string,
+  options?: { readonly allowLatestFallback?: boolean },
+): FeaturedQuarterSelection | undefined {
+  const directSelection = findFeaturedSelectionByQuarterKey(quarterKey);
+
+  if (directSelection !== undefined) {
+    return directSelection;
+  }
+
+  if (options?.allowLatestFallback !== true) {
+    return undefined;
+  }
+
+  return findLatestFeaturedSelection();
 }

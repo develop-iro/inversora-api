@@ -52,9 +52,11 @@ Each item in `data` matches the `FeaturedFund` contract documented in [bff-fund-
 
 Return **200 OK** with `"data": []` when:
 
-- No curated selection exists for the requested quarter.
+- An **explicit** `quarter` query is provided but no curated selection exists for that quarter.
 - Curated ISINs are configured but none are synced in PostgreSQL yet.
 - Optional filters remove all matches.
+
+When `quarter` is **omitted**, the service defaults to the current UTC quarter. If that quarter has no curation yet, it **falls back** to the latest configured quarter so the home carousel can keep showing the most recent editorial selection until the new quarter is published. The response metadata (`quarter`, `quarterTag`, etc.) reflects the quarter actually served.
 
 Do **not** return 404 for empty quarters.
 

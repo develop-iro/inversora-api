@@ -10,10 +10,10 @@ import { FeaturedFundsService } from './featured-funds.service';
 
 const fund: Fund = buildFundTestFixture({
   id: '550e8400-e29b-41d4-a716-446655440000',
-  symbol: 'SPY',
-  isin: 'US78462F1030',
-  name: 'State Street SPDR S&P 500 ETF Trust',
-  issuer: 'State Street',
+  symbol: 'IVV',
+  isin: 'US4642872000',
+  name: 'iShares Core S&P 500 ETF',
+  issuer: 'iShares',
   provider: 'financial-modeling-prep',
   category: 'index',
   vehicle: 'etf',
@@ -76,6 +76,18 @@ describe('FeaturedFundsService', () => {
     expect(fundsRepository.findByIsins).not.toHaveBeenCalled();
   });
 
+  it('should fall back to the latest configured quarter on default requests', async () => {
+    fundsRepository.findByIsins.mockResolvedValue(
+      new Map([[fund.isin as string, fund]]),
+    );
+
+    const response = await service.getFeaturedFunds({});
+
+    expect(response.quarter).toBe('2026-Q3');
+    expect(response.data.length).toBeGreaterThan(0);
+    expect(fundsRepository.findByIsins).toHaveBeenCalled();
+  });
+
   it('should hydrate configured quarter selections from PostgreSQL', async () => {
     fundsRepository.findByIsins.mockResolvedValue(
       new Map([[fund.isin as string, fund]]),
@@ -85,7 +97,7 @@ describe('FeaturedFundsService', () => {
 
     expect(response.quarter).toBe('2026-Q2');
     expect(response.data.length).toBeGreaterThan(0);
-    expect(response.data[0]?.isin).toBe('US78462F1030');
+    expect(response.data[0]?.isin).toBe('US4642872000');
     expect(response.data[0]?.isFeatured).toBe(true);
   });
 
@@ -124,7 +136,7 @@ describe('FeaturedFundsService', () => {
     fundsRepository.findByIsins.mockResolvedValue(
       new Map([
         [
-          'US78462F1030',
+          'US4642872000',
           {
             ...fund,
             isin: null,
@@ -142,7 +154,7 @@ describe('FeaturedFundsService', () => {
     fundsRepository.findByIsins.mockResolvedValue(
       new Map([
         [
-          'US78462F1030',
+          'US4642872000',
           {
             ...fund,
             catalogVisibility: 'blocked' as const,
