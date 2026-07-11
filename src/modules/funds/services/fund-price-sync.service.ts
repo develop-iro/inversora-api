@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { AppConfigService } from '../../../shared/config/config.service';
 import { FinancialModelingPrepProvider } from '../../providers/financial-modeling-prep/financial-modeling-prep.provider';
 import type { ProviderFundHistoricalPrice } from '../../providers/financial-modeling-prep/financial-modeling-prep.domain.schemas';
 import { FUND_RETURN_HISTORY_LOOKBACK_DAYS } from '../entities/fund-returns.enricher';
@@ -22,6 +23,7 @@ const FMP_PROVIDER = 'financial-modeling-prep';
 @Injectable()
 export class FundPriceSyncService {
   constructor(
+    private readonly config: AppConfigService,
     private readonly fmpProvider: FinancialModelingPrepProvider,
     private readonly fundsRepository: FundsRepository,
     private readonly fundPricesService: FundPricesService,
@@ -59,10 +61,13 @@ export class FundPriceSyncService {
     const range = this.resolveSyncRange(options, incremental, latestDate);
 
     if (range.upToDate) {
+      const pricesPruned = await this.pruneRetention(fund.id);
+
       return {
         fundId: fund.id,
         symbol: fund.symbol,
         pricesSynced: 0,
+        pricesPruned,
         from: range.from,
         to: range.to,
         upToDate: true,
@@ -79,10 +84,13 @@ export class FundPriceSyncService {
     );
 
     if (history.length === 0) {
+      const pricesPruned = await this.pruneRetention(fund.id);
+
       return {
         fundId: fund.id,
         symbol: fund.symbol,
         pricesSynced: 0,
+        pricesPruned,
         from: range.from,
         to: range.to,
         upToDate: true,
@@ -93,15 +101,30 @@ export class FundPriceSyncService {
       fund.id,
       history,
     );
+    const pricesPruned = await this.pruneRetention(fund.id);
 
     return {
       fundId: fund.id,
       symbol: fund.symbol,
       pricesSynced,
+      pricesPruned,
       from: range.from,
       to: range.to,
       upToDate: incremental && pricesSynced === 0,
     };
+  }
+
+  /**
+   * Deletes price rows outside the configured retention window for a fund.
+   *
+   * @param fundId - Persisted fund identifier.
+   * @returns Number of deleted rows.
+   */
+  private async pruneRetention(fundId: string): Promise<number> {
+    return this.fundPricesService.pruneRetentionForFund(
+      fundId,
+      this.config.fundPricesRetentionYears,
+    );
   }
 
   /**

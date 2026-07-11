@@ -56,6 +56,7 @@ export const envSchema = z
       .enum(['true', 'false'])
       .default('false')
       .transform((value) => value === 'true'),
+    FUND_PRICES_RETENTION_YEARS: z.coerce.number().int().min(5).default(7),
     ADMIN_SYNC_ENABLED: z
       .enum(['true', 'false'])
       .default('false')
