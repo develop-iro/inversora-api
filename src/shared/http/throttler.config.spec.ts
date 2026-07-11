@@ -1,6 +1,25 @@
+import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
+
 import { buildThrottlerModuleOptions } from './throttler.config';
 
+jest.mock('@nest-lab/throttler-storage-redis', () => ({
+  ThrottlerStorageRedisService: jest.fn(),
+}));
+
 describe('buildThrottlerModuleOptions', () => {
+  beforeEach(() => {
+    jest.mocked(ThrottlerStorageRedisService).mockImplementation(
+      () =>
+        ({
+          increment: jest.fn(),
+        }) as never,
+    );
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('should configure default and assistant throttlers from config', () => {
     const options = buildThrottlerModuleOptions({
       throttleTtlSeconds: 60,
@@ -22,6 +41,7 @@ describe('buildThrottlerModuleOptions', () => {
       },
     ]);
     expect(options.storage).toBeUndefined();
+    expect(ThrottlerStorageRedisService).not.toHaveBeenCalled();
   });
 
   it('should use Redis storage when a Redis URL is configured', () => {
@@ -32,6 +52,9 @@ describe('buildThrottlerModuleOptions', () => {
       throttleRedisUrl: 'redis://localhost:6379',
     } as never);
 
+    expect(ThrottlerStorageRedisService).toHaveBeenCalledWith(
+      'redis://localhost:6379',
+    );
     expect(options.storage).toBeDefined();
   });
 });
