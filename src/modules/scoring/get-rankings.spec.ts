@@ -7,12 +7,12 @@ import { GetRankingsUseCase } from './get-rankings';
 
 describe('GetRankingsUseCase', () => {
   let useCase: GetRankingsUseCase;
-  let fundsRepository: { findAll: jest.Mock };
+  let fundsRepository: { findRankingEligible: jest.Mock };
   let fundPricesService: { getHistoriesByFundIds: jest.Mock };
 
   beforeEach(async () => {
     fundsRepository = {
-      findAll: jest.fn().mockResolvedValue(RANKING_FIXTURE_FUNDS),
+      findRankingEligible: jest.fn().mockResolvedValue(RANKING_FIXTURE_FUNDS),
     };
     fundPricesService = {
       getHistoriesByFundIds: jest.fn().mockResolvedValue(new Map()),
@@ -38,9 +38,16 @@ describe('GetRankingsUseCase', () => {
   it('should return benchmark-scoped rankings', async () => {
     const response = await useCase.execute({});
 
-    expect(fundsRepository.findAll).toHaveBeenCalled();
+    expect(fundsRepository.findRankingEligible).toHaveBeenCalled();
     expect(fundPricesService.getHistoriesByFundIds).toHaveBeenCalled();
     expect(response.data).toHaveLength(2);
+    expect(response.meta).toMatchObject({
+      totalGroups: 2,
+      returnedGroups: 2,
+      groupsLimit: 24,
+      limit: 10,
+      hasMoreGroups: false,
+    });
     expect(response.data[1]?.benchmarkKey).toBe('s&p 500');
     expect(response.data[0]?.funds[0]?.returns).toEqual({
       ytd: null,
