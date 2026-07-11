@@ -149,6 +149,13 @@ export class AppConfigService {
     return this.configService.get('SYNC_COMPOSITION_ENABLED', { infer: true });
   }
 
+  /** Maximum calendar years of end-of-day prices kept in PostgreSQL. */
+  get fundPricesRetentionYears(): number {
+    return this.configService.get('FUND_PRICES_RETENTION_YEARS', {
+      infer: true,
+    });
+  }
+
   /** Whether the manual admin sync endpoint and CLI are available. */
   get adminSyncEnabled(): boolean {
     return this.configService.get('ADMIN_SYNC_ENABLED', { infer: true });

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { ProviderFundHistoricalPrice } from '../../providers/financial-modeling-prep/financial-modeling-prep.domain.schemas';
+import { getFundPriceRetentionCutoffIsoDate } from '../entities/fund-price-retention';
 import { mapProviderFundHistoricalPriceToUpsertInput } from '../entities/fund-price.mapper';
 import type {
   FundPrice,
@@ -90,5 +91,21 @@ export class FundPricesService {
     query: FundPriceHistoryQuery = {},
   ): Promise<Map<string, FundPrice[]>> {
     return this.fundPricesRepository.findHistoriesByFundIds(fundIds, query);
+  }
+
+  /**
+   * Removes price rows older than the configured retention window for one fund.
+   *
+   * @param fundId - Persisted fund identifier.
+   * @param retentionYears - Number of calendar years to keep.
+   * @returns Number of deleted rows.
+   */
+  async pruneRetentionForFund(
+    fundId: string,
+    retentionYears: number,
+  ): Promise<number> {
+    const cutoffIsoDate = getFundPriceRetentionCutoffIsoDate(retentionYears);
+
+    return this.fundPricesRepository.deleteOlderThan(fundId, cutoffIsoDate);
   }
 }

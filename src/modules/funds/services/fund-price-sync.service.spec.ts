@@ -1,5 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { AppConfigService } from '../../../shared/config/config.service';
 import { FinancialModelingPrepProvider } from '../../providers/financial-modeling-prep/financial-modeling-prep.provider';
 import {
   getTodayIsoDate,
@@ -16,6 +17,7 @@ describe('FundPriceSyncService', () => {
   let fundPricesService: {
     getLatestDate: jest.Mock;
     saveProviderPrices: jest.Mock;
+    pruneRetentionForFund: jest.Mock;
   };
 
   const persistedFund = {
@@ -68,11 +70,18 @@ describe('FundPriceSyncService', () => {
     fundPricesService = {
       getLatestDate: jest.fn().mockResolvedValue(null),
       saveProviderPrices: jest.fn().mockResolvedValue(2),
+      pruneRetentionForFund: jest.fn().mockResolvedValue(0),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         FundPriceSyncService,
+        {
+          provide: AppConfigService,
+          useValue: {
+            fundPricesRetentionYears: 7,
+          },
+        },
         {
           provide: FinancialModelingPrepProvider,
           useValue: fmpProvider,
@@ -113,6 +122,7 @@ describe('FundPriceSyncService', () => {
       fundId: persistedFund.id,
       symbol: 'SPY',
       pricesSynced: 2,
+      pricesPruned: 0,
       from: '2024-02-01',
       to: '2024-02-02',
       upToDate: false,
@@ -157,6 +167,7 @@ describe('FundPriceSyncService', () => {
       fundId: persistedFund.id,
       symbol: 'SPY',
       pricesSynced: 0,
+      pricesPruned: 0,
       from: '2024-02-03',
       to: '2024-02-01',
       upToDate: true,
@@ -181,6 +192,7 @@ describe('FundPriceSyncService', () => {
       fundId: persistedFund.id,
       symbol: 'SPY',
       pricesSynced: 0,
+      pricesPruned: 0,
       from: addDaysToIsoDate(getTodayIsoDate(), -365 * 5),
       to: getTodayIsoDate(),
       upToDate: true,
@@ -220,10 +232,16 @@ describe('FundPriceSyncService', () => {
       fundId: persistedFund.id,
       symbol: 'SPY',
       pricesSynced: 1,
+      pricesPruned: 0,
       from: '2024-02-03',
       to: getTodayIsoDate(),
       upToDate: false,
     });
+
+    expect(fundPricesService.pruneRetentionForFund).toHaveBeenCalledWith(
+      persistedFund.id,
+      7,
+    );
 
     expect(fundPricesService.saveProviderPrices).toHaveBeenCalledWith(
       persistedFund.id,

@@ -19,6 +19,8 @@ export interface FundPriceSyncResult {
   symbol: string;
   /** Number of price rows upserted. */
   pricesSynced: number;
+  /** Number of price rows deleted by the retention policy. */
+  pricesPruned: number;
   /** Effective lower bound used for the provider request, if any. */
   from?: string;
   /** Effective upper bound used for the provider request, if any. */
