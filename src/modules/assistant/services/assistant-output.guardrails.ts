@@ -7,8 +7,17 @@ const FORBIDDEN_OUTPUT_PATTERNS: readonly RegExp[] = [
   /\bvende(r|me|lo|a)\b/i,
   /\bsuscr[ií]b(e|ete|ir)\b/i,
   /\bdeber[ií]as\s+invertir\b/i,
+  /\bdeber[ií]as\b/i,
   /\binvierte\s+(ahora|ya)\b/i,
+  /\bte recomiendo\b/i,
+  /\bmejor opci[oó]n\b/i,
+  /\bideal para ti\b/i,
+  /\bapuesta por\b/i,
 ];
+
+/** Safe educational fallback when model output violates guardrails. */
+export const ASSISTANT_GUARDRAIL_FALLBACK_TEXT =
+  'Inversora comparte información educativa. No puedo recomendar comprar, vender o suscribir un fondo concreto. Si quieres, te explico conceptos, métricas o el significado del score en lenguaje sencillo.';
 
 const MAX_RESPONSE_LENGTH = 2_000;
 
@@ -42,6 +51,19 @@ export class AssistantOutputGuardrailsService {
     }
 
     return `${trimmed.slice(0, MAX_RESPONSE_LENGTH - 1).trimEnd()}…`;
+  }
+
+  /**
+   * Sanitizes model output or returns a safe educational fallback.
+   *
+   * @param text - Raw model output.
+   */
+  sanitizeOrFallback(text: string): string {
+    try {
+      return this.sanitize(text);
+    } catch {
+      return ASSISTANT_GUARDRAIL_FALLBACK_TEXT;
+    }
   }
 
   /**

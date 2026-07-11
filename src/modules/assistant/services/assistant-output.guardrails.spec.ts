@@ -13,6 +13,18 @@ describe('AssistantOutputGuardrailsService', () => {
     expect(() => service.sanitize('Deberías comprar este fondo ya.')).toThrow(
       /prohibited recommendation language/i,
     );
+    expect(() => service.sanitize('Te recomiendo este fondo.')).toThrow(
+      /prohibited recommendation language/i,
+    );
+    expect(() => service.sanitize('Es la mejor opción para ti.')).toThrow(
+      /prohibited recommendation language/i,
+    );
+  });
+
+  it('returns a safe fallback when sanitize fails', () => {
+    expect(service.sanitizeOrFallback('Te recomiendo comprar ya.')).toMatch(
+      /informaci[oó]n educativa/i,
+    );
   });
 
   it('rejects empty responses', () => {

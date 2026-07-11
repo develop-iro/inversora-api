@@ -1,5 +1,14 @@
 # Propósito y alcance de Inversora API
 
+Resumen alineado al documento oficial (*Documentación de Proyecto: Inversora*, v1.0). Las reglas de producto completas viven en `invesora/docs/product/`. Ante conflicto, **prevalece el documento oficial**.
+
+| Sección doc oficial | Doc canónica en `invesora` |
+|---------------------|----------------------------|
+| §5 Problema que resuelve Inversora | `docs/product/problem-statement.md` |
+| §2 Objetivos y MVP | `docs/product/objectives.md` |
+| §3 Alcance funcional | `docs/product/mvp-scope.md` |
+| §4 Público y perfiles | `docs/product/target-audience-and-profiles.md` |
+
 ## Qué es
 
 **Inversora API** es el backend de datos y scoring de [Inversora](https://github.com/): una aplicación educativa que ayuda a principiantes a **explorar, entender y comparar fondos indexados** sin ejecutar inversiones ni ofrecer asesoramiento personalizado.
@@ -21,9 +30,9 @@ El principio rector del producto es *educar primero, comparar después*. La API 
 | Motor de scoring en servidor | Generador de recomendaciones de compra/venta |
 | Sincronizador de datos de mercado | Custodio de carteras ni favoritos del usuario |
 
-Los **favoritos**, el **perfil educativo** y la **calculadora** viven en el cliente (almacenamiento local). No requieren backend en el MVP.
+Los **favoritos** y la **calculadora** viven en el cliente (almacenamiento local). El **perfil educativo orientativo** se guarda localmente y, de forma opcional, el cliente sincroniza **solo dimensiones derivadas** (sin respuestas crudas) mediante el módulo `anonymous-devices`.
 
-El **Asistente Inversora** (IA explicativa) es una fase posterior: explicará los datos que ya calcula esta API, pero **no recalculará ni modificará** scores ni rankings.
+El **Asistente Inversora** (IA explicativa) **explica** los datos que ya calcula esta API; **no recalcula ni modifica** scores ni rankings. El módulo `assistant` expone herramientas y contexto; la integración completa en todas las superficies de la app sigue en curso (ver `invesora/docs/product/assistant.md`).
 
 ## Ecosistema
 
@@ -33,7 +42,7 @@ flowchart LR
     API[inversora-api]
     DB[(PostgreSQL)]
     FMP[Financial Modeling Prep]
-    FutureAssistant[Asistente IA fase posterior]
+    FutureAssistant[Asistente Inversora]
 
     App -->|"GET fondos, scores, charts"| API
     API --> DB
@@ -76,19 +85,22 @@ Si la documentación de la app menciona Supabase Edge Functions como backend pla
 ### Incluido
 
 - Health check y documentación OpenAPI (Swagger).
+- Registro de dispositivos anónimos y sync del perfil educativo derivado (`anonymous-devices`).
+- Ingesta de eventos de analytics anónimos (`analytics`, HU-41).
 - Sincronización de fondos indexados desde FMP (metadata + precios EOD).
-- Endpoints de lectura: listado, detalle, gráfico histórico, holdings, exposición sectorial y geográfica, score.
+- Endpoints de lectura: listado, detalle, gráfico histórico, holdings, exposición sectorial y geográfica, score, rankings.
+- Contrato BFF orientado a la app (`bff`: `GET /funds/:isin`, destacados).
+- Módulo de asistente: herramientas y contexto para explicaciones (sin alterar scoring).
 - Cálculo y persistencia del Score Inversora con recálculo automático tras el sync diario.
 - Validación de configuración con Zod (`src/shared/config/env.schema.ts`).
 - Tests unitarios, de integración (PostgreSQL + Prisma + FMP mock) y E2E en CI.
 
 ### Planificado (próximas fases)
 
-- Sincronización de composición (holdings y allocations) en el pipeline diario.
-- Contrato orientado a la app (`GET /funds/:isin` agregado, rankings por benchmark).
-- Integración real de la app móvil (sustitución de mocks).
-- Staging y producción con FMP live y scheduler activo.
-- Servicio de asistente IA separado (fase 3).
+- Integración completa de la app móvil sin mocks locales en todos los flujos.
+- Staging y producción con FMP live y scheduler activo en todos los entornos.
+- Cierre de guardrails del asistente (HU-40) y superficies HU-22–24 en la app.
+- Panel operativo avanzado (“Clínica de Datos”) fuera del MVP de usuario.
 
 ### Excluido del MVP
 
@@ -110,6 +122,9 @@ Si la documentación de la app menciona Supabase Edge Functions como backend pla
 
 - [roles-and-responsibilities.md](./roles-and-responsibilities.md) — capas y módulos internos
 - [infrastructure-phases.md](./infrastructure-phases.md) — evolución del despliegue
-- [scoring-algorithm.md](./scoring-algorithm.md) — implementación actual del score
-- `invesora/docs/product/mvp-scope.md` — alcance completo del producto
+- [scoring-rn-04.md](./scoring-rn-04.md) — spec de scoring de producción (RN-04)
+- [scoring-algorithm.md](./scoring-algorithm.md) — implementación legada en código (`mvp-1`)
+- `invesora/docs/product/mvp-scope.md` — alcance completo del producto (§3)
+- `invesora/docs/product/objectives.md` — objetivos y validación del MVP (§2)
+- `invesora/docs/product/target-audience-and-profiles.md` — perfiles de usuario (§4)
 - `invesora/docs/product/scoring.md` — reglas de negocio RN-02 a RN-05

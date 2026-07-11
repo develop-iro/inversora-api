@@ -153,6 +153,36 @@ describe('AssistantService', () => {
     expect(response.cached).toBe(true);
   });
 
+  it('returns cache on the second identical explain request', async () => {
+    config.assistantEnabled = true;
+    openAiAssistant.generate.mockResolvedValue(
+      'MSCI World es un índice global de acciones de mercados desarrollados.',
+    );
+
+    const request = {
+      surface: 'home' as const,
+      message: 'Explícame MSCI World en detalle educativo',
+    };
+
+    cacheRepository.findValid
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        text: 'MSCI World es un índice global de acciones de mercados desarrollados.',
+        title: 'Respuesta de SORA',
+        source: 'openai',
+        cached: false,
+        disclaimer: 'Disclaimer',
+        promptVersion: 'sora-v1',
+      });
+
+    const first = await service.explain(request);
+    const second = await service.explain(request);
+
+    expect(first.cached).toBe(false);
+    expect(second.source).toBe('cache');
+    expect(second.cached).toBe(true);
+  });
+
   it('generates OpenAI responses when enabled and glossary misses', async () => {
     config.assistantEnabled = true;
     openAiAssistant.generate.mockResolvedValue(
