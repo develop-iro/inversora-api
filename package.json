@@ -55,7 +55,7 @@
     "security:verify-local": "node scripts/verify-local-security.cjs",
     "db:count-funds": "node scripts/count-funds.mjs",
     "db:quarantine-breakdown": "node scripts/quarantine-breakdown.mjs",
-    "prepare": "husky"
+    "prepare": "node scripts/prepare-husky.cjs"
   },
   "lint-staged": {
     "*.{ts,js,mjs}": [

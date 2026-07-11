@@ -26,7 +26,7 @@ COPY scripts/docker-entrypoint.sh ./scripts/docker-entrypoint.sh
 
 RUN npm ci --omit=dev --ignore-scripts \
   && npx prisma generate \
-  && npm install prisma@6.19.3 --no-save \
+  && npm install prisma@6.19.3 --no-save --ignore-scripts \
   && chmod +x ./scripts/docker-entrypoint.sh
 
 COPY --from=builder /app/dist ./dist
