@@ -74,6 +74,8 @@
     "@nestjs/swagger": "^11.4.4",
     "@nestjs/throttler": "^6.5.0",
     "@prisma/client": "^6.19.3",
+    "@sentry/nestjs": "^10.65.0",
+    "@sentry/node": "^10.65.0",
     "axios": "^1.17.0",
     "helmet": "^8.2.0",
     "ioredis": "^5.11.1",

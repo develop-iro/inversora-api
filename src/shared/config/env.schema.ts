@@ -105,6 +105,7 @@ export const envSchema = z
     THROTTLE_LIMIT: z.coerce.number().int().positive().default(120),
     THROTTLE_ASSISTANT_LIMIT: z.coerce.number().int().positive().default(30),
     THROTTLE_REDIS_URL: z.string().url().optional(),
+    SENTRY_DSN: z.string().url().optional(),
   })
   .superRefine((env, ctx) => {
     const adminApiEnabled = env.ADMIN_SYNC_ENABLED || env.ADMIN_CATALOG_ENABLED;

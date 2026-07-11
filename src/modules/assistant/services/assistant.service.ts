@@ -111,7 +111,7 @@ export class AssistantService {
       context,
       request.message,
     );
-    const sanitizedText = this.guardrails.sanitize(generatedText);
+    const sanitizedText = this.guardrails.sanitizeOrFallback(generatedText);
 
     const response: AssistantExplainResponse = {
       title: this.buildTitle(request.message, intent),
@@ -210,7 +210,7 @@ export class AssistantService {
       context,
       request.message,
     );
-    const sanitizedText = this.guardrails.sanitize(generatedText);
+    const sanitizedText = this.guardrails.sanitizeOrFallback(generatedText);
 
     const response = this.guardrails.assertResponse({
       title: this.buildTitle(request.message, intent),

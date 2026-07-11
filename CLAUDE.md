@@ -6,13 +6,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Full documentation index: [docs/README.md](docs/README.md)
 
+**Source of truth:** Documento oficial *Inversora* v1.0 → `invesora/docs/product/*` (reglas de producto) → `inversora-api/docs/*` (backend). Ante conflicto, prevalece el documento oficial.
+
 | Topic | File |
 |-------|------|
-| Purpose and MVP scope | [docs/purpose-and-scope.md](docs/purpose-and-scope.md) |
+| Purpose and MVP scope (backend) | [docs/purpose-and-scope.md](docs/purpose-and-scope.md) |
+| Product rules (invesora repo) | `invesora/docs/product/` — objectives, mvp-scope, target-audience, scoring |
 | Roles, modules, layers | [docs/roles-and-responsibilities.md](docs/roles-and-responsibilities.md) |
 | Infrastructure phases | [docs/infrastructure-phases.md](docs/infrastructure-phases.md) |
 | Development guide | [docs/development-guide.md](docs/development-guide.md) |
-| Scoring algorithm | [docs/scoring-algorithm.md](docs/scoring-algorithm.md) |
+| Scoring RN-04 (production) | [docs/scoring-rn-04.md](docs/scoring-rn-04.md) |
+| Scoring algorithm (legacy) | [docs/scoring-algorithm.md](docs/scoring-algorithm.md) |
 
 ## Commands
 

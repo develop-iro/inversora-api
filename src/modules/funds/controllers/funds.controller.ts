@@ -48,6 +48,8 @@ export class FundsController {
       'currency',
       'createdAt',
       'updatedAt',
+      'return1y',
+      'return3y',
     ],
     example: 'score',
   })
@@ -76,6 +78,22 @@ export class FundsController {
   @ApiQuery({ name: 'maxScore', required: false, type: Number, example: 100 })
   @ApiQuery({ name: 'minTer', required: false, type: Number, example: 0.05 })
   @ApiQuery({ name: 'maxTer', required: false, type: Number, example: 0.5 })
+  @ApiQuery({
+    name: 'minReturn1y',
+    required: false,
+    type: Number,
+    description:
+      'Minimum one-year historical return percent (post-enrichment filter).',
+    example: 5,
+  })
+  @ApiQuery({
+    name: 'minReturn3y',
+    required: false,
+    type: Number,
+    description:
+      'Minimum three-year historical return percent (post-enrichment filter).',
+    example: 10,
+  })
   @ApiQuery({
     name: 'idealForBeginnersOnly',
     required: false,

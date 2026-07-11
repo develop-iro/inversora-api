@@ -52,6 +52,8 @@ export const fundListQuerySchema = z.object({
   maxScore: z.coerce.number().min(0).max(100).optional(),
   minTer: z.coerce.number().nonnegative().optional(),
   maxTer: z.coerce.number().nonnegative().optional(),
+  minReturn1y: z.coerce.number().optional(),
+  minReturn3y: z.coerce.number().optional(),
   idealForBeginnersOnly: z
     .enum(['true', 'false'])
     .optional()

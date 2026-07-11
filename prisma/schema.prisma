@@ -213,6 +213,63 @@ model AssistantConversation {
   @@map("assistant_conversations")
 }
 
+/// Anonymous product analytics event accepted from the mobile app (HU-41).
+model AnalyticsEvent {
+  id         String           @id @default(cuid())
+  event      String
+  surface    String
+  sessionId  String
+  deviceId   String?
+  occurredAt DateTime
+  properties Json?
+  appEnv     String?
+  appVersion String?
+  createdAt  DateTime         @default(now())
+  device     AnonymousDevice? @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+
+  @@index([event, occurredAt])
+  @@index([sessionId, occurredAt])
+  @@index([surface, occurredAt])
+  @@index([deviceId, occurredAt])
+  @@map("analytics_events")
+}
+
+/// Anonymous mobile installation registered without user accounts.
+model AnonymousDevice {
+  id           String                       @id @default(cuid())
+  tokenHash    String                       @unique
+  platform     String
+  appVersion   String?
+  firstSeenAt  DateTime                     @default(now())
+  lastSeenAt   DateTime                     @updatedAt
+  profile      AnonymousEducationalProfile?
+  analytics    AnalyticsEvent[]
+
+  @@index([lastSeenAt])
+  @@map("anonymous_devices")
+}
+
+/// Derived orientative educational profile synced from the mobile app.
+model AnonymousEducationalProfile {
+  id                 String          @id @default(cuid())
+  deviceId           String          @unique
+  knowledgeLevel     String
+  riskOrientation    String
+  investmentHorizon  String
+  investorStyle      String
+  financialReadiness String
+  learningGoal       String
+  profileVersion     Int
+  completedAt        DateTime
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  device             AnonymousDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([completedAt])
+  @@index([riskOrientation, completedAt])
+  @@map("anonymous_educational_profiles")
+}
+
 /// Individual user/assistant turn stored for audit and future memory.
 model AssistantMessage {
   id               String                @id @default(cuid())

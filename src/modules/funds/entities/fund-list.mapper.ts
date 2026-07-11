@@ -182,6 +182,19 @@ export function isReturnBasedSortField(
 }
 
 /**
+ * Returns true when the list query needs return snapshot enrichment.
+ *
+ * @param query - Validated fund list query.
+ */
+export function requiresReturnEnrichment(query: FundListQuery): boolean {
+  return (
+    isReturnBasedSortField(query.sortBy) ||
+    query.minReturn1y !== undefined ||
+    query.minReturn3y !== undefined
+  );
+}
+
+/**
  * Builds a Prisma order clause from validated sort options.
  *
  * @param sortBy - Sort field.

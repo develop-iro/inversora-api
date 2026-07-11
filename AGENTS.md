@@ -2,6 +2,15 @@
 
 Purpose: help AI coding agents become productive quickly in this NestJS TypeScript repository.
 
+## Documentation source of truth
+
+1. **Documento oficial** (*Documentación de Proyecto: Inversora*, v1.0) — negocio, HUs, reglas RN.
+2. **`invesora/docs/product/*`** — reglas de producto resumidas (§2 alcance, §3 MVP, §4 perfiles, scoring, asistente).
+3. **`inversora-api/docs/*`** (este repo) — propósito backend, contratos HTTP, scoring técnico RN-04, infra.
+4. **Swagger** (`/api/docs`) — contrato HTTP vivo.
+
+Ante conflicto, prevalece el documento oficial. **No** implementar Supabase Edge Functions; este repositorio es el backend canónico.
+
 ## Documentation
 
 Start with [docs/README.md](docs/README.md) for the full index. Key docs:
@@ -9,10 +18,12 @@ Start with [docs/README.md](docs/README.md) for the full index. Key docs:
 | Topic | File |
 |-------|------|
 | Purpose and MVP scope | [docs/purpose-and-scope.md](docs/purpose-and-scope.md) |
+| Product rules (invesora repo) | `invesora/docs/product/` — objectives, mvp-scope, target-audience, scoring |
 | Roles, modules, layers | [docs/roles-and-responsibilities.md](docs/roles-and-responsibilities.md) |
 | Infrastructure phases | [docs/infrastructure-phases.md](docs/infrastructure-phases.md) |
 | Development guide | [docs/development-guide.md](docs/development-guide.md) |
-| Scoring algorithm | [docs/scoring-algorithm.md](docs/scoring-algorithm.md) |
+| Scoring RN-04 (production) | [docs/scoring-rn-04.md](docs/scoring-rn-04.md) |
+| Scoring algorithm (legacy code) | [docs/scoring-algorithm.md](docs/scoring-algorithm.md) |
 
 NestJS + PostgreSQL is the canonical backend for Inversora. The mobile app (`invesora` repo) consumes this API via HTTP.
 
@@ -52,7 +63,12 @@ NestJS + PostgreSQL is the canonical backend for Inversora. The mobile app (`inv
 | `health` | `src/modules/health/` | Liveness check |
 | `providers` | `src/modules/providers/` | FMP integration |
 | `funds` | `src/modules/funds/` | Catalog, sync, prices, composition |
+| `bff` | `src/modules/bff/` | App-oriented HTTP contract (fund detail, featured) |
 | `scoring` | `src/modules/scoring/` | Inversora Score calculation |
+| `assistant` | `src/modules/assistant/` | Assistant tools and context (explanatory layer) |
+| `analytics` | `src/modules/analytics/` | Anonymous analytics events (HU-41) |
+| `anonymous-devices` | `src/modules/anonymous-devices/` | Device token and derived educational profile sync |
+| `admin` | `src/modules/admin/` | Manual sync and catalog visibility |
 
 **Framework & Conventions**
 

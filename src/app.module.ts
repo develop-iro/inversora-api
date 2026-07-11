@@ -3,6 +3,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AdminModule } from './modules/admin/admin.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { AnonymousDevicesModule } from './modules/anonymous-devices/anonymous-devices.module';
 import { AssistantModule } from './modules/assistant/assistant.module';
 import { BffModule } from './modules/bff/bff.module';
 import { FundsModule } from './modules/funds/funds.module';
@@ -29,6 +30,7 @@ import { AppThrottlerModule } from './shared/http/throttler.config';
     BffModule,
     AdminModule,
     AnalyticsModule,
+    AnonymousDevicesModule,
     ScoringModule,
     AssistantModule,
     HealthModule,

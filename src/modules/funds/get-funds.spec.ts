@@ -186,4 +186,27 @@ describe('GetFundsUseCase', () => {
 
     expect(response.data).toHaveLength(1);
   });
+
+  it('should use return enrichment path when filtering by minimum one-year return', async () => {
+    repository.findMany.mockResolvedValue({
+      items: [fund],
+      total: 1,
+    });
+    fundPricesService.getHistoriesByFundIds.mockResolvedValue(new Map());
+
+    await useCase.execute({
+      page: '1',
+      limit: '20',
+      sortBy: 'score',
+      sortOrder: 'desc',
+      minReturn1y: '5',
+    });
+
+    expect(repository.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        skip: 0,
+        take: 500,
+      }),
+    );
+  });
 });

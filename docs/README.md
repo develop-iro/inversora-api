@@ -25,32 +25,42 @@
 | **Contrato BFF** `GET /funds/:isin` → `FundDetail` (app) | [bff-fund-detail-contract.md](./bff-fund-detail-contract.md) |
 | **Destacados trimestre** `GET /featured` (dashboard) | [featured-funds-endpoint.md](./featured-funds-endpoint.md) |
 | **Visibilidad de catálogo** (`catalogVisibility`, admin) | [catalog-visibility.md](./catalog-visibility.md) |
+| **Analytics anónimos** (eventos, PostgreSQL, dashboards SQL) | [analytics-dashboards.md](./analytics-dashboards.md) |
 
 ## Jerarquía de fuentes de verdad
 
 ```text
-Documento oficial Inversora (negocio, HUs, RN)
+Documento oficial Inversora (negocio, HUs, RN)   ← fuera del repo; prevalece ante cualquier doc
         ↓
-invesora/docs/product/*           ← reglas de producto (scoring RN-04, alcance MVP)
+invesora/docs/product/*                          ← reglas de producto (§2, §3, §4, §5, scoring RN…)
         ↓
-inversora-api/docs/*              ← backend: propósito, roles, infra, guías
+inversora-api/docs/*                             ← backend: propósito, contratos, infra, scoring técnico
         ↓
-README.md + AGENTS.md + CLAUDE.md ← onboarding rápido para humanos y agentes
+README.md + AGENTS.md + CLAUDE.md                ← onboarding rápido para humanos y agentes
         ↓
-src/ + Swagger /api/docs          ← implementación viva
+src/ + Swagger /api/docs                         ← implementación viva
 ```
+
+Ante conflicto entre repos o docs internas, **prevalece el documento oficial**. Luego `invesora/docs/product/*` para reglas de producto y este repositorio para contratos HTTP y datos de servidor.
 
 ## Relación con la app Inversora
 
-La app móvil/web vive en el repositorio hermano `invesora`. Documentación de producto relevante para el backend:
+La app móvil/web vive en el repositorio hermano `invesora`. **No duplicar** reglas de producto aquí; enlazar a la doc canónica:
 
-| Tema en la app | Ubicación en `invesora` |
-|----------------|-------------------------|
+| Tema (doc oficial) | Ubicación en `invesora` |
+|--------------------|-------------------------|
 | Visión y principios | `docs/product/vision-and-principles.md` |
-| Alcance MVP | `docs/product/mvp-scope.md` |
+| Problema que resuelve Inversora (§5) | `docs/product/problem-statement.md` |
+| Objetivos específicos y MVP (§2) | `docs/product/objectives.md` |
+| Alcance MVP (§3) | `docs/product/mvp-scope.md` |
+| Público objetivo y perfiles (§4) | `docs/product/target-audience-and-profiles.md` |
 | Score Inversora y rankings (reglas RN) | `docs/product/scoring.md` |
+| Asistente Inversora (reglas IA) | `docs/product/assistant.md` |
+| Historias de usuario | `docs/product/user-stories-index.md` |
 | Límites de dominio (scoring, favoritos, IA) | `docs/architecture/adr-001-domain-boundaries.md` |
-| Estado de implementación por feature | `docs/architecture/mvp-feature-map.md` |
+| Estado de implementación app | `docs/architecture/mvp-feature-map.md` |
+| Analytics (cliente) | `docs/architecture/analytics.md` |
+| Conexión app ↔ API en dev | `docs/development-api.md` |
 
 **Decisión de arquitectura:** NestJS + PostgreSQL es el backend oficial de Inversora. La app consumirá esta API vía HTTP, sustituyendo los mocks actuales en `features/funds/services/`.
 
@@ -61,7 +71,11 @@ La app móvil/web vive en el repositorio hermano `invesora`. Documentación de p
 | `health` | Comprobación de disponibilidad (`GET /health`) |
 | `providers` | Integración con Financial Modeling Prep (FMP) |
 | `funds` | Catálogo, sync, precios, composición y exposición |
+| `bff` | Contrato agregado para la app (`GET /funds/:isin`, destacados, noticias) |
 | `scoring` | Cálculo y persistencia del Score Inversora |
+| `assistant` | Herramientas y contexto del Asistente Inversora (fase explicativa) |
+| `analytics` | Ingesta de eventos anónimos (HU-41) |
+| `anonymous-devices` | Registro de dispositivo y sync del perfil educativo derivado |
 | `admin` | Sync manual y gestión de visibilidad (`POST /admin/sync`, `GET/PATCH /admin/funds/*`, CLI `npm run sync:run`) |
 | `shared` | Configuración, Prisma, cliente HTTP, Swagger |
 
@@ -77,6 +91,7 @@ Actualiza la documentación en el mismo PR o issue cuando:
 | Nueva variable de entorno | `.env.example`, `infrastructure-phases.md` |
 | Cambio de fase de despliegue o CI | `infrastructure-phases.md` |
 | Cambio de pesos o versión del scoring | `scoring-rn-04.md`, ADR-002, `invesora/docs/product/scoring.md` |
+| Cambio de reglas de producto (§2–§4) | Actualizar primero `invesora/docs/product/*`; luego reflejar impacto API aquí |
 | Nueva decisión irreversible de arquitectura | Nuevo ADR en `docs/architecture/adr-NNN-titulo.md` y enlace desde este README |
 
 ## Referencias externas
