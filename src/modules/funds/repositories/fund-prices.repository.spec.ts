@@ -11,6 +11,7 @@ describe('FundPricesRepository', () => {
       upsert: jest.Mock;
       findMany: jest.Mock;
       findFirst: jest.Mock;
+      deleteMany: jest.Mock;
     };
     $transaction: jest.Mock;
   };
@@ -21,6 +22,7 @@ describe('FundPricesRepository', () => {
         upsert: jest.fn().mockResolvedValue({}),
         findMany: jest.fn().mockResolvedValue([]),
         findFirst: jest.fn().mockResolvedValue(null),
+        deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
       },
       $transaction: jest.fn().mockResolvedValue([]),
     };
@@ -142,6 +144,24 @@ describe('FundPricesRepository', () => {
     });
 
     await expect(repository.findLatestDate(fundId)).resolves.toBe('2024-01-31');
+  });
+
+  it('should delete prices older than the retention cutoff', async () => {
+    const fundId = '550e8400-e29b-41d4-a716-446655440000';
+    prisma.fundPrice.deleteMany.mockResolvedValueOnce({ count: 42 });
+
+    await expect(
+      repository.deleteOlderThan(fundId, '2019-01-01'),
+    ).resolves.toBe(42);
+
+    expect(prisma.fundPrice.deleteMany).toHaveBeenCalledWith({
+      where: {
+        fundId,
+        date: {
+          lt: parseFundPriceDate('2019-01-01'),
+        },
+      },
+    });
   });
 
   it('should return null when no prices exist', async () => {

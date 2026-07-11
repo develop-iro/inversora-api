@@ -126,6 +126,29 @@ export class FundPricesRepository {
   }
 
   /**
+   * Deletes persisted prices older than the given exclusive ISO cutoff.
+   *
+   * @param fundId - Persisted fund identifier.
+   * @param cutoffIsoDate - Rows strictly before this ISO date are removed.
+   * @returns Number of deleted rows.
+   */
+  async deleteOlderThan(
+    fundId: string,
+    cutoffIsoDate: string,
+  ): Promise<number> {
+    const result = await this.prisma.fundPrice.deleteMany({
+      where: {
+        fundId,
+        date: {
+          lt: parseFundPriceDate(cutoffIsoDate),
+        },
+      },
+    });
+
+    return result.count;
+  }
+
+  /**
    * Reads price history for multiple funds in a single query, grouped by fund id.
    *
    * @param fundIds - Persisted fund identifiers.
