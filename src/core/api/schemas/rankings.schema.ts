@@ -4,7 +4,7 @@ import { fundReturnSnapshotSchema } from '../../../modules/funds/entities/fund-r
 /** Query schema for `GET /rankings`. */
 export const rankingsQuerySchema = z.object({
   benchmark: z.string().trim().min(1).optional(),
-  limit: z.coerce.number().int().min(1).max(100).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(10),
 });
 
 /** Parsed query type for `GET /rankings`. */
