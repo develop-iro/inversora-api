@@ -8,7 +8,7 @@ import { rankingsQuerySchema } from './ranking.schema';
 
 describe('rankingsQuerySchema', () => {
   it('should parse an empty query', () => {
-    expect(rankingsQuerySchema.parse({})).toEqual({});
+    expect(rankingsQuerySchema.parse({})).toEqual({ limit: 10 });
   });
 
   it('should parse benchmark and limit filters', () => {

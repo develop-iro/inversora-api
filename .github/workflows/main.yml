@@ -214,11 +214,41 @@ jobs:
       - name: Run E2E tests
         run: npm run test:e2e:ci
 
+  migrate-production:
+    name: Migrate production database
+    needs: [unit-tests, integration-tests, e2e-tests]
+    if: >-
+      needs.unit-tests.result == 'success' &&
+      needs.integration-tests.result == 'success' &&
+      needs.e2e-tests.result == 'success'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: migrate-production
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply production migrations
+        run: npm run prisma:migrate:deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_PRODUCTION }}
+
   # ── Phase 3: Report ─────────────────────────────────────────────────────────
 
   report:
     name: Test report
-    needs: [unit-tests, integration-tests, e2e-tests]
+    needs: [unit-tests, integration-tests, e2e-tests, migrate-production]
     if: always() && !cancelled()
     runs-on: ubuntu-latest
 
@@ -235,6 +265,7 @@ jobs:
           UNIT_RESULT: ${{ needs.unit-tests.result }}
           INTEGRATION_RESULT: ${{ needs.integration-tests.result }}
           E2E_RESULT: ${{ needs.e2e-tests.result }}
+          MIGRATE_RESULT: ${{ needs.migrate-production.result }}
         run: |
           {
             echo "## Main branch test report"
@@ -244,6 +275,7 @@ jobs:
             echo "| Unit tests | ${UNIT_RESULT} |"
             echo "| Integration tests | ${INTEGRATION_RESULT} |"
             echo "| E2E tests | ${E2E_RESULT} |"
+            echo "| Production migrations | ${MIGRATE_RESULT} |"
             echo ""
           } >> "${GITHUB_STEP_SUMMARY}"
 
@@ -280,5 +312,6 @@ jobs:
         if: >-
           needs.unit-tests.result != 'success' ||
           needs.integration-tests.result != 'success' ||
-          needs.e2e-tests.result != 'success'
+          needs.e2e-tests.result != 'success' ||
+          needs.migrate-production.result != 'success'
         run: exit 1
