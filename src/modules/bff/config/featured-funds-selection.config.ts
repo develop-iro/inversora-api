@@ -111,6 +111,15 @@ export const FEATURED_FUNDS_SELECTIONS: readonly FeaturedQuarterSelection[] = [
 ];
 
 /**
+ * Returns configured featured selections sorted from newest to oldest quarter.
+ */
+export function listFeaturedSelectionsNewestFirst(): readonly FeaturedQuarterSelection[] {
+  return [...FEATURED_FUNDS_SELECTIONS].sort((left, right) =>
+    compareQuarterKeys(right.quarterKey, left.quarterKey),
+  );
+}
+
+/**
  * Returns the curated selection for a quarter key, if configured.
  *
  * @param quarterKey - Canonical quarter key (`YYYY-QN`).

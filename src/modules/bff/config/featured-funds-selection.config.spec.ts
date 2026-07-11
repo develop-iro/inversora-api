@@ -1,5 +1,6 @@
 import {
   findLatestFeaturedSelection,
+  listFeaturedSelectionsNewestFirst,
   resolveFeaturedSelectionForQuarter,
 } from './featured-funds-selection.config';
 
@@ -28,5 +29,15 @@ describe('featured-funds-selection.config', () => {
 
   it('should return the latest configured quarter', () => {
     expect(findLatestFeaturedSelection()?.quarterKey).toBe('2026-Q3');
+  });
+
+  it('should list configured selections from newest to oldest quarter', () => {
+    const selections = listFeaturedSelectionsNewestFirst();
+
+    expect(selections.map((selection) => selection.quarterKey)).toEqual([
+      '2026-Q3',
+      '2026-Q2',
+      '2026-Q1',
+    ]);
   });
 });

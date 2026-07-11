@@ -88,6 +88,61 @@ describe('FeaturedFundsService', () => {
     expect(fundsRepository.findByIsins).toHaveBeenCalled();
   });
 
+  it('should fall back to an older configured quarter when the current quarter hydrates empty', async () => {
+    fundsRepository.findByIsins
+      .mockResolvedValueOnce(new Map())
+      .mockResolvedValueOnce(new Map([[fund.isin as string, fund]]));
+
+    const response = await service.getFeaturedFunds({});
+
+    expect(response.quarter).toBe('2026-Q2');
+    expect(response.data.length).toBeGreaterThan(0);
+    expect(fundsRepository.findByIsins).toHaveBeenCalledTimes(2);
+  });
+
+  it('should not fall back when an explicit quarter hydrates empty', async () => {
+    fundsRepository.findByIsins.mockResolvedValue(new Map());
+
+    const response = await service.getFeaturedFunds({ quarter: '2026-Q3' });
+
+    expect(response.quarter).toBe('2026-Q3');
+    expect(response.data).toEqual([]);
+    expect(fundsRepository.findByIsins).toHaveBeenCalledTimes(1);
+  });
+
+  it('should walk back from an unconfigured current quarter on default requests', async () => {
+    const parseSpy = jest
+      .spyOn(featuredFundsMapper, 'parseFeaturedQuarterQuery')
+      .mockReturnValue({
+        quarterKey: '2028-Q1',
+        quarterTag: 'Q1 2028',
+        periodStart: '2028-01-01',
+        periodEnd: '2028-03-31',
+      });
+
+    fundsRepository.findByIsins
+      .mockResolvedValueOnce(new Map())
+      .mockResolvedValueOnce(new Map([[fund.isin as string, fund]]));
+
+    const response = await service.getFeaturedFunds({});
+
+    expect(response.quarter).toBe('2026-Q2');
+    expect(response.data.length).toBeGreaterThan(0);
+    expect(fundsRepository.findByIsins).toHaveBeenCalledTimes(2);
+
+    parseSpy.mockRestore();
+  });
+
+  it('should return an empty response when every configured quarter hydrates empty', async () => {
+    fundsRepository.findByIsins.mockResolvedValue(new Map());
+
+    const response = await service.getFeaturedFunds({});
+
+    expect(response.quarter).toBe('2026-Q3');
+    expect(response.data).toEqual([]);
+    expect(fundsRepository.findByIsins.mock.calls.length).toBeGreaterThan(1);
+  });
+
   it('should hydrate configured quarter selections from PostgreSQL', async () => {
     fundsRepository.findByIsins.mockResolvedValue(
       new Map([[fund.isin as string, fund]]),

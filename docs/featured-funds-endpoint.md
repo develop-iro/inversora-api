@@ -56,7 +56,9 @@ Return **200 OK** with `"data": []` when:
 - Curated ISINs are configured but none are synced in PostgreSQL yet.
 - Optional filters remove all matches.
 
-When `quarter` is **omitted**, the service defaults to the current UTC quarter. If that quarter has no curation yet, it **falls back** to the latest configured quarter so the home carousel can keep showing the most recent editorial selection until the new quarter is published. The response metadata (`quarter`, `quarterTag`, etc.) reflects the quarter actually served.
+When `quarter` is **omitted**, the service defaults to the current UTC quarter. If that quarter has no curation yet, or curation exists but **hydrates to an empty list** (ISINs not synced, blocked catalog, or filters), it **walks back** to older configured quarters until it finds hydrated data. The response metadata (`quarter`, `quarterTag`, etc.) reflects the quarter actually served.
+
+Explicit `quarter` requests never walk back: they return the requested quarter metadata even when `data` is empty.
 
 Do **not** return 404 for empty quarters.
 
