@@ -38,8 +38,17 @@ export class RankingsController {
     name: 'limit',
     required: false,
     type: Number,
-    description: 'Maximum number of ranked funds returned per benchmark group.',
+    description:
+      'Maximum number of ranked funds returned per benchmark group (default 10, max 100).',
     example: 10,
+  })
+  @ApiQuery({
+    name: 'groupsLimit',
+    required: false,
+    type: Number,
+    description:
+      'Maximum benchmark groups when no `benchmark` filter is set (default 24, max 100). Prioritizes groups with more eligible funds.',
+    example: 24,
   })
   getRankings(
     @Query() query: Record<string, unknown>,

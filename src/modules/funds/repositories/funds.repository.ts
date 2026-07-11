@@ -84,6 +84,30 @@ export class FundsRepository {
   }
 
   /**
+   * Returns funds eligible for public benchmark rankings (RN-02).
+   *
+   * Filters at the database layer to avoid loading blocked funds into memory.
+   *
+   * @returns Persisted funds with benchmark, ISIN, score, and TER populated.
+   */
+  async findRankingEligible(): Promise<Fund[]> {
+    const records = await this.prisma.fund.findMany({
+      where: {
+        catalogVisibility: {
+          not: mapDomainCatalogVisibilityToPrisma('blocked'),
+        },
+        benchmark: { not: null },
+        isin: { not: null },
+        score: { not: null },
+        ter: { not: null },
+      },
+      orderBy: { symbol: 'asc' },
+    });
+
+    return records.map((record) => mapPrismaFundToFund(record));
+  }
+
+  /**
    * Finds a persisted fund by symbol and provider.
    *
    * @param symbol - Fund ticker symbol.

@@ -26,7 +26,16 @@ describe('RankingsService', () => {
   });
 
   it('should delegate rankings reads to GetRankingsUseCase', async () => {
-    const response = { data: [] } as RankingsResponse;
+    const response = {
+      data: [],
+      meta: {
+        totalGroups: 0,
+        returnedGroups: 0,
+        groupsLimit: 24,
+        limit: 10,
+        hasMoreGroups: false,
+      },
+    } as RankingsResponse;
     getRankingsUseCase.execute.mockResolvedValue(response);
 
     await expect(

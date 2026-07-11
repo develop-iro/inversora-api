@@ -10,16 +10,12 @@ import type {
   RankingsResponse,
 } from '../../core/api/schemas/rankings.schema';
 import {
-  addDaysToIsoDate,
-  getTodayIsoDate,
-} from '../funds/entities/fund-price.mapper';
-import { FUND_RETURN_HISTORY_LOOKBACK_DAYS } from '../funds/entities/fund-returns.enricher';
+  loadReturnSnapshotsByFundIds,
+  resolveFundReturnSnapshot,
+} from '../funds/entities/fund-returns.enricher';
 import { FundPricesService } from '../funds/services/fund-prices.service';
 import { FundsRepository } from '../funds/repositories/funds.repository';
-import {
-  buildRankingsResponse,
-  enrichRankingsResponseWithReturns,
-} from './entities/ranking.mapper';
+import { buildRankingsResponse } from './entities/ranking.mapper';
 
 /**
  * Use case for benchmark-scoped fund rankings (`GET /rankings`).
@@ -39,25 +35,28 @@ export class GetRankingsUseCase {
    */
   async execute(rawQuery: Record<string, unknown>): Promise<RankingsResponse> {
     const query = this.parseRankingsQuery(rawQuery);
-    const funds = await this.fundsRepository.findAll();
+    const funds = await this.fundsRepository.findRankingEligible();
     const baseResponse = buildRankingsResponse(funds, query);
     const fundIds = baseResponse.data.flatMap((group) =>
       group.funds.map((entry) => entry.id),
     );
-    const from = addDaysToIsoDate(
-      getTodayIsoDate(),
-      -FUND_RETURN_HISTORY_LOOKBACK_DAYS,
-    );
-    const pricesByFundId = await this.fundPricesService.getHistoriesByFundIds(
+    const returnSnapshots = await loadReturnSnapshotsByFundIds(
+      this.fundPricesService,
       fundIds,
-      { from },
     );
-    const response = enrichRankingsResponseWithReturns(
-      baseResponse,
-      pricesByFundId,
-    );
+    const data = baseResponse.data.map((group) => ({
+      ...group,
+      funds: group.funds.map((entry) => ({
+        ...entry,
+        returns: resolveFundReturnSnapshot(returnSnapshots, entry.id),
+      })),
+    }));
 
-    return parseApiResponse(rankingsResponseSchema, response, 'get-rankings');
+    return parseApiResponse(
+      rankingsResponseSchema,
+      { data, meta: baseResponse.meta },
+      'get-rankings',
+    );
   }
 
   private parseRankingsQuery(rawQuery: Record<string, unknown>): RankingsQuery {

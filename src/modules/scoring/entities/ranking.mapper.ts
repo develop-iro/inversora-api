@@ -9,6 +9,7 @@ import type {
   RankingsQuery,
   RankingsResponse,
 } from './ranking.schema';
+import { RANKINGS_DEFAULT_GROUPS_LIMIT } from '../../../core/api/schemas/rankings.schema';
 import { rankingsResponseSchema } from './ranking.schema';
 
 /**
@@ -105,7 +106,10 @@ export function enrichRankingsResponseWithReturns(
     })),
   }));
 
-  return rankingsResponseSchema.parse({ data });
+  return rankingsResponseSchema.parse({
+    data,
+    meta: response.meta,
+  });
 }
 
 /**
@@ -141,14 +145,29 @@ export function buildRankingsResponse(
     grouped.set(benchmarkKey, group);
   }
 
-  const data: BenchmarkRankingGroup[] = [...grouped.entries()]
-    .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))
-    .map(([benchmarkKey, groupFunds]) => {
+  const sortedGroups = [...grouped.entries()].sort(
+    ([leftKey, leftFunds], [rightKey, rightFunds]) => {
+      const totalDifference = rightFunds.length - leftFunds.length;
+
+      if (totalDifference !== 0) {
+        return totalDifference;
+      }
+
+      return leftKey.localeCompare(rightKey);
+    },
+  );
+
+  const groupsLimit = query.groupsLimit ?? RANKINGS_DEFAULT_GROUPS_LIMIT;
+
+  const cappedGroups =
+    benchmarkFilter === undefined
+      ? sortedGroups.slice(0, groupsLimit)
+      : sortedGroups;
+
+  const data: BenchmarkRankingGroup[] = cappedGroups.map(
+    ([benchmarkKey, groupFunds]) => {
       const sortedFunds = [...groupFunds].sort(compareRankableFunds);
-      const limitedFunds =
-        query.limit === undefined
-          ? sortedFunds
-          : sortedFunds.slice(0, query.limit);
+      const limitedFunds = sortedFunds.slice(0, query.limit);
 
       return {
         benchmark: limitedFunds[0]?.benchmark?.trim() ?? benchmarkKey,
@@ -158,7 +177,20 @@ export function buildRankingsResponse(
           mapFundToRankedEntry(fund, index + 1),
         ),
       };
-    });
+    },
+  );
 
-  return rankingsResponseSchema.parse({ data });
+  const totalGroups =
+    benchmarkFilter === undefined ? sortedGroups.length : data.length;
+
+  return rankingsResponseSchema.parse({
+    data,
+    meta: {
+      totalGroups,
+      returnedGroups: data.length,
+      groupsLimit,
+      limit: query.limit,
+      hasMoreGroups: benchmarkFilter === undefined && totalGroups > data.length,
+    },
+  });
 }

@@ -73,8 +73,44 @@ export class BenchmarkRankingGroupResponseDto {
   funds!: RankedFundEntryResponseDto[];
 }
 
+/** Swagger schema for rankings pagination metadata. */
+export class RankingsMetaResponseDto {
+  @ApiProperty({
+    example: 120,
+    description: 'Total comparable benchmark groups available in the catalog.',
+  })
+  totalGroups!: number;
+
+  @ApiProperty({
+    example: 24,
+    description: 'Benchmark groups included in this response.',
+  })
+  returnedGroups!: number;
+
+  @ApiProperty({
+    example: 24,
+    description: 'Applied `groupsLimit` for this response.',
+  })
+  groupsLimit!: number;
+
+  @ApiProperty({
+    example: 10,
+    description: 'Applied per-group `limit` for this response.',
+  })
+  limit!: number;
+
+  @ApiProperty({
+    example: true,
+    description: 'Whether additional benchmark groups exist beyond this page.',
+  })
+  hasMoreGroups!: boolean;
+}
+
 /** Swagger schema for `GET /rankings` responses. */
 export class RankingsResponseDto {
   @ApiProperty({ type: [BenchmarkRankingGroupResponseDto] })
   data!: BenchmarkRankingGroupResponseDto[];
+
+  @ApiProperty({ type: RankingsMetaResponseDto })
+  meta!: RankingsMetaResponseDto;
 }
