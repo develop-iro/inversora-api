@@ -48,6 +48,10 @@ const captures = [
     fileName: 'etf-country-weightings.symbol-spy.json',
     url: `${baseUrl}/stable/etf/country-weightings?symbol=SPY&apikey=${apiKey}`,
   },
+  {
+    fileName: 'news-general-latest.json',
+    url: `${baseUrl}/stable/news/general-latest?page=0&limit=8&apikey=${apiKey}`,
+  },
 ];
 
 /**

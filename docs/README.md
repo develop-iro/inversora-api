@@ -12,6 +12,7 @@
 | Buenas prácticas, ejemplos y anti-patrones de desarrollo | [development-guide.md](./development-guide.md) |
 | Integración FMP: endpoints, composición y fixtures | [fmp-provider.md](./fmp-provider.md) |
 | Capacidades FMP y roadmap de dataset | [fmp-capabilities-roadmap.md](./fmp-capabilities-roadmap.md) |
+| SORA: pipeline en capas (Qwen + RAG + fallback) | [assistant-pipeline.md](./assistant-pipeline.md) |
 | SORA: agente OpenAI y runtime Python | [openai-agent-python-backend.md](./openai-agent-python-backend.md) |
 | Score Inversora MVP (RN-04, spec de producción) | [scoring-rn-04.md](./scoring-rn-04.md) |
 | Decisión RN-04 vs mvp-1 | [architecture/adr-002-scoring-mvp-version.md](./architecture/adr-002-scoring-mvp-version.md) |
@@ -21,6 +22,8 @@
 | **CORS y cliente Expo** (`CORS_ORIGINS`, Expo web) | [cors-and-expo-client.md](./cors-and-expo-client.md) |
 | **Despliegue staging (Neon + Railway)** | [staging-deploy.md](./staging-deploy.md) |
 | **Endurecimiento de seguridad** (Swagger, throttling, claves, WAF) | [security-hardening.md](./security-hardening.md) |
+| **Informe de seguridad del MVP** (auditoría backend + app, hallazgos) | [security-report.md](./security-report.md) |
+| **Plan de contingencia** (runbooks de incidentes, kill switches) | [security-contingency-plan.md](./security-contingency-plan.md) |
 | Contrato HTTP vivo (endpoints, DTOs) | Swagger en `http://localhost:3000/api/docs` |
 | **Contrato BFF** `GET /funds/:isin` → `FundDetail` (app) | [bff-fund-detail-contract.md](./bff-fund-detail-contract.md) |
 | **Destacados trimestre** `GET /featured` (dashboard) | [featured-funds-endpoint.md](./featured-funds-endpoint.md) |

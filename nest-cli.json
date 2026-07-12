@@ -8,6 +8,10 @@
       {
         "include": "modules/providers/financial-modeling-prep/fixtures/**/*",
         "watchAssets": true
+      },
+      {
+        "include": "modules/providers/myinvestor/fixtures/**/*",
+        "watchAssets": true
       }
     ]
   }

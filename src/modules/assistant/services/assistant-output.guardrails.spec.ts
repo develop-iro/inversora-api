@@ -1,4 +1,7 @@
-import { AssistantOutputGuardrailsService } from './assistant-output.guardrails';
+import {
+  ASSISTANT_GUARDRAIL_FALLBACK_TEXT,
+  AssistantOutputGuardrailsService,
+} from './assistant-output.guardrails';
 
 describe('AssistantOutputGuardrailsService', () => {
   const service = new AssistantOutputGuardrailsService();
@@ -29,6 +32,12 @@ describe('AssistantOutputGuardrailsService', () => {
 
   it('rejects empty responses', () => {
     expect(() => service.sanitize('   ')).toThrow(/empty/i);
+  });
+
+  it('keeps the fallback text accepted by the sanitizer', () => {
+    expect(service.sanitize(ASSISTANT_GUARDRAIL_FALLBACK_TEXT)).toBe(
+      ASSISTANT_GUARDRAIL_FALLBACK_TEXT,
+    );
   });
 
   it('truncates very long responses', () => {

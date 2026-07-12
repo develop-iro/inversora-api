@@ -73,4 +73,32 @@ export class IntentClassifierService {
 
     return 'general';
   }
+
+  /**
+   * Returns true when a deterministic template may answer without an LLM.
+   *
+   * @param intent - Classified assistant intent.
+   */
+  supportsDeterministicTemplate(intent: AssistantIntent): boolean {
+    return intent === 'explain_score' || intent === 'compare';
+  }
+
+  /**
+   * Returns true when the message looks like a conceptual/educational question.
+   *
+   * @param message - Raw user message.
+   */
+  isConceptualQuery(message: string): boolean {
+    const normalized = normalizeAssistantQuery(message);
+
+    return (
+      normalized.includes('que es') ||
+      normalized.includes('que significa') ||
+      normalized.includes('explica') ||
+      normalized.includes('define') ||
+      normalized.includes('significa') ||
+      normalized.includes('como funciona') ||
+      normalized.includes('por que importa')
+    );
+  }
 }

@@ -37,10 +37,12 @@ describe('InvestmentNewsController', () => {
     controller = module.get(InvestmentNewsController);
   });
 
-  it('delegates news requests to the service', () => {
-    investmentNewsService.getInvestmentNews.mockReturnValue(response);
+  it('delegates news requests to the service', async () => {
+    investmentNewsService.getInvestmentNews.mockResolvedValue(response);
 
-    expect(controller.getInvestmentNews({ limit: '1' })).toEqual(response);
+    await expect(controller.getInvestmentNews({ limit: '1' })).resolves.toEqual(
+      response,
+    );
     expect(investmentNewsService.getInvestmentNews).toHaveBeenCalledWith({
       limit: '1',
     });

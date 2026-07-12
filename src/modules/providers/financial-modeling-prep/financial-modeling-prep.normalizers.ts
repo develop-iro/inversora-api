@@ -9,6 +9,7 @@ import {
   providerFundQuoteSchema,
   providerFundSearchResultSchema,
   providerFundSectorWeightingSchema,
+  providerNewsArticleSchema,
 } from './financial-modeling-prep.domain.schemas';
 import type {
   ProviderFundComposition,
@@ -21,6 +22,7 @@ import type {
   ProviderFundQuote,
   ProviderFundSearchResult,
   ProviderFundSectorWeighting,
+  ProviderNewsArticle,
 } from './financial-modeling-prep.domain.schemas';
 import { resolveFundVehicleFromFmpMetadata } from './fund-vehicle.resolver';
 import { isIndexedProductSearchResult } from './indexed-product.filters';
@@ -29,6 +31,7 @@ import type {
   FmpFundHolding,
   FmpFundProfile,
   FmpHistoricalPrice,
+  FmpNewsArticle,
   FmpQuote,
   FmpQuoteShort,
   FmpSearchResult,
@@ -538,6 +541,72 @@ export function buildProviderFundDetail(
     priceSummary: buildProviderFundPriceSummary(prices),
     history: includeHistory ? [...prices] : undefined,
   });
+}
+
+/**
+ * Extracts the `YYYY-MM-DD` date part from an FMP news timestamp.
+ *
+ * @param publishedDate - Raw timestamp such as `2026-07-12 10:40:44`.
+ * @returns ISO date or `undefined` when the value has no valid date prefix.
+ */
+function extractNewsPublishedDate(publishedDate: string): string | undefined {
+  const match = publishedDate.trim().match(/^(\d{4}-\d{2}-\d{2})/);
+
+  return match?.[1];
+}
+
+/**
+ * Maps a raw FMP news article to the normalized provider news shape.
+ *
+ * Articles without title, summary text, HTTPS link, or a parseable date are
+ * discarded so the BFF never serves incomplete headlines.
+ *
+ * @param article - Raw FMP news article row.
+ * @returns Normalized article or `null` when required fields are missing.
+ */
+export function normalizeProviderNewsArticle(
+  article: FmpNewsArticle,
+): ProviderNewsArticle | null {
+  const title = article.title.trim();
+  const summary = article.text?.trim() ?? '';
+  const url = article.url.trim();
+  const publishedAt = extractNewsPublishedDate(article.publishedDate);
+  const source = article.publisher?.trim() || article.site?.trim() || '';
+
+  if (
+    title.length === 0 ||
+    summary.length === 0 ||
+    source.length === 0 ||
+    publishedAt === undefined ||
+    !url.startsWith('https://')
+  ) {
+    return null;
+  }
+
+  const parsed = providerNewsArticleSchema.safeParse({
+    title,
+    summary,
+    source,
+    publishedAt,
+    url,
+  });
+
+  return parsed.success ? parsed.data : null;
+}
+
+/**
+ * Maps raw FMP news articles to normalized provider news articles.
+ *
+ * @param articles - Raw FMP news article rows.
+ * @returns Normalized articles sorted by published date descending.
+ */
+export function normalizeProviderNewsArticles(
+  articles: readonly FmpNewsArticle[],
+): ProviderNewsArticle[] {
+  return articles
+    .map((article) => normalizeProviderNewsArticle(article))
+    .filter((article): article is ProviderNewsArticle => article !== null)
+    .sort((left, right) => right.publishedAt.localeCompare(left.publishedAt));
 }
 
 /**

@@ -28,11 +28,24 @@ export function buildAssistantUserPrompt(
   message: string,
   intent: string,
   contextJson: string,
+  ragContext?: string,
 ): string {
-  return [
+  const sections = [
     `Intención detectada: ${intent}`,
     `Pregunta del usuario: ${message}`,
-    'Contexto factual (no inventes datos fuera de esto):',
-    contextJson,
-  ].join('\n\n');
+  ];
+
+  if (ragContext !== undefined && ragContext.trim().length > 0) {
+    sections.push(
+      'Fragmentos documentales educativos (solo para explicar conceptos):',
+    );
+    sections.push(ragContext);
+  }
+
+  sections.push(
+    'Contexto factual del fondo o superficie (no inventes datos fuera de esto):',
+  );
+  sections.push(contextJson);
+
+  return sections.join('\n\n');
 }

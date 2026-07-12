@@ -1,0 +1,362 @@
+{
+  "view": "funds-data",
+  "data": {
+    "funds": [
+      {
+        "isin": "IE00B03HD191",
+        "morningstar_id": "FSGBR057AA",
+        "morningstar_sec_id": "F0GBR052TN",
+        "name": "Vanguard Global Stock Index Fund EUR Acc",
+        "product_type": "FONDOS_INDEXADOS",
+        "asset_class": "Renta Variable",
+        "category": "Otros",
+        "category_morningstar": "RV Global Cap. Grande Blend",
+        "category_morningstar_en": "Global Equity Large Cap",
+        "geographic_zone": "Global",
+        "market": "FEX",
+        "management_company": "Vanguard",
+        "status": "OPEN",
+        "operation_mode": "IMPORTE_Y_PARTICIPACIONES",
+        "ter": 0.18,
+        "risk_indicator": 4,
+        "mstar_rating": 4,
+        "volatility_1y": 10.5,
+        "volatility_3y": 11.65,
+        "volatility_5y": 13.35,
+        "tracking_error_1y": 1.56,
+        "ytd": 13.28,
+        "return_1y": 23.98,
+        "return_3y": 18.2,
+        "return_5y": 12.07,
+        "return_past_1y": 6.65,
+        "return_past_2y": 26.5,
+        "return_past_3y": 19.54,
+        "return_past_4y": -12.85,
+        "return_past_5y": 30.98,
+        "return_since_inception": 9.17,
+        "return_acc_3y": 65.16,
+        "return_acc_5y": 76.77,
+        "return_acc_since_inception": 691.61,
+        "aum": 23363476658,
+        "nav": 62.7241,
+        "nav_date": "2026-07-09T00:00:00Z",
+        "nav_decimals": 2,
+        "inception_date": "1998-08-04T00:00:00Z",
+        "alloc_equity": 99.97,
+        "alloc_bond": 0,
+        "alloc_cash": 0,
+        "alloc_other": 0.03,
+        "currency": "EUR",
+        "distributing": 0,
+        "esg": 0,
+        "is_complex": 0,
+        "min_initial": "1.00 EUR",
+        "min_followup": "1.00 EUR",
+        "min_redemption": "0.00 EUR",
+        "cutoff_time": "10:00",
+        "subscription_lag_days": 2,
+        "redemption_lag_days": 2,
+        "nav_lag_days": 0,
+        "description": null,
+        "warning_text": "iShares Developed World Index (IE) Acc EUR clase S (ISIN IE000ZYRH0Q7) es el fondo de menor coste que busca replicar este índice. Esto no es una recomendación de inversión.",
+        "url_kiid": "https://api.fundinfo.com/document/6bf5129f1734775a459e507f61512e1a_206114/PRP_ES_es_IE00B03HD191_YES_2025-07-23.pdf?apiKey=282b2922-c396-415c-9a88-a721851feedc",
+        "url_factsheet": null,
+        "url_semiannual_report": "https://api.fundinfo.com/document/f2d1af8a93923611af6b1bdb606b0ac0_6781412/SAR_ES_en_IE00B03HD191_YES_2025-06-30.pdf?apiKey=282b2922-c396-415c-9a88-a721851feedc",
+        "url_annual_report": "https://www.inversis.com/trans/inversis/SvlGenerarDocumentoPdf?srv=imprimirMemoriaFondo&ext=.pdf&codigoFondo=459342&institucion=1854326",
+        "last_returns_update": "2026-07-12T06:24:16Z",
+        "top_sectors": [
+          {
+            "name": "Tecnología",
+            "pct": 31.4
+          },
+          {
+            "name": "Servicios Financieros",
+            "pct": 14.8
+          },
+          {
+            "name": "Industria",
+            "pct": 10.91
+          },
+          {
+            "name": "Consumo Cíclico",
+            "pct": 9.2
+          },
+          {
+            "name": "Servicios de Comunicación",
+            "pct": 8.98
+          },
+          {
+            "name": "Salud",
+            "pct": 8.59
+          }
+        ],
+        "top_regions": [],
+        "fees": [
+          {
+            "name": "Gestión",
+            "pct": 0.18
+          },
+          {
+            "name": "Depósito",
+            "pct": 0
+          },
+          {
+            "name": "Suscripción",
+            "pct": 0
+          },
+          {
+            "name": "Reembolso",
+            "pct": 0
+          },
+          {
+            "name": "Distribución (cobrada por la gestora)",
+            "pct": 0
+          },
+          {
+            "name": "Costes operativos/transaccionales",
+            "pct": 0.000128
+          }
+        ],
+        "manager_domain": "vanguard.com",
+        "price_series": null
+      },
+      {
+        "isin": "IE0031786142",
+        "morningstar_id": "FSGBR073EV",
+        "morningstar_sec_id": "F0GBR06TSA",
+        "name": "Vanguard Emerging Markets Stock Index Fund Investor EUR Accumulation",
+        "product_type": "FONDOS_INDEXADOS",
+        "asset_class": "Renta Variable",
+        "category": "Otros",
+        "category_morningstar": "RV Global Emergente",
+        "category_morningstar_en": "Global Emerging Markets Equity",
+        "geographic_zone": "Mercados Emergentes",
+        "market": "FEX",
+        "management_company": "Vanguard",
+        "status": "OPEN",
+        "operation_mode": "IMPORTE_Y_PARTICIPACIONES",
+        "ter": 0.23,
+        "risk_indicator": 4,
+        "mstar_rating": 3,
+        "volatility_1y": 21.95,
+        "volatility_3y": 15.85,
+        "volatility_5y": 15.71,
+        "tracking_error_1y": 0.6,
+        "ytd": 23.92,
+        "return_1y": 42.43,
+        "return_3y": 20.29,
+        "return_5y": 8.06,
+        "return_past_1y": 17.62,
+        "return_past_2y": 14.79,
+        "return_past_3y": 5.54,
+        "return_past_4y": -15.12,
+        "return_past_5y": 4.52,
+        "return_since_inception": 7.01,
+        "return_acc_3y": 74.04,
+        "return_acc_5y": 47.32,
+        "return_acc_since_inception": 290.01,
+        "aum": 18806519007,
+        "nav": 305.2787,
+        "nav_date": "2026-07-09T00:00:00Z",
+        "nav_decimals": 2,
+        "inception_date": "2006-06-07T00:00:00Z",
+        "alloc_equity": 99.91,
+        "alloc_bond": 0,
+        "alloc_cash": 0,
+        "alloc_other": 0.09,
+        "currency": "EUR",
+        "distributing": 0,
+        "esg": 0,
+        "is_complex": 0,
+        "min_initial": "1.00 EUR",
+        "min_followup": "1.00 EUR",
+        "min_redemption": "0.00 EUR",
+        "cutoff_time": "16:00",
+        "subscription_lag_days": 3,
+        "redemption_lag_days": 3,
+        "nav_lag_days": 1,
+        "description": null,
+        "warning_text": "iShares Emerging Markets Index Fund (IE) Acc EUR clase S (ISIN IE000QAZP7L2) es el fondo de menor coste que busca replicar este índice. Esto no es una recomendación de inversión.",
+        "url_kiid": "https://api.fundinfo.com/document/7c308ad862454ac339bf3b135f10b46c_206211/PRP_ES_es_IE0031786142_YES_2025-07-23.pdf?apiKey=282b2922-c396-415c-9a88-a721851feedc",
+        "url_factsheet": null,
+        "url_semiannual_report": "https://api.fundinfo.com/document/f2d1af8a93923611af6b1bdb606b0ac0_6781412/SAR_ES_en_IE0031786142_YES_2025-06-30.pdf?apiKey=282b2922-c396-415c-9a88-a721851feedc",
+        "url_annual_report": "https://www.inversis.com/trans/inversis/SvlGenerarDocumentoPdf?srv=imprimirMemoriaFondo&codigoFondo=459317&ext=.pdf&institucion=1854326",
+        "last_returns_update": "2026-07-12T06:24:01Z",
+        "top_sectors": [
+          {
+            "name": "Tecnología",
+            "pct": 43.55
+          },
+          {
+            "name": "Servicios Financieros",
+            "pct": 17.56
+          },
+          {
+            "name": "Consumo Cíclico",
+            "pct": 8.57
+          },
+          {
+            "name": "Industria",
+            "pct": 6.77
+          },
+          {
+            "name": "Servicios de Comunicación",
+            "pct": 6.09
+          },
+          {
+            "name": "Materiales Básicos",
+            "pct": 5.91
+          }
+        ],
+        "top_regions": [],
+        "fees": [
+          {
+            "name": "Gestión",
+            "pct": 0.23
+          },
+          {
+            "name": "Depósito",
+            "pct": 0
+          },
+          {
+            "name": "Suscripción",
+            "pct": 0
+          },
+          {
+            "name": "Reembolso",
+            "pct": 0
+          },
+          {
+            "name": "Distribución (cobrada por la gestora)",
+            "pct": 0
+          },
+          {
+            "name": "Costes operativos/transaccionales",
+            "pct": 0.000535
+          }
+        ],
+        "manager_domain": "vanguard.com",
+        "price_series": null
+      },
+      {
+        "isin": "LU0996177134",
+        "morningstar_id": "FS0000AIM1",
+        "morningstar_sec_id": "F00000T8H9",
+        "name": "Amundi IS MSCI Emerging Markets AE-C",
+        "product_type": "FONDOS_INDEXADOS",
+        "asset_class": "Renta Variable",
+        "category": "Otros",
+        "category_morningstar": "RV Global Emergente",
+        "category_morningstar_en": "Global Emerging Markets Equity",
+        "geographic_zone": "Mercados Emergentes",
+        "market": "FEX",
+        "management_company": "Amundi",
+        "status": "OPEN",
+        "operation_mode": "IMPORTE_Y_PARTICIPACIONES",
+        "ter": 0.45,
+        "risk_indicator": 4,
+        "mstar_rating": 3,
+        "volatility_1y": 22.46,
+        "volatility_3y": 16.16,
+        "volatility_5y": 15.65,
+        "tracking_error_1y": 2.36,
+        "ytd": 23.24,
+        "return_1y": 43.32,
+        "return_3y": 20.19,
+        "return_5y": 7.8,
+        "return_past_1y": 17.59,
+        "return_past_2y": 15.23,
+        "return_past_3y": 4.62,
+        "return_past_4y": -15.07,
+        "return_past_5y": 4.34,
+        "return_since_inception": 7.74,
+        "return_acc_3y": 73.62,
+        "return_acc_5y": 45.56,
+        "return_acc_since_inception": 149.33,
+        "aum": 9317443087,
+        "nav": 249.6,
+        "nav_date": "2026-07-09T00:00:00Z",
+        "nav_decimals": 5,
+        "inception_date": "2013-12-13T00:00:00Z",
+        "alloc_equity": 99.97,
+        "alloc_bond": 0,
+        "alloc_cash": 0,
+        "alloc_other": 0.03,
+        "currency": "EUR",
+        "distributing": 0,
+        "esg": 0,
+        "is_complex": 0,
+        "min_initial": "0.00 participaciones",
+        "min_followup": "1.00 EUR",
+        "min_redemption": "0.00 EUR",
+        "cutoff_time": "12:00",
+        "subscription_lag_days": 4,
+        "redemption_lag_days": 4,
+        "nav_lag_days": 1,
+        "description": null,
+        "warning_text": "iShares Emerging Markets Index Fund (IE) Acc EUR clase S (ISIN IE000QAZP7L2) es el fondo de menor coste que busca replicar este índice. Esto no es una recomendación de inversión.",
+        "url_kiid": "https://api.fundinfo.com/document/d854139aeea0cd079f4c077bf290be24_148241/PRP_ES_es_LU0996177134_YES_2024-12-13.pdf?apiKey=282b2922-c396-415c-9a88-a721851feedc",
+        "url_factsheet": null,
+        "url_semiannual_report": "https://api.fundinfo.com/document/a87dfc745fa41d708b802f054c3c1ede_8730652/SAR_ES_en_LU0996177134_YES_2024-03-31.pdf?apiKey=282b2922-c396-415c-9a88-a721851feedc",
+        "url_annual_report": "https://www.inversis.com/trans/inversis/SvlGenerarDocumentoPdf?srv=imprimirMemoriaFondo&ext=.pdf&codigoFondo=396505&institucion=1854326",
+        "last_returns_update": "2026-07-12T06:15:32Z",
+        "top_sectors": [
+          {
+            "name": "Tecnología",
+            "pct": 43.46
+          },
+          {
+            "name": "Servicios Financieros",
+            "pct": 18.96
+          },
+          {
+            "name": "Consumo Cíclico",
+            "pct": 8.14
+          },
+          {
+            "name": "Servicios de Comunicación",
+            "pct": 6.56
+          },
+          {
+            "name": "Industria",
+            "pct": 6.03
+          },
+          {
+            "name": "Materiales Básicos",
+            "pct": 5.48
+          }
+        ],
+        "top_regions": [],
+        "fees": [
+          {
+            "name": "Gestión",
+            "pct": 0.3
+          },
+          {
+            "name": "Depósito",
+            "pct": 0
+          },
+          {
+            "name": "Suscripción",
+            "pct": 0
+          },
+          {
+            "name": "Reembolso",
+            "pct": 0
+          },
+          {
+            "name": "Distribución (cobrada por la gestora)",
+            "pct": 0
+          },
+          {
+            "name": "Costes operativos/transaccionales",
+            "pct": 0.001044
+          }
+        ],
+        "manager_domain": "amundi.com",
+        "price_series": null
+      }
+    ],
+    "missing": []
+  }
+}

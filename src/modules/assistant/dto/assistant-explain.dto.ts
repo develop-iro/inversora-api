@@ -58,7 +58,17 @@ export class AssistantExplainResponseDto {
   @ApiPropertyOptional({ example: 'TER' })
   title?: string;
 
-  @ApiProperty({ enum: ['glossary', 'cache', 'openai'], example: 'glossary' })
+  @ApiProperty({
+    enum: [
+      'glossary',
+      'cache',
+      'template',
+      'qwen',
+      'openai-fallback',
+      'openai',
+    ],
+    example: 'glossary',
+  })
   source!: string;
 
   @ApiProperty({ example: false })
@@ -75,6 +85,15 @@ export class AssistantExplainResponseDto {
 
   @ApiProperty({ example: 'sora-v1' })
   promptVersion!: string;
+
+  @ApiPropertyOptional({ example: 'qwen-2.5-7b-instruct' })
+  model?: string;
+
+  @ApiPropertyOptional({ example: 0.82 })
+  confidence?: number;
+
+  @ApiPropertyOptional({ enum: ['error', 'low_confidence', 'guardrails'] })
+  fallbackReason?: string;
 }
 
 /** Swagger schema for assistant chat response. */

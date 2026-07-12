@@ -132,6 +132,18 @@ export type ProviderFundCountryWeighting = z.infer<
   typeof providerFundCountryWeightingSchema
 >;
 
+/** Zod schema for a normalized market news article from the provider. */
+export const providerNewsArticleSchema = z.object({
+  title: z.string().min(1),
+  summary: z.string().min(1),
+  source: z.string().min(1),
+  publishedAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  url: z.string().url(),
+});
+
+/** Inferred type for a normalized market news article from the provider. */
+export type ProviderNewsArticle = z.infer<typeof providerNewsArticleSchema>;
+
 /** Zod schema for a normalized provider fund composition snapshot. */
 export const providerFundCompositionSchema = z.object({
   asOf: z.string(),

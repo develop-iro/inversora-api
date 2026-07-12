@@ -31,6 +31,8 @@ describe('validateEnv', () => {
       FMP_BASE_URL: 'https://financialmodelingprep.com',
       FMP_DATA_SOURCE: 'mock',
       FMP_SAVE_FIXTURES: false,
+      MYINVESTOR_MCP_URL: 'https://mcp.myinvestor.es/mcp',
+      MYINVESTOR_DATA_SOURCE: 'mock',
       SYNC_SCHEDULER_ENABLED: false,
       SYNC_CRON_EXPRESSION: '0 6 * * *',
       SYNC_FUND_SYMBOLS: [],
@@ -42,15 +44,15 @@ describe('validateEnv', () => {
       FUND_PRICES_RETENTION_YEARS: 7,
       ADMIN_SYNC_ENABLED: false,
       ADMIN_CATALOG_ENABLED: false,
-      ADMIN_API_KEY: undefined,
       CORS_ORIGINS: [],
       OPENAI_MODEL: 'gpt-4o-mini',
+      ASSISTANT_LLM_PRIMARY_MODEL: 'qwen-2.5-7b-instruct',
+      ASSISTANT_OPENAI_FALLBACK_ENABLED: true,
+      ASSISTANT_FALLBACK_CONFIDENCE_THRESHOLD: 0.6,
       ASSISTANT_ENABLED: false,
       ASSISTANT_RUNTIME: 'nestjs',
       ASSISTANT_AGENT_BASE_URL: 'http://localhost:8001',
       ASSISTANT_AGENT_TIMEOUT_MS: 10_000,
-      ASSISTANT_AGENT_API_KEY: undefined,
-      ASSISTANT_INTERNAL_API_KEY: undefined,
       ASSISTANT_RATE_LIMIT_MAX_REQUESTS: 30,
       ASSISTANT_RATE_LIMIT_WINDOW_SECONDS: 60,
       ASSISTANT_PROMPT_VERSION: 'sora-v2',
@@ -59,7 +61,6 @@ describe('validateEnv', () => {
       THROTTLE_TTL_SECONDS: 60,
       THROTTLE_LIMIT: 120,
       THROTTLE_ASSISTANT_LIMIT: 30,
-      THROTTLE_REDIS_URL: undefined,
     });
   });
 
@@ -90,6 +91,8 @@ describe('validateEnv', () => {
       FMP_BASE_URL: 'https://financialmodelingprep.com',
       FMP_DATA_SOURCE: 'mock',
       FMP_SAVE_FIXTURES: false,
+      MYINVESTOR_MCP_URL: 'https://mcp.myinvestor.es/mcp',
+      MYINVESTOR_DATA_SOURCE: 'mock',
       SYNC_SCHEDULER_ENABLED: false,
       SYNC_CRON_EXPRESSION: '0 6 * * *',
       SYNC_FUND_SYMBOLS: [],
@@ -101,15 +104,15 @@ describe('validateEnv', () => {
       FUND_PRICES_RETENTION_YEARS: 7,
       ADMIN_SYNC_ENABLED: false,
       ADMIN_CATALOG_ENABLED: false,
-      ADMIN_API_KEY: undefined,
       CORS_ORIGINS: [],
       OPENAI_MODEL: 'gpt-4o-mini',
+      ASSISTANT_LLM_PRIMARY_MODEL: 'qwen-2.5-7b-instruct',
+      ASSISTANT_OPENAI_FALLBACK_ENABLED: true,
+      ASSISTANT_FALLBACK_CONFIDENCE_THRESHOLD: 0.6,
       ASSISTANT_ENABLED: false,
       ASSISTANT_RUNTIME: 'nestjs',
       ASSISTANT_AGENT_BASE_URL: 'http://localhost:8001',
       ASSISTANT_AGENT_TIMEOUT_MS: 10_000,
-      ASSISTANT_AGENT_API_KEY: undefined,
-      ASSISTANT_INTERNAL_API_KEY: undefined,
       ASSISTANT_RATE_LIMIT_MAX_REQUESTS: 30,
       ASSISTANT_RATE_LIMIT_WINDOW_SECONDS: 60,
       ASSISTANT_PROMPT_VERSION: 'sora-v2',
@@ -118,7 +121,6 @@ describe('validateEnv', () => {
       THROTTLE_TTL_SECONDS: 60,
       THROTTLE_LIMIT: 120,
       THROTTLE_ASSISTANT_LIMIT: 30,
-      THROTTLE_REDIS_URL: undefined,
     });
   });
 
@@ -216,6 +218,30 @@ describe('validateEnv', () => {
         ASSISTANT_AGENT_BASE_URL: 'http://localhost:8001',
       }),
     ).toThrow('Environment validation failed');
+  });
+
+  it('should reject "change-me" placeholder secrets outside local', () => {
+    expect(() =>
+      validateEnv({
+        ...validEnv,
+        APP_ENV: 'qa',
+        FMP_DATA_SOURCE: 'live',
+        ADMIN_SYNC_ENABLED: 'true',
+        ADMIN_API_KEY: 'change-me-local-admin-key',
+      }),
+    ).toThrow('ADMIN_API_KEY must not use a committed "change-me" placeholder');
+  });
+
+  it('should allow "change-me" placeholder secrets in local', () => {
+    expect(
+      validateEnv({
+        ...validEnv,
+        ADMIN_SYNC_ENABLED: 'true',
+        ADMIN_API_KEY: 'change-me-local-admin-key',
+      }),
+    ).toMatchObject({
+      ADMIN_API_KEY: 'change-me-local-admin-key',
+    });
   });
 
   it('should parse CORS origins from a comma-separated list', () => {

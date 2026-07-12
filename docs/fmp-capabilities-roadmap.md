@@ -38,7 +38,8 @@ La app nunca debe llamar a FMP directamente.
 | Bulk EOD | [`/stable/eod-bulk`](https://site.financialmodelingprep.com/developer/docs/stable/eod-bulk) | Carga diaria masiva de precios sin N llamadas por simbolo. | Pendiente |
 | Quote/price corto | [`/stable/quote-short`](https://site.financialmodelingprep.com/developer/docs/stable/quote-short) | Precio reciente y estado de mercado para ETFs cotizados. Menos relevante para fondos no cotizados. | Pendiente |
 | Cambios de simbolo | [`/stable/symbol-changes-list`](https://site.financialmodelingprep.com/developer/docs/stable/symbol-changes-list) | Evitar registros rotos si cambia un ticker. | Pendiente |
-| Noticias | [`/stable/search-stock-news`](https://site.financialmodelingprep.com/developer/docs/stable/search-stock-news) | Bajo valor MVP; riesgo de ruido y sesgo de actualidad. Mejor no priorizar. | No planificado |
+| Noticias generales | [`/stable/news/general-latest`](https://site.financialmodelingprep.com/developer/docs/stable/general-news) | Titulares de mercado para la seccion de noticias del home (`GET /news`), con fallback editorial curado. Verificado en Starter. | Implementado (`getGeneralNews`) |
+| Noticias por simbolo | [`/stable/search-stock-news`](https://site.financialmodelingprep.com/developer/docs/stable/search-stock-news) | Bajo valor MVP; riesgo de ruido y sesgo de actualidad. Mejor no priorizar. | No planificado |
 
 ## Capacidades que mas nutren el MVP
 

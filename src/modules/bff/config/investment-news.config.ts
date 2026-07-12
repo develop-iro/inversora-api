@@ -1,8 +1,8 @@
 import type { InvestmentNewsItem } from '../entities/investment-news.schema';
 
 /**
- * Curated educational headlines for the home news section.
- * Editorial content only — not live market news.
+ * Curated educational headlines used as a fallback for the home news section
+ * when live market news from the provider is unavailable.
  */
 export const CURATED_INVESTMENT_NEWS: readonly InvestmentNewsItem[] = [
   {

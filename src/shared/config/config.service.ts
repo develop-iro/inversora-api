@@ -109,6 +109,19 @@ export class AppConfigService {
     return this.configService.get('FMP_SAVE_FIXTURES', { infer: true });
   }
 
+  /** MyInvestor MCP server endpoint URL. */
+  get myInvestorMcpUrl(): string {
+    return this.configService.get('MYINVESTOR_MCP_URL', { infer: true });
+  }
+
+  /** Whether MyInvestor responses are served from committed fixtures. */
+  get myInvestorUsesMocks(): boolean {
+    return (
+      this.configService.get('MYINVESTOR_DATA_SOURCE', { infer: true }) ===
+      'mock'
+    );
+  }
+
   /** Whether the daily fund sync scheduler is active. */
   get syncSchedulerEnabled(): boolean {
     return this.configService.get('SYNC_SCHEDULER_ENABLED', { infer: true });
@@ -197,6 +210,53 @@ export class AppConfigService {
   /** OpenAI model identifier for assistant completions. */
   get openAiModel(): string {
     return this.configService.get('OPENAI_MODEL', { infer: true });
+  }
+
+  /** Primary LLM base URL (OpenAI-compatible, e.g. Qwen/DashScope). */
+  get assistantLlmPrimaryBaseUrl(): string | undefined {
+    return this.configService.get('ASSISTANT_LLM_PRIMARY_BASE_URL', {
+      infer: true,
+    });
+  }
+
+  /** Primary LLM model identifier (default: Qwen). */
+  get assistantLlmPrimaryModel(): string {
+    return this.configService.get('ASSISTANT_LLM_PRIMARY_MODEL', {
+      infer: true,
+    });
+  }
+
+  /** Primary LLM API key; falls back to OPENAI_API_KEY for legacy deployments. */
+  get assistantLlmPrimaryApiKey(): string {
+    const primary = this.configService.get('ASSISTANT_LLM_PRIMARY_API_KEY', {
+      infer: true,
+    });
+
+    if (primary !== undefined) {
+      return primary;
+    }
+
+    const legacyOpenAi = this.openAiApiKey;
+
+    if (legacyOpenAi !== undefined) {
+      return legacyOpenAi;
+    }
+
+    throw new Error('ASSISTANT_LLM_PRIMARY_API_KEY is not configured');
+  }
+
+  /** Whether OpenAI is used as fallback when Qwen confidence is low or errors occur. */
+  get assistantOpenAiFallbackEnabled(): boolean {
+    return this.configService.get('ASSISTANT_OPENAI_FALLBACK_ENABLED', {
+      infer: true,
+    });
+  }
+
+  /** Minimum confidence score required to accept the primary LLM response. */
+  get assistantFallbackConfidenceThreshold(): number {
+    return this.configService.get('ASSISTANT_FALLBACK_CONFIDENCE_THRESHOLD', {
+      infer: true,
+    });
   }
 
   /** Whether the SORA assistant endpoint is active. */

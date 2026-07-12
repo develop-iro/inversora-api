@@ -251,4 +251,32 @@ describe('FinancialModelingPrepClient', () => {
       }),
     );
   });
+
+  it('should fetch the latest general news articles', async () => {
+    const payload = [
+      {
+        symbol: null,
+        publishedDate: '2026-07-12 10:40:44',
+        publisher: 'Investopedia',
+        title: 'What to Expect in Markets this Week',
+        image: null,
+        site: 'investopedia.com',
+        text: 'Inflation will loom large this week.',
+        url: 'https://www.investopedia.com/markets-this-week',
+      },
+    ];
+    httpClient.get.mockResolvedValue({ data: payload });
+
+    await expect(client.fetchGeneralNews(8)).resolves.toEqual(payload);
+    expect(httpClient.get).toHaveBeenCalledWith(
+      `${FMP_DEFAULT_BASE_URL}/stable/news/general-latest`,
+      expect.objectContaining({
+        params: {
+          page: 0,
+          limit: 8,
+          apikey: 'test-api-key',
+        },
+      }),
+    );
+  });
 });
