@@ -172,6 +172,35 @@ describe('ScoringService', () => {
     expect(typeof result?.score).toBe('number');
   });
 
+  it('should calculate rounded scores for multiple fund ids', async () => {
+    const peerFund = {
+      ...fund,
+      id: '660e8400-e29b-41d4-a716-446655440001',
+      symbol: 'VOO',
+    };
+    fundsRepository.findAll.mockResolvedValue([fund, peerFund]);
+
+    const scores = await service.calculateScoresForFundIds([fund.id]);
+
+    expect(scores.get(fund.id)).toBeGreaterThanOrEqual(0);
+    expect(scores.get(fund.id)).toBe(Math.round(scores.get(fund.id)!));
+  });
+
+  it('should return empty scores when no fund ids are requested', async () => {
+    await expect(service.calculateScoresForFundIds([])).resolves.toEqual(
+      new Map(),
+    );
+    expect(fundsRepository.findAll).not.toHaveBeenCalled();
+  });
+
+  it('should return empty scores when requested fund ids are not found', async () => {
+    fundsRepository.findAll.mockResolvedValueOnce([fund]);
+
+    await expect(
+      service.calculateScoresForFundIds(['missing-fund-id']),
+    ).resolves.toEqual(new Map());
+  });
+
   it('should skip recalculation when there are no funds', async () => {
     fundsRepository.findAll.mockResolvedValueOnce([]);
 

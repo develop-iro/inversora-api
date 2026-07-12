@@ -22,6 +22,8 @@ export type FeaturedFundHydrationInput = {
   editorial: FeaturedFundEditorial;
   quarter: QuarterMetadata;
   brandfetchClientId?: string;
+  /** Live Inversora Score; falls back to the persisted score when omitted. */
+  efficiencyScore?: number;
 };
 
 /**
@@ -35,7 +37,7 @@ export function mapFundToFeaturedFund(
   const { fund, editorial, quarter, brandfetchClientId } = input;
   const terPercent = fund.metrics.ter ?? 0;
   const riskLevel = mapRiskLevelToApp(fund.riskLevel);
-  const efficiencyScore = Math.round(fund.score ?? 0);
+  const efficiencyScore = input.efficiencyScore ?? Math.round(fund.score ?? 0);
   const branding = mapFundCardBranding(fund, brandfetchClientId);
 
   return {
