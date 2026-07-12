@@ -5,7 +5,7 @@ import {
   FundVehicleType as PrismaFundVehicleType,
   InvestmentTheme as PrismaInvestmentTheme,
 } from '@prisma/client';
-import { Decimal } from '@prisma/client/runtime/library';
+import { Decimal } from '@prisma/client/runtime/client';
 import type { FundCategory, FundProvider } from './fund.schema';
 import {
   mapFundMetricsToPrismaFields,
