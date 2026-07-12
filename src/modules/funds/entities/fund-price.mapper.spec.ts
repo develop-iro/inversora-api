@@ -73,6 +73,21 @@ describe('fund-price.mapper', () => {
     });
   });
 
+  it('should map zero provider vwap values to null', () => {
+    expect(
+      mapProviderFundHistoricalPriceToUpsertInput({
+        date: '2024-01-31',
+        open: 10,
+        high: 11,
+        low: 9,
+        close: 10.5,
+        vwap: 0,
+      }),
+    ).toMatchObject({
+      vwap: null,
+    });
+  });
+
   it('should map upsert inputs to Prisma create payloads', () => {
     expect(
       mapUpsertFundPriceInputToPrismaData(
