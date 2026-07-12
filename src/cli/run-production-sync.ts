@@ -220,8 +220,15 @@ function parseProductionSyncCliArgs(
         break;
       }
       case '--metadata-start-batch': {
-        const value = readCliRequiredValue(args, index, '--metadata-start-batch');
-        metadataStartBatch = parseCliPositiveInt(value, '--metadata-start-batch');
+        const value = readCliRequiredValue(
+          args,
+          index,
+          '--metadata-start-batch',
+        );
+        metadataStartBatch = parseCliPositiveInt(
+          value,
+          '--metadata-start-batch',
+        );
         index += 1;
         break;
       }
@@ -307,7 +314,7 @@ Options:
 
 Example (resume after batch 4 completed, batch 5 interrupted):
   npm run sync:production -- --metadata-start-batch 5
-`;
+`);
 }
 
 void runProductionSyncCli().catch((error: unknown) => {
