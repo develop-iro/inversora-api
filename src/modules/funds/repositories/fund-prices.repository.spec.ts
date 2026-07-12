@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { Decimal } from '@prisma/client/runtime/library';
+import { Decimal } from '@prisma/client/runtime/client';
 import { PrismaService } from '../../../shared/database/prisma.service';
 import { parseFundPriceDate } from '../entities/fund-price.mapper';
 import { FundPricesRepository } from './fund-prices.repository';
