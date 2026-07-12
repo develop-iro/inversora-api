@@ -63,4 +63,30 @@ describe('FeedbackService', () => {
       'Failed to persist product feedback: database unavailable',
     );
   });
+
+  it('should log empty messages and warn unknown persistence errors', async () => {
+    repository.create.mockRejectedValue('database unavailable');
+
+    service.recordFeedback({
+      clarity: 'somewhat',
+      wouldReturn: 'maybe',
+      message: '',
+      surface: 'feedback',
+    });
+
+    await Promise.resolve();
+
+    expect(logSpy).toHaveBeenCalledWith(
+      JSON.stringify({
+        type: 'product_feedback',
+        clarity: 'somewhat',
+        wouldReturn: 'maybe',
+        surface: 'feedback',
+        hasMessage: false,
+      }),
+    );
+    expect(warnSpy).toHaveBeenCalledWith(
+      'Failed to persist product feedback: unknown error',
+    );
+  });
 });

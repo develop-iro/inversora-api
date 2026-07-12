@@ -137,14 +137,14 @@ export class AssistantConversationRepository {
       return [];
     }
 
-    return [...conversation.messages]
-      .reverse()
-      .map((message): AssistantRecentMessage => ({
+    return [...conversation.messages].reverse().map(
+      (message): AssistantRecentMessage => ({
         role: message.role,
         content: message.content,
         intent: message.intent ?? undefined,
         createdAt: message.createdAt.toISOString(),
-      }));
+      }),
+    );
   }
 
   /**
