@@ -6,6 +6,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AnonymousDevicesModule } from './modules/anonymous-devices/anonymous-devices.module';
 import { AssistantModule } from './modules/assistant/assistant.module';
 import { BffModule } from './modules/bff/bff.module';
+import { FeedbackModule } from './modules/feedback/feedback.module';
 import { FundsModule } from './modules/funds/funds.module';
 import { HealthModule } from './modules/health/health.module';
 import { ScoringModule } from './modules/scoring/scoring.module';
@@ -30,6 +31,7 @@ import { AppThrottlerModule } from './shared/http/throttler.config';
     BffModule,
     AdminModule,
     AnalyticsModule,
+    FeedbackModule,
     AnonymousDevicesModule,
     ScoringModule,
     AssistantModule,
