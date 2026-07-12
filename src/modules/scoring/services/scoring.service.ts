@@ -185,6 +185,59 @@ export class ScoringService {
   }
 
   /**
+   * Computes rounded Invesora Scores for multiple funds using peer comparison.
+   *
+   * Loads metrics only for funds that share a peer group with the requested ids
+   * so list and featured cards stay aligned with fund detail scoring.
+   *
+   * @param fundIds - Persisted fund identifiers to score.
+   */
+  async calculateScoresForFundIds(
+    fundIds: readonly string[],
+  ): Promise<Map<string, number>> {
+    if (fundIds.length === 0) {
+      return new Map();
+    }
+
+    const allFunds = await this.fundsRepository.findAll();
+    const requestedIdSet = new Set(fundIds);
+    const requestedFunds = allFunds.filter((fund) =>
+      requestedIdSet.has(fund.id),
+    );
+
+    if (requestedFunds.length === 0) {
+      return new Map();
+    }
+
+    const peerKeysNeeded = new Set(
+      requestedFunds.map((fund) => resolveScoringPeerGroupKey(fund)),
+    );
+    const relevantFunds = allFunds.filter((fund) =>
+      peerKeysNeeded.has(resolveScoringPeerGroupKey(fund)),
+    );
+    const entries = await mapInBatches(
+      relevantFunds,
+      SCORING_METRICS_BATCH_SIZE,
+      async (peerFund) => ({
+        fund: peerFund,
+        metrics: await this.buildMetricsForFund(peerFund),
+      }),
+    );
+    const categoryScores = this.calculateCategoryScores(entries);
+    const scores = new Map<string, number>();
+
+    for (const fundId of fundIds) {
+      const score = categoryScores.get(fundId);
+
+      if (score !== undefined) {
+        scores.set(fundId, Math.round(score.score));
+      }
+    }
+
+    return scores;
+  }
+
+  /**
    * Recalculates scores for all persisted funds and stores them in PostgreSQL.
    *
    * Scores are computed with peer comparison within each benchmark or category

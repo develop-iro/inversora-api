@@ -85,8 +85,7 @@ describe('AdminSyncController', () => {
 describe('AdminSyncController guard wiring', () => {
   it('should register AdminApiKeyGuard on the controller', () => {
     const guards = Reflect.getMetadata('__guards__', AdminSyncController) as
-      | unknown[]
-      | undefined;
+      unknown[] | undefined;
 
     expect(guards).toContain(AdminApiKeyGuard);
   });
