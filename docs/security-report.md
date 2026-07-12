@@ -1,178 +1,105 @@
 # Informe de seguridad del MVP Inversora
 
-Informe de la postura de seguridad del MVP, cubriendo el backend (`inversora-api`) y el cliente Expo/React Native (`invesora`). Complementa la guía operativa [security-hardening.md](./security-hardening.md) y el plan de respuesta [security-contingency-plan.md](./security-contingency-plan.md).
+Informe de postura de seguridad del MVP, cubriendo el backend `inversora-api` y el cliente Expo/React Native `invesora`. Complementa la guia operativa [security-hardening.md](./security-hardening.md) y el plan de respuesta [security-contingency-plan.md](./security-contingency-plan.md).
 
 **Fecha del informe:** 12 de julio de 2026
-**Método:** revisión estática del código fuente de ambos repositorios. No incluye pentest dinámico, escaneo de infraestructura desplegada ni auditoría de dependencias transitivas.
-
----
+**Actualizacion API:** rama `codex/security-api-p0-p1`
+**Metodo:** revision estatica del codigo fuente. No incluye pentest dinamico ni escaneo de infraestructura desplegada.
 
 ## 1. Resumen ejecutivo
 
-| Severidad | Backend | Cliente | Total |
-|-----------|---------|---------|-------|
-| Crítica | 0 | 0 | **0** |
-| Alta | 3 | 2 | **5** |
-| Media | ~12 | ~5 | **~17** |
-| Baja | ~10 | ~10 | **~20** |
+La base del MVP es solida para un producto educativo sin cuentas ni operaciones financieras. Desde la revision inicial, el backend ya cubre varios puntos que antes figuraban como pendientes: `npm audit` y Dependabot existen en CI, Swagger queda deshabilitado por defecto en `pro`, la validacion de entorno rechaza secretos `change-me-*` fuera de `local`, y la alerta transitiva de `@hono/node-server` queda fijada a una version parcheada.
 
-**Veredicto:** el MVP tiene una base de seguridad sólida y verificable en código, por encima del estándar de un MVP sin cuentas de usuario. No hay secretos de producción hardcodeados, la superficie financiera y de IA está acotada por diseño, y existen controles reales (Helmet, throttling, guards con comparación en tiempo constante, Zod, SecureStore, allowlist de URLs). Sin embargo, **no se cumple "todo lo posible"**: quedan cinco hallazgos de severidad alta —principalmente mitigación parcial de prompt injection, discrepancia entre el SSL pinning declarado y el implementado, y ausencia de auditoría de dependencias en CI— y un conjunto de hallazgos medios accionables antes del lanzamiento público.
+Esta rama endurece la API en los puntos P0/P1 backend:
 
----
+- body parser explicito con limite configurable;
+- `ZodError` global como HTTP 400;
+- throttling dedicado para analytics y registro de dispositivos;
+- tracker de throttling basado en `request.ip`, no en `x-forwarded-for` directo;
+- prompt de SORA con input delimitado como datos no confiables;
+- guardrails de salida ES/EN;
+- binding opcional de sesiones SORA a device token;
+- contadores diarios/mensuales de llamadas LLM;
+- logs de analytics reducidos en produccion;
+- chequeo de mojibake en CI.
 
-## 2. Controles ya implementados
+Quedan fuera de esta rama los hallazgos del cliente `invesora` y el refactor arquitectonico `FundsModule <-> ScoringModule`.
 
-### 2.1 Backend (`inversora-api`)
-
-| Control | Evidencia |
-|---------|-----------|
-| Helmet con HSTS (entornos no locales) y `referrerPolicy: no-referrer` | `src/main.ts`, `src/shared/http/security-headers.config.ts` |
-| Rate limiting global por IP (`@nestjs/throttler`, 120 req/min) + límite dedicado para SORA (30 req/min) | `src/app.module.ts`, `src/shared/http/throttler.config.ts`, `ip-throttler.guard.ts` |
-| Redis opcional para throttling distribuido en múltiples réplicas | `THROTTLE_REDIS_URL` en `env.schema.ts` |
-| CORS condicional, sin `credentials`, deshabilitado en producción si no hay orígenes configurados | `src/shared/http/cors.config.ts` |
-| Endpoints admin protegidos por API key con comparación timing-safe; devuelven 404 si la feature está deshabilitada (no revelan existencia) | `src/modules/admin/admin-api-key.guard.ts`, `api-key.utils.ts` |
-| Admin y Swagger deshabilitados por defecto en `pro` | `src/shared/config/app-environment.ts`, `env/pro.env` |
-| Validación de entorno con Zod al arranque; exige secretos cuando la feature correspondiente está activa | `src/shared/config/env.schema.ts` (`superRefine`) |
-| Filtro global de excepciones: sin stack traces ni detalles internos en respuestas 5xx en `pro` | `src/shared/errors/http-exception.filter.ts` |
-| Prisma ORM exclusivo; sin `$queryRaw` / `$executeRaw` en `src/` | Búsqueda sin coincidencias |
-| Validación Zod de entrada en módulos críticos (assistant, admin) e ISIN validado (12 chars, uppercase) | `assistant-context.schema.ts`, `admin-sync-request.schema.ts` |
-| API keys de LLM solo en servidor; límite de tokens (500) y temperatura baja (0.3) | `llm-chat-completion.service.ts` |
-| Defensa en capas para SORA: filtro de intents prohibidos, system prompt con reglas inmutables, contexto factual desde BD, RAG con chunks curados, guardrails de salida con fallback seguro | `intent-classifier.service.ts`, `assistant-system-prompt.ts`, `assistant-output.guardrails.ts` |
-| Agente Python autenticado con `hmac.compare_digest` y no expuesto públicamente por diseño | `agent-service/app/auth.py`, `docs/security-hardening.md` |
-| Device tokens opacos (32 bytes aleatorios) almacenados como hash SHA-256 | `device-token.utils.ts`, `anonymous-devices.repository.ts` |
-| Analytics sin PII: lista cerrada de eventos, propiedades solo escalares | `analytics-event.schema.ts`, `analytics-event-names.ts` |
-| URLs con `apikey` redactadas en logs | `sanitize-url-for-log.ts` |
-| `.env` y variantes en `.gitignore`; docker-compose exige `POSTGRES_PASSWORD` explícito | `.gitignore`, `docker-compose.yml` |
-
-### 2.2 Cliente (`invesora`)
+## 2. Controles backend implementados
 
 | Control | Evidencia |
-|---------|-----------|
-| Sin API keys de FMP/OpenAI en el bundle; la IA se consume solo vía backend | Búsqueda en `src/`: 0 coincidencias; `src/core/api/assistant-client.ts` |
-| Variables `EXPO_PUBLIC_*` limitadas a valores públicos por diseño (URL de API, flags, DSN de Sentry) | `src/core/config/app-environment.ts` |
-| HTTPS en perfiles `qa` y `pro`; `usesCleartextTraffic: false` en Android | `env/pro.env`, `app.json` |
-| Allowlist de URLs externas: solo `https:`, sin IP literal, sin credenciales embebidas, hosts en lista cerrada | `src/core/security/safe-external-url.ts` + specs |
-| `Linking.openURL` siempre precedido por validación (`openSafeExternalUrl` / `isSafeExternalUrl`) | `legal-screen.tsx`, `home-news-section.tsx` |
-| SecureStore en nativo para favoritos, perfil educativo, progreso de aprendizaje y token de dispositivo, con migración desde AsyncStorage | `src/core/storage/secure-storage.ts` |
-| Validación de rutas: ISIN con Zod + regex ISO 6166 en `/funds/[isin]`, `/compare`, `/calculator`; parámetros inválidos → not found sin crash | `fund-isin.ts`, `fund-detail-screen.tsx` |
-| Sin WebView, `dangerouslySetInnerHTML`, `eval` ni `Function()` | Búsqueda: 0 resultados |
-| Perfil educativo sincronizado sin respuestas literales del cuestionario | `derived-educational-profile-payload.ts` |
-| Guardrails del asistente también en cliente (defensa en profundidad) | `assistant-output-guardrails.ts` |
-| Sin `expo-updates`/OTA (elimina el vector de actualización remota) y sin permisos peligrosos en `app.json` | `package.json`, `app.json` |
-| Quality gate con `security:verify-plugins` en pre-push y CI | `package.json` (`test:ci`), `.husky/pre-push` |
-| Política de privacidad completa y pantalla legal in-app | `public/privacidad.html`, `legal-screen.tsx` |
+| --- | --- |
+| Helmet con HSTS en entornos no locales y `referrerPolicy: no-referrer` | `src/main.ts`, `src/shared/http/security-headers.config.ts` |
+| Body parser explicito con limite `API_BODY_LIMIT` (`100kb` por defecto) | `src/main.ts`, `src/shared/http/body-parser.config.ts` |
+| Rate limiting global, SORA, analytics y registro de dispositivos | `src/shared/http/throttler.config.ts`, decorators de throttling |
+| Tracker de rate limit basado en `request.ip` resuelto por Express | `src/shared/http/ip-throttler.guard.ts` |
+| Redis opcional para throttling distribuido | `THROTTLE_REDIS_URL` |
+| CORS condicional, sin credentials, cerrado por defecto fuera de desarrollo si no hay origenes | `src/shared/http/cors.config.ts` |
+| Admin API protegida por API key timing-safe y 404 cuando la feature esta deshabilitada | `src/modules/admin/guards`, `src/shared/security/api-key.utils.ts` |
+| Swagger deshabilitado por defecto en `pro` | `src/shared/config/app-environment.ts`, `env/pro.env` |
+| Validacion de entorno con Zod y rechazo de placeholders `change-me-*` en qa/pro | `src/shared/config/env.schema.ts` |
+| `ZodError` global como HTTP 400, sin detalles sensibles en `pro` | `src/shared/http/http-exception.filter.ts` |
+| SORA con prompt delimitado, contexto factual, RAG curado y guardrails ES/EN | `assistant-system-prompt.ts`, `assistant-output.guardrails.ts` |
+| SORA chat opcionalmente vinculado a `X-Device-Token` | `AssistantConversation.deviceId`, `assistant.controller.ts`, `assistant.service.ts` |
+| Limites diarios/mensuales de llamadas LLM, desactivados por defecto con `0` | `ASSISTANT_DAILY_LLM_LIMIT`, `ASSISTANT_MONTHLY_LLM_LIMIT` |
+| Logs de analytics reducidos en produccion | `analytics.service.ts` |
+| Auditoria de dependencias y Dependabot | `.github/workflows/ci.yml`, `.github/dependabot.yml` |
+| Override transitivo de `@hono/node-server` a `1.19.13` | `package.json`, `package-lock.json` |
+| Chequeo de mojibake en CI | `npm run security:check-encoding` |
 
----
+## 3. Hallazgos resueltos o parcialmente resueltos
 
-## 3. Hallazgos de severidad alta
+| ID previo | Estado | Nota |
+| --- | --- | --- |
+| A1 Prompt injection parcial | Parcialmente resuelto en API | El input de usuario queda dentro de `<user_input>` y el system prompt lo declara no confiable. Los guardrails cubren patrones ES/EN. Sigue recomendado evaluar moderacion/LLM classifier en una fase posterior. |
+| A3 Sin auditoria de dependencias | Resuelto en API | La API ya tiene `npm audit --omit=dev --audit-level=high` y Dependabot. El cliente debe mantenerse alineado en su propio repo. |
+| A3.1 Dependabot: `@hono/node-server` via Prisma | Resuelto en API | La API no usa `serveStatic` ni Hono directamente. Aun asi, se fuerza `@hono/node-server@1.19.13` con `overrides` y `npm audit` queda en 0 vulnerabilidades. |
+| A4 Placeholders locales reutilizables | Resuelto en API | `env.schema.ts` rechaza `change-me` cuando `APP_ENV !== local`; `env/local.env` queda como perfil Docker local. |
+| M1 Sin limite de body | Resuelto en API | `API_BODY_LIMIT=100kb` por defecto. |
+| M3 `ZodError` como 500 | Resuelto en API | Filtro global devuelve 400. |
+| M4 Analytics/register sin throttle dedicado | Resuelto en API | Nuevos throttlers dedicados. |
+| M5 Sesion SORA controlada por cliente | Parcialmente resuelto en API | Si hay device token valido, la conversacion se vincula al device y no puede usarse desde otro. Sesiones legacy sin device siguen permitidas por compatibilidad. |
+| M6 Sin limite de coste LLM | Parcialmente resuelto en API | Contadores de llamadas configurables; el limite economico real debe seguir configurado en el proveedor. |
+| M7 Logs de analytics completos | Resuelto en API | Produccion no loguea `sessionId` ni `deviceId`. |
+| M8 IP spoofing en throttling | Resuelto en API | El guard ya no lee `x-forwarded-for` directamente. La configuracion del proxy sigue siendo responsabilidad operativa. |
 
-### A1 — Prompt injection mitigado solo parcialmente (backend)
+## 4. Hallazgos vigentes
 
-- **Evidencia:** `src/modules/assistant/entities/assistant-system-prompt.ts` interpola el mensaje del usuario directamente en el prompt (`Pregunta del usuario: ${message}`). Los filtros de entrada (`intent-classifier.service.ts`) y de salida (`assistant-output.guardrails.ts`) son regex en español, bypasseables con parafraseo, typos o inglés.
-- **Riesgo:** un usuario puede inducir a SORA a emitir recomendaciones de compra/venta o contenido fuera de política, dañando la posición legal del producto ("no es asesoramiento financiero").
-- **Remediación:** delimitar el input del usuario con marcadores estructurados y una instrucción explícita de tratarlo como datos; considerar clasificación de intent con el propio LLM o moderación adicional; ampliar guardrails de salida más allá de regex.
+### Backend
 
-### A2 — SSL pinning declarado pero no implementado (cliente)
+| Severidad | Hallazgo | Recomendacion |
+| --- | --- | --- |
+| Media | `FundsModule` y `ScoringModule` dependen entre si con `forwardRef` | Separar un read-model/port de fondos para scoring o mover la orquestacion `sync + scoring` a una capa application. |
+| Media | Conversaciones y mensajes de usuario sin purga automatica | Anadir job de retencion y reflejarlo en la politica de privacidad. |
+| Baja | Rutas sin versionado `/v1` | Planificar antes de abrir integraciones publicas. |
+| Baja | CSP/COEP desactivados | Aceptable para API JSON; revisar si se sirve UI adicional. |
 
-- **Evidencia:** `plugins/with-ssl-pinning.js` solo configura ATS (iOS) y deshabilita cleartext (Android); no hay hashes SPKI ni TrustKit. El comentario en `src/core/api/ssl-pinning.ts` y la política de privacidad (`public/privacidad.html`, sección de seguridad) afirman certificate pinning en producción.
-- **Riesgo:** además del gap técnico (MITM con CA comprometida), existe **riesgo legal**: la política de privacidad afirma un control que no existe.
-- **Remediación:** implementar pinning real (SPKI hashes vía módulo nativo o librería) **o** corregir `privacidad.html` y los comentarios de código para describir exactamente lo que hay (HTTPS + ATS + no-cleartext). La corrección documental es inmediata; el pinning real requiere gestionar rotación de certificados de Railway (ver `security-hardening.md`).
+### Cliente `invesora` (fuera de esta rama)
 
-### A3 — Sin auditoría de dependencias en CI (ambos repos)
+| Severidad | Hallazgo | Recomendacion |
+| --- | --- | --- |
+| Alta | SSL pinning declarado pero no implementado como SPKI real | Corregir politica/comentarios o implementar pinning nativo real con estrategia de rotacion. |
+| Alta | `expo-dev-client` en plugins globales | Condicionar plugin por perfil o migrar a config dinamico antes de builds de tienda. |
+| Media | Mensajes de error backend retransmitidos a UI | Mostrar mensajes genericos y enviar detalles solo a Sentry/dev. |
+| Media | `logoUrl` remoto en `<Image>` sin allowlist local | Validar host/protocolo antes de renderizar. |
+| Media | `apiGet<T>` castea sin parser obligatorio | Exigir parser por endpoint o Zod uniforme. |
 
-- **Evidencia:** `.github/workflows/ci.yml` en ambos repos ejecuta lint/build/tests pero ningún `npm audit` / `pnpm audit`, Dependabot ni Snyk.
-- **Riesgo:** vulnerabilidades conocidas en dependencias (directas o transitivas) pasan desapercibidas; es el vector de supply chain más común.
-- **Remediación:** añadir `npm audit --audit-level=high` (API) y `pnpm audit --audit-level high` (app) como paso de CI, y habilitar Dependabot/Renovate en GitHub.
+## 5. Checklist pre-lanzamiento API
 
-### A4 — `env/local.env` commiteado con placeholders reutilizables (backend)
+- [ ] `APP_ENV=pro` y `NODE_ENV=production`.
+- [ ] `SWAGGER_ENABLED=false` salvo ventana puntual de diagnostico.
+- [ ] `ADMIN_SYNC_ENABLED=false` y `ADMIN_CATALOG_ENABLED=false` salvo operacion puntual.
+- [ ] Ninguna variable con `change-me-*` en qa/pro.
+- [ ] `CORS_ORIGINS` con lista exacta o vacio si solo hay app nativa.
+- [ ] `THROTTLE_REDIS_URL` configurado si hay mas de una replica.
+- [ ] `ASSISTANT_DAILY_LLM_LIMIT` y `ASSISTANT_MONTHLY_LLM_LIMIT` definidos si SORA esta activo.
+- [ ] Limite de gasto configurado tambien en OpenAI/proveedor LLM.
+- [ ] Agente Python sin dominio publico.
+- [ ] `npm run security:check-encoding`, `npm run lint:ci`, `npm run test`, `npm run test:e2e` y `npm run test:integration` ejecutados antes de merge.
 
-- **Evidencia:** `env/local.env` contiene `POSTGRES_PASSWORD`, `ADMIN_API_KEY` y `ASSISTANT_*_API_KEY` con valores `change-me-local-*`; el directorio `env/` no está en `.gitignore`.
-- **Riesgo:** que un despliegue de qa/pro reutilice por descuido credenciales conocidas públicamente en el repo. Nota: el diseño es intencional para Docker local (ver `security-hardening.md`), y `env/pro.env` no contiene secretos.
-- **Remediación:** mantener el guard `security:verify-local`, añadir verificación en arranque que rechace valores `change-me-*` cuando `APP_ENV !== 'local'`, y documentar la prohibición en el checklist de despliegue (ya recogido en el plan de contingencia).
+## 6. Prioridad siguiente
 
-### A5 — `expo-dev-client` presente en el perfil de producción (cliente)
-
-- **Evidencia:** `app.json` incluye `expo-dev-client` en `plugins` globales, que aplican también al perfil `production` de `eas.json`.
-- **Riesgo:** un build de tienda con dev client embebido expone menús de desarrollo y superficie de depuración.
-- **Remediación:** condicionar el plugin al perfil de build (app.config dinámico o exclusión en EAS) y verificar el binario de producción antes de subirlo a stores.
-
----
-
-## 4. Hallazgos de severidad media
-
-### 4.1 Backend
-
-| # | Hallazgo | Evidencia | Remediación recomendada |
-|---|----------|-----------|-------------------------|
-| M1 | Sin límite explícito de tamaño de body (DoS ligero en `/assistant/chat`, `/analytics/events`) | `src/main.ts` | `app.use(json({ limit: '100kb' }))` |
-| M2 | Sin `ValidationPipe` global; DTOs Swagger son schemas vacíos sin `class-validator` | `src/main.ts`, `assistant-explain.dto.ts` | La validación real es Zod; unificar criterio y documentarlo, o añadir pipe global |
-| M3 | `ZodError` sin capturar en analytics y anonymous-devices → 500 en lugar de 400 | `analytics.controller.ts`, `anonymous-devices.controller.ts` | Filtro global que mapee `ZodError` a `BadRequestException` |
-| M4 | `POST /analytics/events` y `POST /anonymous-devices/register` abiertos sin throttle dedicado (spam / llenado de BD) | Controllers respectivos | Throttle específico más estricto + validación de volumen |
-| M5 | `sessionId` del asistente controlado por el cliente sin binding al device token (contaminación de contexto conversacional) | `assistant.service.ts`, `assistant-context.schema.ts` | Vincular `sessionId` a `deviceId` o emitirlo desde servidor |
-| M6 | Sin límite de costo diario/mensual de LLM (solo rate limit por IP) | `env.schema.ts` | Límite de gasto en la cuenta OpenAI + contador de uso en BD |
-| M7 | Logs de analytics incluyen el payload completo del evento (`deviceId`, `sessionId`) | `analytics.service.ts` | Loguear solo `event` + `surface` en `pro` |
-| M8 | IP spoofing del rate limit si `trust proxy` está activo sin red de proxies confiable | `main.ts`, `ip-throttler.guard.ts` | Configurar `trust proxy` con el número de saltos real del hosting |
-| M9 | Conversaciones y mensajes de usuario persistidos sin política de retención | `prisma/schema.prisma` (assistant) | Job de purga según `ASSISTANT_CACHE_TTL_DAYS` y declaración en la política de privacidad |
-| M10 | Si `NODE_ENV=development` en un deploy, CORS abre orígenes Expo por defecto | `cors.config.ts` | Verificar `NODE_ENV=production` en el checklist de despliegue |
-| M11 | PostgreSQL de Docker expuesto en `localhost:5432` por defecto | `docker-compose.yml` | Aceptable en local; no replicar el compose en servidores |
-| M12 | Validación inconsistente: `GET /funds/:identifier` acepta UUID sin schema en el controller | `fund-detail.controller.ts` | Validar con Zod antes de delegar al servicio |
-
-### 4.2 Cliente
-
-| # | Hallazgo | Evidencia | Remediación recomendada |
-|---|----------|-----------|-------------------------|
-| M13 | Mensajes de error del backend retransmitidos a la UI sin sanitizar | `src/core/api/client.ts`, `use-assistant-chat.ts` | Mostrar mensajes genéricos; detalle solo a Sentry/dev |
-| M14 | `logoUrl` de la API cargado en `<Image source={{ uri }}>` sin validar host/protocolo | `fund-card-icon.tsx` | Validar con `isSafeExternalUrl` o allowlist de CDN |
-| M15 | En web todo el almacenamiento va a AsyncStorage sin cifrado (SecureStore no disponible) | `secure-storage.ts` | Limitación de plataforma; ya declarado en `privacidad.html` — mantener solo datos no sensibles |
-| M16 | Política de privacidad afirma certificate pinning inexistente (ver A2) | `privacidad.html` | Corregir el texto junto con A2 |
-| M17 | `apiGet<T>` castea `as T` sin validar; la validación depende de parsers por servicio | `client.ts` | Exigir parser en la firma o Zod uniforme por endpoint |
-
----
-
-## 5. Hallazgos de severidad baja (resumen)
-
-| Área | Hallazgos |
-|------|-----------|
-| Backend — API | Sin versionado de rutas (`/v1`); CSP y COEP desactivados en Helmet; sin redirect HTTPS a nivel app (delegado al proxy); `FMP_API_KEY` viaja en query string (mitigado en logs) |
-| Backend — assistant | `ASSISTANT_ENABLED=false` por defecto en pro/qa (positivo como default, revisar al activar); agente Python expone puerto 8001 en Docker local |
-| Backend — datos | Device tokens sin expiración/rotación; `timestamp` de analytics sin validación ISO estricta; perfil educativo derivado podría considerarse dato personal indirecto bajo RGPD |
-| Cliente — config | `EXPO_PUBLIC_BRANDFETCH_CLIENT_ID` y `EXPO_PUBLIC_SENTRY_DSN` van al bundle si se configuran (públicos por diseño, pero visibles) |
-| Cliente — rutas | `benchmarkKey` en `/rankings/[benchmarkKey]` solo con `trim()`, sin whitelist; analytics extrae ISIN del pathname sin re-validar |
-| Cliente — almacenamiento | `sessionId` de analytics en AsyncStorage plano; `compare-selection-store` no valida formato ISIN al escribir |
-| Cliente — privacidad | Registro de dispositivo automático al abrir la app (declarado en política); email de contacto personal expuesto en `privacidad.html` |
-
----
-
-## 6. Checklist de cumplimiento pre-lanzamiento
-
-Verificación operativa antes de cada despliegue a producción (complementa el checklist de [security-hardening.md](./security-hardening.md)):
-
-- [ ] `APP_ENV=pro` y `NODE_ENV=production` en el hosting
-- [ ] `SWAGGER_ENABLED=false` (default de pro; confirmar sin override)
-- [ ] `ADMIN_SYNC_ENABLED=false` y `ADMIN_CATALOG_ENABLED=false` salvo operación puntual
-- [ ] Ninguna variable con valor `change-me-*` en qa/pro
-- [ ] `ADMIN_API_KEY`, `ASSISTANT_INTERNAL_API_KEY`, `ASSISTANT_AGENT_API_KEY` únicas, fuertes y solo en el secret store del hosting
-- [ ] `CORS_ORIGINS` con la lista exacta de orígenes web (o vacío para solo nativo)
-- [ ] Agente Python sin dominio público; alcanzable solo desde la red interna
-- [ ] `THROTTLE_REDIS_URL` configurado si hay más de una réplica
-- [ ] Límite de gasto configurado en la cuenta OpenAI
-- [ ] Build EAS de producción sin `expo-dev-client` (hasta resolver A5, verificar manualmente)
-- [ ] `EXPO_PUBLIC_API_URL` apuntando a HTTPS de producción
-- [ ] `privacidad.html` alineada con los controles realmente implementados
-- [ ] `npm audit` / `pnpm audit` ejecutado manualmente (hasta automatizar A3)
-
----
-
-## 7. Priorización de remediaciones
-
-| Prioridad | Hallazgos | Esfuerzo estimado | Criterio |
-|-----------|-----------|-------------------|----------|
-| **P0 — antes del lanzamiento público** | A2 (corrección documental de `privacidad.html` + M16), A5, A3 (paso de CI), M1, M3, M13 | 1–2 días | Riesgo legal, superficie de release y errores triviales de endurecer |
-| **P1 — primeras semanas post-lanzamiento** | A1, A4 (guard de arranque), M4, M5, M6, M7, M14 | 3–5 días | Abuso, costo LLM y robustez del asistente |
-| **P2 — mejora continua** | A2 (pinning nativo real), M2, M8–M12, M15, M17 y hallazgos bajos | Incremental | Endurecimiento progresivo sin bloquear el MVP |
-
----
-
-## 8. Conclusión
-
-El MVP puede lanzarse con un nivel de riesgo aceptable para su naturaleza (educativo, sin cuentas, sin operaciones financieras), **siempre que se ejecute el bloque P0 y se respete el checklist operativo**. Los dos frentes que más atención requieren a corto plazo son la **coherencia legal** (afirmaciones de la política de privacidad frente a los controles reales) y la **robustez del asistente SORA** frente a prompt injection y abuso de costo. El plan de respuesta ante incidentes asociado a este informe está en [security-contingency-plan.md](./security-contingency-plan.md).
+1. Resolver los hallazgos del cliente `invesora` en una rama separada.
+2. Anadir retencion automatica de conversaciones SORA.
+3. Refactorizar la frontera `FundsModule`/`ScoringModule` cuando se toque scoring o sync.
+4. Evaluar una segunda capa de moderacion/clasificacion para SORA si se activa publicamente con trafico real.

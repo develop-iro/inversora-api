@@ -69,7 +69,7 @@ export class PythonAgentAssistantService {
       return parsed.data.text;
     } catch (error: unknown) {
       throw new ServiceUnavailableException(
-        'El runtime Python de SORA no estÃ¡ disponible en este momento.',
+        'El runtime Python de SORA no esta disponible en este momento.',
         { cause: error },
       );
     }

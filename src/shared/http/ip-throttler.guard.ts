@@ -3,7 +3,10 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 import type { Request } from 'express';
 
 /**
- * Rate-limits requests by client IP, honoring reverse-proxy forwarded headers.
+ * Rate-limits requests by the IP resolved by Express.
+ *
+ * Express only honors forwarded headers when `trust proxy` is configured by
+ * bootstrap, which avoids letting callers spoof tracker keys directly.
  */
 @Injectable()
 export class IpThrottlerGuard extends ThrottlerGuard {
@@ -14,13 +17,6 @@ export class IpThrottlerGuard extends ThrottlerGuard {
    */
   protected getTracker(request: Record<string, unknown>): Promise<string> {
     const httpRequest = request as unknown as Request;
-    const forwardedFor = httpRequest.header('x-forwarded-for');
-    const forwardedIp = forwardedFor?.split(',')[0]?.trim();
-
-    if (forwardedIp !== undefined && forwardedIp.length > 0) {
-      return Promise.resolve(forwardedIp);
-    }
-
     return Promise.resolve(httpRequest.ip ?? 'unknown');
   }
 }

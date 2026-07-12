@@ -25,6 +25,8 @@ describe('buildThrottlerModuleOptions', () => {
       throttleTtlSeconds: 60,
       throttleLimit: 120,
       throttleAssistantLimit: 30,
+      throttleAnalyticsLimit: 60,
+      throttleDeviceRegisterLimit: 10,
       throttleRedisUrl: undefined,
     } as never);
 
@@ -39,6 +41,16 @@ describe('buildThrottlerModuleOptions', () => {
         ttl: 60_000,
         limit: 30,
       },
+      {
+        name: 'analytics',
+        ttl: 60_000,
+        limit: 60,
+      },
+      {
+        name: 'device-register',
+        ttl: 60_000,
+        limit: 10,
+      },
     ]);
     expect(options.storage).toBeUndefined();
     expect(ThrottlerStorageRedisService).not.toHaveBeenCalled();
@@ -49,6 +61,8 @@ describe('buildThrottlerModuleOptions', () => {
       throttleTtlSeconds: 60,
       throttleLimit: 120,
       throttleAssistantLimit: 30,
+      throttleAnalyticsLimit: 60,
+      throttleDeviceRegisterLimit: 10,
       throttleRedisUrl: 'redis://localhost:6379',
     } as never);
 

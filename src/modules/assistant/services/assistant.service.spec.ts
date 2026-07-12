@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ServiceUnavailableException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
@@ -13,6 +14,7 @@ import { AssistantCacheRepository } from '../repositories/assistant-cache.reposi
 import { AssistantConversationRepository } from '../repositories/assistant-conversation.repository';
 import { AssistantContextBuilderService } from './assistant-context.builder';
 import { AssistantLlmOrchestratorService } from './assistant-llm-orchestrator.service';
+import { AssistantLlmUsageService } from './assistant-llm-usage.service';
 import { AssistantOutputGuardrailsService } from './assistant-output.guardrails';
 import { AssistantRagService } from './assistant-rag.service';
 import { AssistantService } from './assistant.service';
@@ -32,9 +34,11 @@ describe('AssistantService', () => {
   let cacheRepository: { findValid: jest.Mock; save: jest.Mock };
   let conversationRepository: {
     findRecentMessages: jest.Mock;
+    findDeviceIdBySessionId: jest.Mock;
     saveTurn: jest.Mock;
   };
   let llmOrchestrator: { generate: jest.Mock };
+  let llmUsage: { reserveCall: jest.Mock };
   let deterministicAssistant: { tryBuild: jest.Mock };
   let ragService: { retrieve: jest.Mock };
   let pythonAgentAssistant: { generate: jest.Mock };
@@ -60,10 +64,14 @@ describe('AssistantService', () => {
     };
     conversationRepository = {
       findRecentMessages: jest.fn().mockResolvedValue([]),
+      findDeviceIdBySessionId: jest.fn().mockResolvedValue(null),
       saveTurn: jest.fn(),
     };
     llmOrchestrator = {
       generate: jest.fn(),
+    };
+    llmUsage = {
+      reserveCall: jest.fn().mockResolvedValue(undefined),
     };
     deterministicAssistant = {
       tryBuild: jest.fn().mockReturnValue(null),
@@ -121,6 +129,10 @@ describe('AssistantService', () => {
           useValue: llmOrchestrator,
         },
         {
+          provide: AssistantLlmUsageService,
+          useValue: llmUsage,
+        },
+        {
           provide: PythonAgentAssistantService,
           useValue: pythonAgentAssistant,
         },
@@ -143,8 +155,8 @@ describe('AssistantService', () => {
 
   it('returns deterministic template responses without calling the LLM', async () => {
     deterministicAssistant.tryBuild.mockReturnValue({
-      title: 'Explicación del Score Inversora',
-      text: 'Explicación determinística del score para el fondo en contexto.',
+      title: 'Explicacion del Score Inversora',
+      text: 'Explicacion deterministica del score para el fondo en contexto.',
     });
 
     const response = await service.explain({
@@ -154,7 +166,7 @@ describe('AssistantService', () => {
     });
 
     expect(response.source).toBe('template');
-    expect(response.title).toBe('Explicación del Score Inversora');
+    expect(response.title).toBe('Explicacion del Score Inversora');
     expect(llmOrchestrator.generate).not.toHaveBeenCalled();
     expect(cacheRepository.save).toHaveBeenCalled();
   });
@@ -279,14 +291,14 @@ describe('AssistantService', () => {
 
     const response = await service.explain({
       surface: 'home',
-      message: 'ExplÃ­came la diferencia entre dos fondos indexados',
+      message: 'Explicame la diferencia entre dos fondos indexados',
     });
 
     expect(response.source).toBe('openai');
     expect(llmOrchestrator.generate).not.toHaveBeenCalled();
     expect(pythonAgentAssistant.generate).toHaveBeenCalledWith(
       expect.objectContaining({ surface: 'home', intent: 'compare' }),
-      'ExplÃ­came la diferencia entre dos fondos indexados',
+      'Explicame la diferencia entre dos fondos indexados',
     );
   });
 
@@ -307,7 +319,7 @@ describe('AssistantService', () => {
       source: 'qwen',
       cached: false,
       sessionId: 'session-1',
-      title: 'Cómo comparar fondos en Inversora',
+      title: 'Como comparar fondos en Inversora',
     });
     expect(cacheRepository.findValid).toHaveBeenCalled();
     expect(cacheRepository.save).not.toHaveBeenCalled();
@@ -367,6 +379,39 @@ describe('AssistantService', () => {
       expect.objectContaining({ sessionId: 'session-1' }),
       'general',
       recentMessages,
+    );
+  });
+
+  it('rejects chat when a bound session is used by another device', async () => {
+    conversationRepository.findDeviceIdBySessionId.mockResolvedValue(
+      'device-1',
+    );
+
+    await expect(
+      service.chat(
+        {
+          surface: 'home',
+          message: 'Pregunta general sobre fondos',
+          sessionId: 'session-1',
+        },
+        'device-2',
+      ),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('persists device id when a chat session includes a valid device token', async () => {
+    const response = await service.chat(
+      {
+        surface: 'home',
+        message: 'Que es el TER?',
+        sessionId: 'session-1',
+      },
+      'device-1',
+    );
+
+    expect(response.source).toBe('glossary');
+    expect(conversationRepository.saveTurn).toHaveBeenCalledWith(
+      expect.objectContaining({ deviceId: 'device-1' }),
     );
   });
 
@@ -461,8 +506,8 @@ describe('AssistantService', () => {
       fund: { isin: 'US78462F1030' },
     });
 
-    expect(compareResponse.title).toBe('Cómo comparar fondos en Inversora');
-    expect(scoreResponse.title).toBe('Explicación del Score Inversora');
+    expect(compareResponse.title).toBe('Como comparar fondos en Inversora');
+    expect(scoreResponse.title).toBe('Explicacion del Score Inversora');
   });
 
   it('capitalizes question titles for LLM responses', async () => {

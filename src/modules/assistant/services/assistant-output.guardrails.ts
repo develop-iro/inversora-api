@@ -3,21 +3,29 @@ import { Injectable } from '@nestjs/common';
 import type { AssistantExplainResponse } from '../entities/assistant-context.schema';
 
 const FORBIDDEN_OUTPUT_PATTERNS: readonly RegExp[] = [
-  /\bcompra(r|me|lo|a)\b/i,
-  /\bvende(r|me|lo|a)\b/i,
-  /\bsuscr[ií]b(e|ete|ir)\b/i,
-  /\bdeber[ií]as\s+invertir\b/i,
-  /\bdeber[ií]as\b/i,
+  /\bcompra(r|me|lo|la)?\b/i,
+  /\bvende(r|me|lo|la)?\b/i,
+  /\bsuscrib(e|ete|ir)\b/i,
+  /\bsuscribe(te)?\b/i,
+  /\binvierte?\s+en\b/i,
+  /\bdeberias\s+invertir\b/i,
+  /\bdebes\s+invertir\b/i,
   /\binvierte\s+(ahora|ya)\b/i,
   /\bte recomiendo\b/i,
-  /\bmejor opci[oó]n\b/i,
+  /\bmi recomendacion\b/i,
+  /\bmejor opcion\b/i,
   /\bideal para ti\b/i,
   /\bapuesta por\b/i,
+  /\bbuy\s+(this|it|now|the)\b/i,
+  /\bsell\s+(this|it|now|the)\b/i,
+  /\byou should\s+(buy|sell|invest)\b/i,
+  /\bi recommend\s+(buying|selling|investing)\b/i,
+  /\bbest option for you\b/i,
 ];
 
 /** Safe educational fallback when model output violates guardrails. */
 export const ASSISTANT_GUARDRAIL_FALLBACK_TEXT =
-  'Inversora comparte información educativa. No puedo dar instrucciones operativas sobre un fondo concreto. Puedo explicarte conceptos, métricas o el significado del score en lenguaje sencillo.';
+  'Inversora comparte informacion educativa. No puedo dar instrucciones operativas sobre un fondo concreto. Puedo explicarte conceptos, metricas o el significado del score en lenguaje sencillo.';
 
 const MAX_RESPONSE_LENGTH = 2_000;
 
@@ -34,7 +42,7 @@ export class AssistantOutputGuardrailsService {
    * @throws {Error} When output contains prohibited recommendation language.
    */
   sanitize(text: string): string {
-    const trimmed = text.trim();
+    const trimmed = normalizeForGuardrails(text.trim());
 
     if (trimmed.length === 0) {
       throw new Error('Assistant response was empty');
@@ -47,10 +55,13 @@ export class AssistantOutputGuardrailsService {
     }
 
     if (trimmed.length <= MAX_RESPONSE_LENGTH) {
-      return trimmed;
+      return text.trim();
     }
 
-    return `${trimmed.slice(0, MAX_RESPONSE_LENGTH - 1).trimEnd()}…`;
+    return `${text
+      .trim()
+      .slice(0, MAX_RESPONSE_LENGTH - 3)
+      .trimEnd()}...`;
   }
 
   /**
@@ -77,4 +88,12 @@ export class AssistantOutputGuardrailsService {
       text: this.sanitize(response.text),
     };
   }
+}
+
+function normalizeForGuardrails(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/[’']/g, '')
+    .toLowerCase();
 }

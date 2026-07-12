@@ -1,0 +1,22 @@
+process.env.NODE_ENV ??= 'test';
+process.env.PORT ??= '3000';
+process.env.POSTGRES_USER ??= 'inversora';
+process.env.POSTGRES_PASSWORD ??= 'inversora';
+process.env.POSTGRES_DB ??= 'inversora';
+process.env.POSTGRES_HOST ??= 'localhost';
+process.env.POSTGRES_PORT ??= '5432';
+process.env.DATABASE_URL ??=
+  'postgresql://inversora:inversora@localhost:5432/inversora';
+process.env.HTTP_CLIENT_TIMEOUT_MS ??= '10000';
+process.env.HTTP_CLIENT_MAX_RETRIES ??= '3';
+process.env.HTTP_CLIENT_RETRY_DELAY_MS ??= '500';
+process.env.FMP_API_KEY ??= 'integration-test-fmp-key';
+process.env.FMP_BASE_URL ??= 'https://financialmodelingprep.com';
+process.env.FMP_DATA_SOURCE ??= 'mock';
+process.env.FMP_SAVE_FIXTURES ??= 'false';
+process.env.SYNC_SCHEDULER_ENABLED ??= 'false';
+process.env.SYNC_CRON_EXPRESSION ??= '0 6 * * *';
+process.env.SYNC_FUND_SYMBOLS ??= '';
+process.env.SYNC_ETF_LIST_DISCOVERY ??= 'false';
+process.env.SYNC_DISCOVERY_MODE ??= 'all';
+process.env.SYNC_COMPOSITION_ENABLED ??= 'true';

@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   ServiceUnavailableException,
+  UnauthorizedException,
 } from '@nestjs/common';
 
 import { randomUUID } from 'crypto';
@@ -32,6 +33,8 @@ import { AssistantConversationRepository } from '../repositories/assistant-conve
 import { AssistantContextBuilderService } from './assistant-context.builder';
 
 import { AssistantLlmOrchestratorService } from './assistant-llm-orchestrator.service';
+
+import { AssistantLlmUsageService } from './assistant-llm-usage.service';
 
 import { AssistantOutputGuardrailsService } from './assistant-output.guardrails';
 
@@ -69,6 +72,8 @@ export class AssistantService {
     private readonly ragService: AssistantRagService,
 
     private readonly llmOrchestrator: AssistantLlmOrchestratorService,
+
+    private readonly llmUsage: AssistantLlmUsageService,
 
     private readonly guardrails: AssistantOutputGuardrailsService,
 
@@ -253,7 +258,10 @@ export class AssistantService {
 
    */
 
-  async chat(request: AssistantChatRequest): Promise<AssistantChatResponse> {
+  async chat(
+    request: AssistantChatRequest,
+    deviceId?: string,
+  ): Promise<AssistantChatResponse> {
     if (this.intentClassifier.isForbiddenInput(request.message)) {
       throw new BadRequestException(
         'SORA no puede ayudarte con recomendaciones de compra o venta ni modificar rankings.',
@@ -265,6 +273,8 @@ export class AssistantService {
     const sessionId = request.sessionId ?? this.createSessionId();
 
     const locale = request.locale ?? 'es';
+
+    await this.assertSessionDeviceBinding(sessionId, deviceId);
 
     const requestedFundIsins = this.getRequestedFundIsins(request);
 
@@ -312,6 +322,8 @@ export class AssistantService {
         runtime: this.config.assistantRuntime,
 
         relatedFundIsins: requestedFundIsins,
+
+        deviceId,
       });
 
       return response;
@@ -374,6 +386,8 @@ export class AssistantService {
           runtime: this.config.assistantRuntime,
 
           relatedFundIsins: requestedFundIsins,
+
+          deviceId,
         });
 
         return response;
@@ -429,6 +443,8 @@ export class AssistantService {
           runtime: this.config.assistantRuntime,
 
           relatedFundIsins: requestedFundIsins,
+
+          deviceId,
         });
 
         return response;
@@ -473,6 +489,8 @@ export class AssistantService {
       runtime: this.config.assistantRuntime,
 
       relatedFundIsins: requestedFundIsins,
+
+      deviceId,
     });
 
     return response;
@@ -490,6 +508,8 @@ export class AssistantService {
     promptVersion: string,
   ): Promise<AssistantExplainResponse> {
     if (this.config.assistantRuntime === 'python-agent') {
+      await this.llmUsage.reserveCall();
+
       const generatedText = await this.pythonAgentAssistant.generate(
         context,
 
@@ -566,13 +586,31 @@ export class AssistantService {
     return `sora_${randomUUID()}`;
   }
 
+  private async assertSessionDeviceBinding(
+    sessionId: string,
+    deviceId: string | undefined,
+  ): Promise<void> {
+    const boundDeviceId =
+      await this.conversationRepository.findDeviceIdBySessionId(sessionId);
+
+    if (boundDeviceId === null) {
+      return;
+    }
+
+    if (deviceId === undefined || boundDeviceId !== deviceId) {
+      throw new UnauthorizedException(
+        'Esta conversacion de SORA pertenece a otro dispositivo.',
+      );
+    }
+  }
+
   private buildTitle(message: string, intent: string): string {
     if (intent === 'compare') {
-      return 'Cómo comparar fondos en Inversora';
+      return 'Como comparar fondos en Inversora';
     }
 
     if (intent === 'explain_score') {
-      return 'Explicación del Score Inversora';
+      return 'Explicacion del Score Inversora';
     }
 
     const trimmed = message.trim();

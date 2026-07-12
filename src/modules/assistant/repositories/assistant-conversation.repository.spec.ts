@@ -5,11 +5,13 @@ type ConversationUpsertInput = {
   where: { sessionId: string };
   create: {
     sessionId: string;
+    deviceId?: string;
     surface: string;
     locale: string;
     lastMessageAt: Date;
   };
   update: {
+    deviceId?: string;
     surface: string;
     locale: string;
     lastMessageAt: Date;
@@ -18,7 +20,7 @@ type ConversationUpsertInput = {
 
 type ConversationFindUniqueInput = {
   where: { sessionId: string };
-  include: {
+  include?: {
     messages: {
       orderBy: { createdAt: 'desc' };
       take: number;
@@ -30,6 +32,7 @@ type ConversationFindUniqueInput = {
       };
     };
   };
+  select?: { deviceId: true };
 };
 
 type MessageCreateInput = {
@@ -120,7 +123,7 @@ describe('AssistantConversationRepository', () => {
       relatedFundIsins: ['US78462F1030', 'US46090E1038'],
       response: {
         text: 'Comparacion educativa.',
-        title: 'Cómo comparar fondos en Inversora',
+        title: 'Como comparar fondos en Inversora',
         source: 'openai',
         cached: false,
         disclaimer: 'Disclaimer',
@@ -165,6 +168,32 @@ describe('AssistantConversationRepository', () => {
         promptVersion: 'sora-v1',
       },
     });
+  });
+
+  it('binds a conversation to the provided device id', async () => {
+    await repository.saveTurn({
+      sessionId: 'session-1',
+      surface: 'home',
+      locale: 'es',
+      userMessage: 'Que es el TER?',
+      intent: 'glossary',
+      runtime: 'nestjs',
+      relatedFundIsins: [],
+      deviceId: 'device-1',
+      response: {
+        text: 'Respuesta educativa.',
+        source: 'glossary',
+        cached: false,
+        disclaimer: 'Disclaimer',
+        promptVersion: 'sora-v1',
+        sessionId: 'session-1',
+      },
+    });
+
+    const input = prisma.assistantConversation.upsert.mock.calls[0]?.[0];
+
+    expect(input?.create.deviceId).toBe('device-1');
+    expect(input?.update.deviceId).toBe('device-1');
   });
 
   it('returns an empty list when limit is zero or negative', async () => {
@@ -234,6 +263,20 @@ describe('AssistantConversationRepository', () => {
           },
         },
       },
+    });
+  });
+
+  it('returns the device id bound to a session', async () => {
+    prisma.assistantConversation.findUnique.mockResolvedValue({
+      deviceId: 'device-1',
+    } as never);
+
+    await expect(repository.findDeviceIdBySessionId('session-1')).resolves.toBe(
+      'device-1',
+    );
+    expect(prisma.assistantConversation.findUnique).toHaveBeenCalledWith({
+      where: { sessionId: 'session-1' },
+      select: { deviceId: true },
     });
   });
 });

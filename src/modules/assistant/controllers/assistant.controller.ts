@@ -2,8 +2,10 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Headers,
   Post,
   ServiceUnavailableException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
 import {
@@ -32,13 +34,18 @@ import {
 } from '../entities/assistant-context.schema';
 import { AssistantThrottle } from '../decorators/assistant-throttle.decorator';
 import { AssistantService } from '../services/assistant.service';
+import { isDeviceTokenFormatValid } from '../../anonymous-devices/entities/device-token.utils';
+import { AnonymousDevicesRepository } from '../../anonymous-devices/repositories/anonymous-devices.repository';
 
 @ApiTags('assistant')
 @Controller('assistant')
 @SkipThrottle({ default: true })
 @AssistantThrottle()
 export class AssistantController {
-  constructor(private readonly assistantService: AssistantService) {}
+  constructor(
+    private readonly assistantService: AssistantService,
+    private readonly anonymousDevicesRepository: AnonymousDevicesRepository,
+  ) {}
 
   @Post('explain')
   @ApiOperation({
@@ -109,10 +116,12 @@ export class AssistantController {
   })
   async chat(
     @Body() body: AssistantChatRequestDto,
+    @Headers('x-device-token') deviceToken?: string,
   ): Promise<AssistantChatResponse> {
     try {
       const request = parseAssistantChatRequest(body);
-      return await this.assistantService.chat(request);
+      const deviceId = await this.resolveOptionalDeviceId(deviceToken);
+      return await this.assistantService.chat(request, deviceId);
     } catch (error: unknown) {
       if (error instanceof ZodError) {
         throw new BadRequestException(formatZodError(error));
@@ -128,12 +137,33 @@ export class AssistantController {
 
       if (error instanceof Error && error.message.includes('prohibited')) {
         throw new BadRequestException(
-          'SORA no puede responder con lenguaje de recomendaciÃ³n directa.',
+          'SORA no puede responder con lenguaje de recomendacion directa.',
         );
       }
 
       throw error;
     }
+  }
+
+  private async resolveOptionalDeviceId(
+    deviceToken: string | undefined,
+  ): Promise<string | undefined> {
+    if (deviceToken === undefined || deviceToken.trim().length === 0) {
+      return undefined;
+    }
+
+    if (!isDeviceTokenFormatValid(deviceToken)) {
+      throw new UnauthorizedException('Device token is invalid.');
+    }
+
+    const device =
+      await this.anonymousDevicesRepository.findByToken(deviceToken);
+
+    if (device === null) {
+      throw new UnauthorizedException('Device token is invalid.');
+    }
+
+    return device.id;
   }
 }
 
