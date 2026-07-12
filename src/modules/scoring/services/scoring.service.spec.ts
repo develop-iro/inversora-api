@@ -186,6 +186,21 @@ describe('ScoringService', () => {
     expect(scores.get(fund.id)).toBe(Math.round(scores.get(fund.id)!));
   });
 
+  it('should return empty scores when no fund ids are requested', async () => {
+    await expect(service.calculateScoresForFundIds([])).resolves.toEqual(
+      new Map(),
+    );
+    expect(fundsRepository.findAll).not.toHaveBeenCalled();
+  });
+
+  it('should return empty scores when requested fund ids are not found', async () => {
+    fundsRepository.findAll.mockResolvedValueOnce([fund]);
+
+    await expect(
+      service.calculateScoresForFundIds(['missing-fund-id']),
+    ).resolves.toEqual(new Map());
+  });
+
   it('should skip recalculation when there are no funds', async () => {
     fundsRepository.findAll.mockResolvedValueOnce([]);
 
