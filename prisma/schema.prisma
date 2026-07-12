@@ -243,9 +243,30 @@ model AnonymousDevice {
   lastSeenAt   DateTime                     @updatedAt
   profile      AnonymousEducationalProfile?
   analytics    AnalyticsEvent[]
+  feedback     ProductFeedback[]
 
   @@index([lastSeenAt])
   @@map("anonymous_devices")
+}
+
+/// Anonymous product feedback submitted from the mobile app.
+model ProductFeedback {
+  id          String           @id @default(cuid())
+  clarity     String
+  wouldReturn String
+  message     String?
+  surface     String           @default("feedback")
+  deviceId    String?
+  appEnv      String?
+  appVersion  String?
+  createdAt   DateTime         @default(now())
+  device      AnonymousDevice? @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([clarity, createdAt])
+  @@index([wouldReturn, createdAt])
+  @@index([deviceId, createdAt])
+  @@map("product_feedback")
 }
 
 /// Derived orientative educational profile synced from the mobile app.
