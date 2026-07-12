@@ -5,6 +5,9 @@
   "author": "Ivan Romero",
   "private": true,
   "license": "SEE LICENSE IN LICENSE.md",
+  "overrides": {
+    "@hono/node-server": "1.19.13"
+  },
   "scripts": {
     "build": "prisma generate && nest build",
     "postinstall": "prisma generate",
@@ -56,6 +59,7 @@
     "sync:pro": "node scripts/run-with-profile.cjs pro node scripts/ensure-prisma-client.cjs && node scripts/run-with-profile.cjs pro node -r ./scripts/preload-env.cjs -r ts-node/register -r tsconfig-paths/register src/cli/run-fund-sync.ts --symbols SPY --no-composition",
     "test:env": "node --test scripts/load-env.spec.cjs",
     "security:verify-local": "node scripts/verify-local-security.cjs",
+    "security:check-encoding": "node scripts/check-mojibake.cjs",
     "db:count-funds": "node scripts/count-funds.mjs",
     "db:quarantine-breakdown": "node scripts/quarantine-breakdown.mjs",
     "prepare": "node scripts/prepare-husky.cjs"

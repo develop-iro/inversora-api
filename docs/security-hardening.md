@@ -11,6 +11,7 @@ Operational checklist and conventions for securing **inversora-api** and the **i
 - [ ] Strong unique values for `ADMIN_API_KEY`, `ASSISTANT_INTERNAL_API_KEY`, `ASSISTANT_AGENT_API_KEY` (min 16 chars for agent key)
 - [ ] `ASSISTANT_AGENT` port **8001** is **not** exposed publicly; reachable only from the NestJS service network
 - [ ] `THROTTLE_REDIS_URL` configured when running multiple API replicas
+- [ ] `ASSISTANT_DAILY_LLM_LIMIT` and `ASSISTANT_MONTHLY_LLM_LIMIT` configured when SORA is public
 - [ ] Railway/proxy logs do not capture full outbound URLs with `apikey` query parameters
 - [ ] Secrets live in the platform secret store (Railway variables), not in committed `env/*.env` overrides
 
@@ -32,11 +33,16 @@ Operational checklist and conventions for securing **inversora-api** and the **i
 | Variable | Purpose | Default |
 |----------|---------|---------|
 | `SWAGGER_ENABLED` | OpenAPI UI at `/api/docs` | `true` local/qa, `false` pro |
+| `API_BODY_LIMIT` | Max JSON / URL-encoded request body size | `100kb` |
 | `THROTTLE_TTL_SECONDS` | Rate-limit window | `60` |
 | `THROTTLE_LIMIT` | Public routes per IP/window | `120` |
 | `THROTTLE_ASSISTANT_LIMIT` | SORA routes per IP/window | `30` |
+| `THROTTLE_ANALYTICS_LIMIT` | Analytics events per IP/window | `60` |
+| `THROTTLE_DEVICE_REGISTER_LIMIT` | Anonymous device registrations per IP/window | `10` |
 | `THROTTLE_REDIS_URL` | Optional distributed throttler storage | unset |
 | `ASSISTANT_AGENT_API_KEY` | Auth for Python `/agent/respond` | required when agent runtime enabled |
+| `ASSISTANT_DAILY_LLM_LIMIT` | Daily LLM calls accepted by SORA; `0` disables the guard | `0` |
+| `ASSISTANT_MONTHLY_LLM_LIMIT` | Monthly LLM calls accepted by SORA; `0` disables the guard | `0` |
 
 ### Mobile (`invesora`)
 

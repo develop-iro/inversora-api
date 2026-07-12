@@ -10,6 +10,7 @@ import type {
 type AssistantConversationRecord = {
   id: string;
   sessionId: string;
+  deviceId: string | null;
 };
 
 type AssistantMessageRecord = {
@@ -24,11 +25,13 @@ type AssistantConversationDelegate = {
     where: { sessionId: string };
     create: {
       sessionId: string;
+      deviceId?: string;
       surface: AssistantSurface;
       locale: string;
       lastMessageAt: Date;
     };
     update: {
+      deviceId?: string;
       surface: AssistantSurface;
       locale: string;
       lastMessageAt: Date;
@@ -36,8 +39,8 @@ type AssistantConversationDelegate = {
   }): Promise<AssistantConversationRecord>;
   findUnique(input: {
     where: { sessionId: string };
-    include: {
-      messages: {
+    include?: {
+      messages?: {
         orderBy: { createdAt: 'desc' };
         take: number;
         select: {
@@ -48,8 +51,11 @@ type AssistantConversationDelegate = {
         };
       };
     };
+    select?: { deviceId: true };
   }): Promise<
-    | (AssistantConversationRecord & { messages: AssistantMessageRecord[] })
+    | (Partial<AssistantConversationRecord> & {
+        messages?: AssistantMessageRecord[];
+      })
     | null
   >;
 };
@@ -85,6 +91,7 @@ export type SaveAssistantChatTurnInput = {
   response: AssistantChatResponse;
   runtime: string;
   relatedFundIsins: readonly string[];
+  deviceId?: string;
 };
 
 /** Recent chat message projected into the assistant prompt context. */
@@ -137,7 +144,7 @@ export class AssistantConversationRepository {
       return [];
     }
 
-    return [...conversation.messages]
+    return [...(conversation.messages ?? [])]
       .reverse()
       .map((message): AssistantRecentMessage => ({
         role: message.role,
@@ -145,6 +152,19 @@ export class AssistantConversationRepository {
         intent: message.intent ?? undefined,
         createdAt: message.createdAt.toISOString(),
       }));
+  }
+
+  /**
+   * Returns the device currently bound to a conversation, if any.
+   */
+  async findDeviceIdBySessionId(sessionId: string): Promise<string | null> {
+    const prisma = this.prisma as unknown as AssistantConversationPrismaClient;
+    const conversation = await prisma.assistantConversation.findUnique({
+      where: { sessionId },
+      select: { deviceId: true },
+    });
+
+    return conversation?.deviceId ?? null;
   }
 
   /**
@@ -159,11 +179,13 @@ export class AssistantConversationRepository {
       where: { sessionId: input.sessionId },
       create: {
         sessionId: input.sessionId,
+        ...(input.deviceId !== undefined ? { deviceId: input.deviceId } : {}),
         surface: input.surface,
         locale: input.locale,
         lastMessageAt: now,
       },
       update: {
+        ...(input.deviceId !== undefined ? { deviceId: input.deviceId } : {}),
         surface: input.surface,
         locale: input.locale,
         lastMessageAt: now,

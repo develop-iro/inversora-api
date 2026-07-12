@@ -29,6 +29,16 @@ export function buildThrottlerModuleOptions(
         ttl: ttlMs,
         limit: config.throttleAssistantLimit,
       },
+      {
+        name: 'analytics',
+        ttl: ttlMs,
+        limit: config.throttleAnalyticsLimit,
+      },
+      {
+        name: 'device-register',
+        ttl: ttlMs,
+        limit: config.throttleDeviceRegisterLimit,
+      },
     ],
     storage,
   };

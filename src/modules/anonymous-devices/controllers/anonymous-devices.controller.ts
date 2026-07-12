@@ -15,6 +15,7 @@ import {
 import type { AnonymousDeviceRequestContext } from '../guards/device-token.guard';
 import { DeviceTokenGuard } from '../guards/device-token.guard';
 import { AnonymousDevicesService } from '../services/anonymous-devices.service';
+import { DeviceRegisterThrottle } from '../../../shared/http/named-throttle.decorator';
 
 @ApiTags('anonymous-devices')
 @Controller('anonymous-devices')
@@ -24,6 +25,7 @@ export class AnonymousDevicesController {
   ) {}
 
   @Post('register')
+  @DeviceRegisterThrottle()
   @ApiOperation({ summary: 'Register an anonymous mobile device installation' })
   @ApiCreatedResponse({ description: 'Device registered with opaque token.' })
   register(@Body() body: unknown) {

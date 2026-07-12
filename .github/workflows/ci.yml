@@ -32,6 +32,9 @@ jobs:
       - name: Run ESLint
         run: npm run lint:ci
 
+      - name: Check text encoding
+        run: npm run security:check-encoding
+
   dependency-audit:
     name: Dependency audit
     runs-on: ubuntu-latest
@@ -106,7 +109,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: '3.12'
 
       - name: Install agent service dependencies
         working-directory: agent-service
@@ -197,11 +200,66 @@ jobs:
       - name: Run integration tests
         run: npm run test:integration:ci
 
+  e2e-tests:
+    name: E2E tests
+    needs: [unit-tests, integration-tests]
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: inversora
+          POSTGRES_PASSWORD: inversora
+          POSTGRES_DB: inversora
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U inversora -d inversora"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      NODE_ENV: test
+      PORT: 3000
+      DATABASE_URL: postgresql://inversora:inversora@localhost:5432/inversora
+      POSTGRES_USER: inversora
+      POSTGRES_PASSWORD: inversora
+      POSTGRES_DB: inversora
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      FMP_API_KEY: integration-test-fmp-key
+      FMP_DATA_SOURCE: mock
+      FMP_SAVE_FIXTURES: false
+      SYNC_SCHEDULER_ENABLED: false
+      SYNC_CRON_EXPRESSION: '0 6 * * *'
+      SYNC_FUND_SYMBOLS: ''
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply database migrations
+        run: npm run prisma:migrate:deploy
+
+      - name: Run E2E tests
+        run: npm run test:e2e:ci
+
   # ── Phase 3: Report ─────────────────────────────────────────────────────────
 
   report:
     name: Test report
-    needs: [agent-service-tests, unit-tests, integration-tests]
+    needs: [agent-service-tests, unit-tests, integration-tests, e2e-tests]
     if: always() && !cancelled()
     runs-on: ubuntu-latest
 
@@ -217,6 +275,7 @@ jobs:
         env:
           UNIT_RESULT: ${{ needs.unit-tests.result }}
           INTEGRATION_RESULT: ${{ needs.integration-tests.result }}
+          E2E_RESULT: ${{ needs.e2e-tests.result }}
           AGENT_RESULT: ${{ needs.agent-service-tests.result }}
         run: |
           {
@@ -226,6 +285,7 @@ jobs:
             echo "| --- | --- |"
             echo "| Unit tests | ${UNIT_RESULT} |"
             echo "| Integration tests | ${INTEGRATION_RESULT} |"
+            echo "| E2E tests | ${E2E_RESULT} |"
             echo "| SORA agent service | ${AGENT_RESULT} |"
             echo ""
           } >> "${GITHUB_STEP_SUMMARY}"
@@ -249,5 +309,5 @@ jobs:
           fi
 
       - name: Enforce test job results
-        if: needs.agent-service-tests.result != 'success' || needs.unit-tests.result != 'success' || needs.integration-tests.result != 'success'
+        if: needs.agent-service-tests.result != 'success' || needs.unit-tests.result != 'success' || needs.integration-tests.result != 'success' || needs.e2e-tests.result != 'success'
         run: exit 1

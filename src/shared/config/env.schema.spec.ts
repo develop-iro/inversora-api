@@ -17,6 +17,7 @@ describe('validateEnv', () => {
     expect(validateEnv(validEnv)).toEqual({
       APP_ENV: 'local',
       PORT: 3000,
+      API_BODY_LIMIT: '100kb',
       NODE_ENV: 'development',
       POSTGRES_USER: 'inversora',
       POSTGRES_PASSWORD: 'inversora',
@@ -57,10 +58,14 @@ describe('validateEnv', () => {
       ASSISTANT_RATE_LIMIT_WINDOW_SECONDS: 60,
       ASSISTANT_PROMPT_VERSION: 'sora-v2',
       ASSISTANT_CACHE_TTL_DAYS: 90,
+      ASSISTANT_DAILY_LLM_LIMIT: 0,
+      ASSISTANT_MONTHLY_LLM_LIMIT: 0,
       SWAGGER_ENABLED: true,
       THROTTLE_TTL_SECONDS: 60,
       THROTTLE_LIMIT: 120,
       THROTTLE_ASSISTANT_LIMIT: 30,
+      THROTTLE_ANALYTICS_LIMIT: 60,
+      THROTTLE_DEVICE_REGISTER_LIMIT: 10,
     });
   });
 
@@ -77,6 +82,7 @@ describe('validateEnv', () => {
     expect(validateEnv(required)).toEqual({
       APP_ENV: 'local',
       PORT: 3000,
+      API_BODY_LIMIT: '100kb',
       NODE_ENV: 'development',
       POSTGRES_USER: 'inversora',
       POSTGRES_PASSWORD: 'inversora',
@@ -117,10 +123,14 @@ describe('validateEnv', () => {
       ASSISTANT_RATE_LIMIT_WINDOW_SECONDS: 60,
       ASSISTANT_PROMPT_VERSION: 'sora-v2',
       ASSISTANT_CACHE_TTL_DAYS: 90,
+      ASSISTANT_DAILY_LLM_LIMIT: 0,
+      ASSISTANT_MONTHLY_LLM_LIMIT: 0,
       SWAGGER_ENABLED: true,
       THROTTLE_TTL_SECONDS: 60,
       THROTTLE_LIMIT: 120,
       THROTTLE_ASSISTANT_LIMIT: 30,
+      THROTTLE_ANALYTICS_LIMIT: 60,
+      THROTTLE_DEVICE_REGISTER_LIMIT: 10,
     });
   });
 

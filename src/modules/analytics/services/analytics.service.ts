@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 
+import { AppConfigService } from '../../../shared/config/config.service';
 import type { AnalyticsEvent } from '../entities/analytics-event.schema';
 import { AnalyticsEventsRepository } from '../repositories/analytics-events.repository';
 
@@ -12,6 +13,7 @@ export class AnalyticsService {
 
   constructor(
     private readonly analyticsEventsRepository: AnalyticsEventsRepository,
+    private readonly config: AppConfigService,
   ) {}
 
   /**
@@ -20,10 +22,19 @@ export class AnalyticsService {
    * @param event - Validated analytics payload.
    */
   recordEvent(event: AnalyticsEvent): void {
+    const logPayload = this.config.isProductionDeployment
+      ? {
+          event: event.event,
+          surface: event.surface,
+          appEnv: event.appEnv,
+          appVersion: event.appVersion,
+        }
+      : event;
+
     this.logger.log(
       JSON.stringify({
         type: 'analytics_event',
-        ...event,
+        ...logPayload,
       }),
     );
 

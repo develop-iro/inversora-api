@@ -13,6 +13,7 @@ import type { AssistantRagChunk } from '../entities/assistant-rag.data';
 import { AssistantConfidenceService } from './assistant-confidence.service';
 import type { AssistantPromptContext } from './assistant-context.builder';
 import { AssistantOutputGuardrailsService } from './assistant-output.guardrails';
+import { AssistantLlmUsageService } from './assistant-llm-usage.service';
 import { LlmChatCompletionService } from './llm-chat-completion.service';
 
 export type AssistantLlmGenerationResult = {
@@ -33,6 +34,7 @@ export class AssistantLlmOrchestratorService {
     private readonly llmCompletion: LlmChatCompletionService,
     private readonly confidenceService: AssistantConfidenceService,
     private readonly guardrails: AssistantOutputGuardrailsService,
+    private readonly usage: AssistantLlmUsageService,
   ) {}
 
   /**
@@ -59,6 +61,8 @@ export class AssistantLlmOrchestratorService {
       JSON.stringify(context, null, 2),
       ragContext.length > 0 ? ragContext : undefined,
     );
+
+    await this.usage.reserveCall();
 
     try {
       const primaryText = await this.llmCompletion.complete({
@@ -144,6 +148,8 @@ export class AssistantLlmOrchestratorService {
         'El asistente SORA no está disponible en este entorno.',
       );
     }
+
+    await this.usage.reserveCall();
 
     try {
       const fallbackText = await this.llmCompletion.complete({

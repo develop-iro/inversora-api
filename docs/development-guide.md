@@ -445,6 +445,7 @@ npm run format:ci     # verificar formato sin modificar
 npm run build
 npm run test
 npm run test:integration
+npm run test:e2e
 ```
 
 - [ ] Tests pasan localmente.

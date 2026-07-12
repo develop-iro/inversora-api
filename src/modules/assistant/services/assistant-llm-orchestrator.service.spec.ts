@@ -5,6 +5,7 @@ import { AppConfigService } from '../../../shared/config/config.service';
 import type { AssistantPromptContext } from './assistant-context.builder';
 import { AssistantConfidenceService } from './assistant-confidence.service';
 import { AssistantOutputGuardrailsService } from './assistant-output.guardrails';
+import { AssistantLlmUsageService } from './assistant-llm-usage.service';
 import type { LlmChatCompletionInput } from './llm-chat-completion.service';
 import { AssistantLlmOrchestratorService } from './assistant-llm-orchestrator.service';
 import { LlmChatCompletionService } from './llm-chat-completion.service';
@@ -12,6 +13,7 @@ import { LlmChatCompletionService } from './llm-chat-completion.service';
 describe('AssistantLlmOrchestratorService', () => {
   let service: AssistantLlmOrchestratorService;
   let llmCompletion: { complete: jest.Mock };
+  let usage: { reserveCall: jest.Mock };
   let config: {
     assistantLlmPrimaryApiKey: string;
     assistantLlmPrimaryBaseUrl?: string;
@@ -32,6 +34,9 @@ describe('AssistantLlmOrchestratorService', () => {
   beforeEach(async () => {
     llmCompletion = {
       complete: jest.fn(),
+    };
+    usage = {
+      reserveCall: jest.fn().mockResolvedValue(undefined),
     };
     config = {
       assistantLlmPrimaryApiKey: 'primary-key',
@@ -55,6 +60,10 @@ describe('AssistantLlmOrchestratorService', () => {
           provide: AppConfigService,
           useValue: config,
         },
+        {
+          provide: AssistantLlmUsageService,
+          useValue: usage,
+        },
       ],
     }).compile();
 
@@ -71,6 +80,7 @@ describe('AssistantLlmOrchestratorService', () => {
     expect(result.source).toBe('qwen');
     expect(result.model).toBe('qwen-2.5-7b-instruct');
     expect(llmCompletion.complete).toHaveBeenCalledTimes(1);
+    expect(usage.reserveCall).toHaveBeenCalledTimes(1);
   });
 
   it('falls back to OpenAI when primary response is too short', async () => {
@@ -85,6 +95,7 @@ describe('AssistantLlmOrchestratorService', () => {
     expect(result.source).toBe('openai-fallback');
     expect(result.fallbackReason).toBe('low_confidence');
     expect(llmCompletion.complete).toHaveBeenCalledTimes(2);
+    expect(usage.reserveCall).toHaveBeenCalledTimes(2);
   });
 
   it('marks fallback reason as guardrails when primary output is blocked', async () => {

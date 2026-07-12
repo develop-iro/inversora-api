@@ -12,6 +12,10 @@ export const envSchema = z
   .object({
     APP_ENV: z.enum(['local', 'qa', 'pro']).default('local'),
     PORT: z.coerce.number().int().positive().default(3000),
+    API_BODY_LIMIT: z
+      .string()
+      .regex(/^\d+(b|kb|mb)$/i, 'API_BODY_LIMIT must be like 100kb or 1mb')
+      .default('100kb'),
     NODE_ENV: z
       .enum(['development', 'production', 'test'])
       .default('development'),
@@ -117,6 +121,12 @@ export const envSchema = z
       .default(60),
     ASSISTANT_PROMPT_VERSION: z.string().min(1).default('sora-v2'),
     ASSISTANT_CACHE_TTL_DAYS: z.coerce.number().int().positive().default(90),
+    ASSISTANT_DAILY_LLM_LIMIT: z.coerce.number().int().nonnegative().default(0),
+    ASSISTANT_MONTHLY_LLM_LIMIT: z.coerce
+      .number()
+      .int()
+      .nonnegative()
+      .default(0),
     BRANDFETCH_CLIENT_ID: z.string().min(1).optional(),
     SWAGGER_ENABLED: z
       .enum(['true', 'false'])
@@ -125,6 +135,12 @@ export const envSchema = z
     THROTTLE_TTL_SECONDS: z.coerce.number().int().positive().default(60),
     THROTTLE_LIMIT: z.coerce.number().int().positive().default(120),
     THROTTLE_ASSISTANT_LIMIT: z.coerce.number().int().positive().default(30),
+    THROTTLE_ANALYTICS_LIMIT: z.coerce.number().int().positive().default(60),
+    THROTTLE_DEVICE_REGISTER_LIMIT: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(10),
     THROTTLE_REDIS_URL: z.string().url().optional(),
     SENTRY_DSN: z.string().url().optional(),
   })

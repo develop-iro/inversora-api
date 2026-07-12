@@ -15,6 +15,11 @@ export class AppConfigService {
     return this.configService.get('PORT', { infer: true });
   }
 
+  /** Maximum request body size accepted by JSON and URL-encoded parsers. */
+  get apiBodyLimit(): string {
+    return this.configService.get('API_BODY_LIMIT', { infer: true });
+  }
+
   /** Application runtime environment. */
   get nodeEnv(): Env['NODE_ENV'] {
     return this.configService.get('NODE_ENV', { infer: true });
@@ -317,6 +322,20 @@ export class AppConfigService {
     return this.configService.get('ASSISTANT_CACHE_TTL_DAYS', { infer: true });
   }
 
+  /** Maximum LLM calls accepted per UTC day; 0 disables the guard. */
+  get assistantDailyLlmLimit(): number {
+    return this.configService.get('ASSISTANT_DAILY_LLM_LIMIT', {
+      infer: true,
+    });
+  }
+
+  /** Maximum LLM calls accepted per UTC month; 0 disables the guard. */
+  get assistantMonthlyLlmLimit(): number {
+    return this.configService.get('ASSISTANT_MONTHLY_LLM_LIMIT', {
+      infer: true,
+    });
+  }
+
   /** Brandfetch Logo API client ID for fund manager logo URLs. */
   get brandfetchClientId(): string | undefined {
     return this.configService.get('BRANDFETCH_CLIENT_ID', { infer: true });
@@ -340,6 +359,18 @@ export class AppConfigService {
   /** Maximum requests per IP per window for SORA assistant routes. */
   get throttleAssistantLimit(): number {
     return this.configService.get('THROTTLE_ASSISTANT_LIMIT', { infer: true });
+  }
+
+  /** Maximum analytics ingestion requests per IP/window. */
+  get throttleAnalyticsLimit(): number {
+    return this.configService.get('THROTTLE_ANALYTICS_LIMIT', { infer: true });
+  }
+
+  /** Maximum anonymous device registration requests per IP/window. */
+  get throttleDeviceRegisterLimit(): number {
+    return this.configService.get('THROTTLE_DEVICE_REGISTER_LIMIT', {
+      infer: true,
+    });
   }
 
   /** Optional Redis URL for distributed rate-limit storage. */

@@ -201,13 +201,16 @@ model AssistantResponseCache {
 model AssistantConversation {
   id            String             @id @default(cuid())
   sessionId     String             @unique
+  deviceId      String?
   surface       String
   locale        String             @default("es")
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
   lastMessageAt DateTime           @default(now())
   messages      AssistantMessage[]
+  device        AnonymousDevice?   @relation(fields: [deviceId], references: [id], onDelete: SetNull)
 
+  @@index([deviceId, lastMessageAt])
   @@index([lastMessageAt])
   @@map("assistant_conversations")
 }
@@ -244,9 +247,21 @@ model AnonymousDevice {
   profile      AnonymousEducationalProfile?
   analytics    AnalyticsEvent[]
   feedback     ProductFeedback[]
+  assistantConversations AssistantConversation[]
 
   @@index([lastSeenAt])
   @@map("anonymous_devices")
+}
+
+/// Aggregate counters used to fail safely when LLM usage exceeds configured budgets.
+model AssistantLlmUsageCounter {
+  id        String   @id @default(cuid())
+  periodKey String   @unique
+  count     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("assistant_llm_usage_counters")
 }
 
 /// Anonymous product feedback submitted from the mobile app.

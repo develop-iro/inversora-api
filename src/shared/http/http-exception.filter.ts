@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
+import { ZodError, treeifyError } from 'zod';
 
 import type { AppConfigService } from '../config/config.service';
 
@@ -40,6 +41,16 @@ export class GlobalHttpExceptionFilter implements ExceptionFilter {
     const request = context.getRequest<Request>();
     const isProductionDeployment = this.config.isProductionDeployment;
 
+    if (exception instanceof ZodError) {
+      response.status(HttpStatus.BAD_REQUEST).json({
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'Invalid request payload',
+        path: request.path,
+        ...(isProductionDeployment ? {} : { issues: treeifyError(exception) }),
+      } satisfies ErrorResponseBody);
+      return;
+    }
+
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
@@ -58,6 +69,19 @@ export class GlobalHttpExceptionFilter implements ExceptionFilter {
       }
 
       response.status(status).json(body);
+      return;
+    }
+
+    const externalStatus = this.getExternalErrorStatus(exception);
+    if (externalStatus !== null) {
+      response.status(externalStatus).json({
+        statusCode: externalStatus,
+        message:
+          externalStatus === Number(HttpStatus.PAYLOAD_TOO_LARGE)
+            ? 'Request body is too large'
+            : 'Request failed',
+        path: request.path,
+      } satisfies ErrorResponseBody);
       return;
     }
 
@@ -119,5 +143,29 @@ export class GlobalHttpExceptionFilter implements ExceptionFilter {
         typeof payload.context === 'string' ? payload.context : undefined,
       path,
     };
+  }
+
+  private getExternalErrorStatus(exception: unknown): number | null {
+    if (typeof exception !== 'object' || exception === null) {
+      return null;
+    }
+
+    const status =
+      'statusCode' in exception
+        ? exception.statusCode
+        : 'status' in exception
+          ? exception.status
+          : undefined;
+
+    if (
+      typeof status === 'number' &&
+      status >= 400 &&
+      status < 500 &&
+      Number.isInteger(status)
+    ) {
+      return status;
+    }
+
+    return null;
   }
 }

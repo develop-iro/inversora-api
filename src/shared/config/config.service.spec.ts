@@ -35,6 +35,7 @@ describe('AppConfigService', () => {
 
   it('should expose typed environment values', () => {
     expect(service.port).toBe(3000);
+    expect(service.apiBodyLimit).toBe('100kb');
     expect(service.appEnv).toBe('local');
     expect(service.isProductionDeployment).toBe(false);
     expect(service.isQaDeployment).toBe(false);
@@ -188,6 +189,8 @@ describe('AppConfigService', () => {
     expect(service.openAiModel).toBe('gpt-4o-mini');
     expect(service.assistantPromptVersion).toBe('sora-v2');
     expect(service.assistantCacheTtlDays).toBe(30);
+    expect(service.assistantDailyLlmLimit).toBe(0);
+    expect(service.assistantMonthlyLlmLimit).toBe(0);
     expect(service.assistantRateLimitMaxRequests).toBe(30);
     expect(service.assistantRateLimitWindowSeconds).toBe(60);
   });
@@ -236,6 +239,8 @@ describe('AppConfigService', () => {
                 THROTTLE_TTL_SECONDS: '30',
                 THROTTLE_LIMIT: '90',
                 THROTTLE_ASSISTANT_LIMIT: '15',
+                THROTTLE_ANALYTICS_LIMIT: '40',
+                THROTTLE_DEVICE_REGISTER_LIMIT: '8',
                 THROTTLE_REDIS_URL: 'redis://localhost:6379',
                 ASSISTANT_AGENT_API_KEY: 'change-me-agent-key',
                 BRANDFETCH_CLIENT_ID: 'brandfetch-id',
@@ -251,6 +256,8 @@ describe('AppConfigService', () => {
     expect(service.throttleTtlSeconds).toBe(30);
     expect(service.throttleLimit).toBe(90);
     expect(service.throttleAssistantLimit).toBe(15);
+    expect(service.throttleAnalyticsLimit).toBe(40);
+    expect(service.throttleDeviceRegisterLimit).toBe(8);
     expect(service.throttleRedisUrl).toBe('redis://localhost:6379');
     expect(service.assistantAgentApiKey).toBe('change-me-agent-key');
     expect(service.brandfetchClientId).toBe('brandfetch-id');
