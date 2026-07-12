@@ -141,6 +141,47 @@ describe('AssistantService', () => {
     expect(llmOrchestrator.generate).not.toHaveBeenCalled();
   });
 
+  it('returns deterministic template responses without calling the LLM', async () => {
+    deterministicAssistant.tryBuild.mockReturnValue({
+      title: 'Explicación del Score Inversora',
+      text: 'Explicación determinística del score para el fondo en contexto.',
+    });
+
+    const response = await service.explain({
+      surface: 'fund-detail',
+      message: 'Por que este fondo aparece arriba en la categoria',
+      fund: { isin: 'IE00B4L5Y983' },
+    });
+
+    expect(response.source).toBe('template');
+    expect(response.title).toBe('Explicación del Score Inversora');
+    expect(llmOrchestrator.generate).not.toHaveBeenCalled();
+    expect(cacheRepository.save).toHaveBeenCalled();
+  });
+
+  it('returns deterministic compare templates in chat mode', async () => {
+    deterministicAssistant.tryBuild.mockReturnValue({
+      title: 'Como comparar fondos en Inversora',
+      text: 'Comparativa educativa entre dos fondos indexados con datos disponibles.',
+    });
+
+    const response = await service.chat({
+      surface: 'compare',
+      message: 'Compara estos dos fondos similares en detalle',
+      sessionId: 'session-template',
+      funds: [{ isin: 'US78462F1030' }, { isin: 'US46090E1038' }],
+    });
+
+    expect(response.source).toBe('template');
+    expect(llmOrchestrator.generate).not.toHaveBeenCalled();
+    expect(conversationRepository.saveTurn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sessionId: 'session-template',
+        intent: 'compare',
+      }),
+    );
+  });
+
   it('rejects forbidden user intents', async () => {
     await expect(
       service.explain({

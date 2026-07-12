@@ -35,4 +35,30 @@ describe('AssistantRagService', () => {
     expect(formatted).toContain('[Doc 1');
     expect(formatted).toContain('Score Inversora');
   });
+
+  it('returns empty prompt text when no chunks are available', () => {
+    expect(service.formatChunksForPrompt([])).toBe(
+      'Sin fragmentos documentales adicionales.',
+    );
+  });
+
+  it('biases compare intent toward comparison chunks', () => {
+    const result = service.retrieve('comparar fondos similares', 'compare');
+
+    expect(result.chunks.some((chunk) => chunk.topic === 'comparacion')).toBe(
+      true,
+    );
+  });
+
+  it('supports glossary intent retrieval', () => {
+    const result = service.retrieve('glosario ter comisiones', 'glossary');
+
+    expect(result.chunks.length).toBeGreaterThan(0);
+  });
+
+  it('returns no chunks for unrelated general queries', () => {
+    const result = service.retrieve('hola', 'general');
+
+    expect(result.chunks).toEqual([]);
+  });
 });

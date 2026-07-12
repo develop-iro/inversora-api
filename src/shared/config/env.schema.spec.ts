@@ -232,6 +232,29 @@ describe('validateEnv', () => {
     ).toThrow('ADMIN_API_KEY must not use a committed "change-me" placeholder');
   });
 
+  it('should reject change-me values in FMP_API_KEY outside local', () => {
+    expect(() =>
+      validateEnv({
+        ...validEnv,
+        APP_ENV: 'pro',
+        FMP_DATA_SOURCE: 'live',
+        FMP_API_KEY: 'change-me-fmp-key',
+      }),
+    ).toThrow('FMP_API_KEY must not use a committed "change-me" placeholder');
+  });
+
+  it('should reject change-me values in DATABASE_URL outside local', () => {
+    expect(() =>
+      validateEnv({
+        ...validEnv,
+        APP_ENV: 'qa',
+        FMP_DATA_SOURCE: 'live',
+        DATABASE_URL:
+          'postgresql://inversora:change-me-local-postgres@localhost:5432/inversora',
+      }),
+    ).toThrow('DATABASE_URL must not use a committed "change-me" placeholder');
+  });
+
   it('should allow "change-me" placeholder secrets in local', () => {
     expect(
       validateEnv({

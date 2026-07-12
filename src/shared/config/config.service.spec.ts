@@ -255,4 +255,80 @@ describe('AppConfigService', () => {
     expect(service.assistantAgentApiKey).toBe('change-me-agent-key');
     expect(service.brandfetchClientId).toBe('brandfetch-id');
   });
+
+  it('should expose assistant LLM and MyInvestor configuration', async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        ConfigModule.forRoot({
+          isGlobal: true,
+          ignoreEnvFile: true,
+          load: [
+            () =>
+              validateEnv({
+                ...validEnv,
+                ASSISTANT_LLM_PRIMARY_API_KEY: 'primary-llm-key',
+                ASSISTANT_LLM_PRIMARY_BASE_URL: 'https://llm.example.com/v1',
+                ASSISTANT_LLM_PRIMARY_MODEL: 'qwen-test',
+                ASSISTANT_OPENAI_FALLBACK_ENABLED: 'false',
+                ASSISTANT_FALLBACK_CONFIDENCE_THRESHOLD: '0.7',
+                MYINVESTOR_MCP_URL: 'https://mcp.example.com',
+                MYINVESTOR_DATA_SOURCE: 'mock',
+              }),
+          ],
+        }),
+      ],
+      providers: [AppConfigService],
+    }).compile();
+
+    service = module.get(AppConfigService);
+    expect(service.assistantLlmPrimaryApiKey).toBe('primary-llm-key');
+    expect(service.assistantLlmPrimaryBaseUrl).toBe(
+      'https://llm.example.com/v1',
+    );
+    expect(service.assistantLlmPrimaryModel).toBe('qwen-test');
+    expect(service.assistantOpenAiFallbackEnabled).toBe(false);
+    expect(service.assistantFallbackConfidenceThreshold).toBe(0.7);
+    expect(service.myInvestorMcpUrl).toBe('https://mcp.example.com');
+    expect(service.myInvestorUsesMocks).toBe(true);
+  });
+
+  it('should fall back to OPENAI_API_KEY for the primary LLM when dedicated key is absent', async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        ConfigModule.forRoot({
+          isGlobal: true,
+          ignoreEnvFile: true,
+          load: [
+            () =>
+              validateEnv({
+                ...validEnv,
+                OPENAI_API_KEY: 'legacy-openai-key',
+              }),
+          ],
+        }),
+      ],
+      providers: [AppConfigService],
+    }).compile();
+
+    service = module.get(AppConfigService);
+    expect(service.assistantLlmPrimaryApiKey).toBe('legacy-openai-key');
+  });
+
+  it('should throw when no primary LLM key is configured', async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        ConfigModule.forRoot({
+          isGlobal: true,
+          ignoreEnvFile: true,
+          load: [() => validateEnv({ ...validEnv })],
+        }),
+      ],
+      providers: [AppConfigService],
+    }).compile();
+
+    service = module.get(AppConfigService);
+    expect(() => service.assistantLlmPrimaryApiKey).toThrow(
+      'ASSISTANT_LLM_PRIMARY_API_KEY is not configured',
+    );
+  });
 });

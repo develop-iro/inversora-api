@@ -22,6 +22,9 @@ describe('IntentClassifierService', () => {
     expect(service.classify('¿Por qué tiene este score?', true)).toBe(
       'explain_score',
     );
+    expect(
+      service.classify('Porque este fondo tiene esta puntuacion', true),
+    ).toBe('explain_score');
   });
 
   it('allows educational questions that are not forbidden', () => {
@@ -44,5 +47,18 @@ describe('IntentClassifierService', () => {
     expect(service.classify('Diferencia entre SPY y QQQ', false)).toBe(
       'compare',
     );
+  });
+
+  it('detects conceptual educational queries', () => {
+    expect(service.isConceptualQuery('Como funciona el tracking error')).toBe(
+      true,
+    );
+    expect(service.isConceptualQuery('Hola SORA')).toBe(false);
+  });
+
+  it('supports deterministic templates only for score and compare intents', () => {
+    expect(service.supportsDeterministicTemplate('explain_score')).toBe(true);
+    expect(service.supportsDeterministicTemplate('compare')).toBe(true);
+    expect(service.supportsDeterministicTemplate('general')).toBe(false);
   });
 });
