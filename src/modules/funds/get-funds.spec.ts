@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppConfigService } from '../../shared/config/config.service';
+import { ScoringService } from '../scoring/services/scoring.service';
 import { FundsRepository } from './repositories/funds.repository';
 import { FundPricesService } from './services/fund-prices.service';
 import { GetFundsUseCase } from './get-funds';
@@ -39,6 +40,7 @@ describe('GetFundsUseCase', () => {
   let repository: { findMany: jest.Mock };
   let configService: { brandfetchClientId: string | undefined };
   let fundPricesService: { getHistoriesByFundIds: jest.Mock };
+  let scoringService: { calculateScoresForFundIds: jest.Mock };
 
   beforeEach(async () => {
     repository = {
@@ -52,6 +54,9 @@ describe('GetFundsUseCase', () => {
     };
     fundPricesService = {
       getHistoriesByFundIds: jest.fn().mockResolvedValue(new Map()),
+    };
+    scoringService = {
+      calculateScoresForFundIds: jest.fn().mockResolvedValue(new Map()),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -68,6 +73,10 @@ describe('GetFundsUseCase', () => {
         {
           provide: FundPricesService,
           useValue: fundPricesService,
+        },
+        {
+          provide: ScoringService,
+          useValue: scoringService,
         },
       ],
     }).compile();
@@ -112,6 +121,47 @@ describe('GetFundsUseCase', () => {
         orderBy: { score: 'desc' },
       }),
     );
+  });
+
+  it('should return persisted scores without live scoring enrichment', async () => {
+    const response = await useCase.execute({
+      page: '1',
+      limit: '20',
+      sortBy: 'score',
+      sortOrder: 'desc',
+    });
+
+    expect(response.data[0]?.score).toBe(fund.score);
+    expect(scoringService.calculateScoresForFundIds).not.toHaveBeenCalled();
+  });
+
+  it('should compute live scores only for funds missing persisted scores', async () => {
+    const fundWithoutScore = {
+      ...fund,
+      id: '550e8400-e29b-41d4-a716-446655440099',
+      symbol: 'MISS',
+      score: null,
+    };
+
+    repository.findMany.mockResolvedValue({
+      items: [fundWithoutScore],
+      total: 1,
+    });
+    scoringService.calculateScoresForFundIds.mockResolvedValue(
+      new Map([[fundWithoutScore.id, 76]]),
+    );
+
+    const response = await useCase.execute({
+      page: '1',
+      limit: '20',
+      sortBy: 'score',
+      sortOrder: 'desc',
+    });
+
+    expect(scoringService.calculateScoresForFundIds).toHaveBeenCalledWith([
+      fundWithoutScore.id,
+    ]);
+    expect(response.data[0]?.score).toBe(76);
   });
 
   it('should reject invalid query parameters', async () => {

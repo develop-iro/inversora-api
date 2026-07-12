@@ -122,7 +122,7 @@ export function mapProviderFundHistoricalPriceToUpsertInput(
     volume: price.volume ?? null,
     change: price.change ?? null,
     changePercent: price.changePercent ?? null,
-    vwap: price.vwap ?? null,
+    vwap: price.vwap !== undefined && price.vwap > 0 ? price.vwap : null,
   };
 }
 
