@@ -36,6 +36,11 @@ export const envSchema = z
       .enum(['true', 'false'])
       .default('false')
       .transform((value) => value === 'true'),
+    MYINVESTOR_MCP_URL: z
+      .string()
+      .url()
+      .default('https://mcp.myinvestor.es/mcp'),
+    MYINVESTOR_DATA_SOURCE: z.enum(['mock', 'live']).default('mock'),
     SYNC_SCHEDULER_ENABLED: z
       .enum(['true', 'false'])
       .default('false')
@@ -72,6 +77,21 @@ export const envSchema = z
       .transform((value) => parseCommaSeparatedList(value)),
     OPENAI_API_KEY: z.string().min(1).optional(),
     OPENAI_MODEL: z.string().min(1).default('gpt-4o-mini'),
+    ASSISTANT_LLM_PRIMARY_BASE_URL: z.string().url().optional(),
+    ASSISTANT_LLM_PRIMARY_MODEL: z
+      .string()
+      .min(1)
+      .default('qwen-2.5-7b-instruct'),
+    ASSISTANT_LLM_PRIMARY_API_KEY: z.string().min(1).optional(),
+    ASSISTANT_OPENAI_FALLBACK_ENABLED: z
+      .enum(['true', 'false'])
+      .default('true')
+      .transform((value) => value === 'true'),
+    ASSISTANT_FALLBACK_CONFIDENCE_THRESHOLD: z.coerce
+      .number()
+      .min(0)
+      .max(1)
+      .default(0.6),
     ASSISTANT_ENABLED: z
       .enum(['true', 'false'])
       .default('false')
@@ -136,14 +156,40 @@ export const envSchema = z
     if (
       env.ASSISTANT_ENABLED &&
       env.ASSISTANT_RUNTIME === 'nestjs' &&
+      env.ASSISTANT_LLM_PRIMARY_API_KEY === undefined &&
       env.OPENAI_API_KEY === undefined
     ) {
       ctx.addIssue({
         code: 'custom',
-        path: ['OPENAI_API_KEY'],
+        path: ['ASSISTANT_LLM_PRIMARY_API_KEY'],
         message:
-          'OPENAI_API_KEY is required when ASSISTANT_ENABLED is true and ASSISTANT_RUNTIME is nestjs',
+          'ASSISTANT_LLM_PRIMARY_API_KEY is required when ASSISTANT_ENABLED is true and ASSISTANT_RUNTIME is nestjs (or provide OPENAI_API_KEY for legacy mode)',
       });
+    }
+
+    if (env.APP_ENV !== 'local') {
+      const placeholderGuardedKeys = [
+        'POSTGRES_PASSWORD',
+        'DATABASE_URL',
+        'FMP_API_KEY',
+        'ADMIN_API_KEY',
+        'OPENAI_API_KEY',
+        'ASSISTANT_LLM_PRIMARY_API_KEY',
+        'ASSISTANT_AGENT_API_KEY',
+        'ASSISTANT_INTERNAL_API_KEY',
+      ] as const;
+
+      for (const key of placeholderGuardedKeys) {
+        const value = env[key];
+
+        if (typeof value === 'string' && value.includes('change-me')) {
+          ctx.addIssue({
+            code: 'custom',
+            path: [key],
+            message: `${key} must not use a committed "change-me" placeholder when APP_ENV is qa or pro`,
+          });
+        }
+      }
     }
 
     if (requiresLiveFmpDataSource(env.APP_ENV)) {

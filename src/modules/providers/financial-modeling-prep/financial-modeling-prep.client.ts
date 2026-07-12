@@ -18,6 +18,7 @@ import {
   fmpFundHoldingSchema,
   fmpFundProfileSchema,
   fmpHistoricalPriceSchema,
+  fmpNewsArticleSchema,
   fmpQuoteSchema,
   fmpQuoteShortSchema,
   fmpSearchResultSchema,
@@ -29,6 +30,7 @@ import type {
   FmpFundHolding,
   FmpFundProfile,
   FmpHistoricalPrice,
+  FmpNewsArticle,
   FmpQuote,
   FmpQuoteShort,
   FmpSearchResult,
@@ -221,6 +223,22 @@ export class FinancialModelingPrepClient {
       fmpQuoteSchema,
       'quote',
       FMP_FIXTURE_FILES.quoteFull,
+    );
+  }
+
+  /**
+   * Fetches the latest general financial market news articles.
+   *
+   * @param limit - Maximum number of articles to request.
+   * @returns Raw FMP news article rows.
+   */
+  async fetchGeneralNews(limit: number): Promise<FmpNewsArticle[]> {
+    return this.fetchArray(
+      '/stable/news/general-latest',
+      { page: 0, limit },
+      fmpNewsArticleSchema,
+      'news/general-latest',
+      FMP_FIXTURE_FILES.newsGeneralLatest,
     );
   }
 

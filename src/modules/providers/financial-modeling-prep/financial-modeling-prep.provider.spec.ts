@@ -19,6 +19,7 @@ describe('FinancialModelingPrepProvider', () => {
     fetchEtfList: jest.Mock;
     fetchQuote: jest.Mock;
     fetchQuoteShort: jest.Mock;
+    fetchGeneralNews: jest.Mock;
   };
   let fixtures: {
     readFixture: jest.Mock;
@@ -42,6 +43,7 @@ describe('FinancialModelingPrepProvider', () => {
       fetchEtfList: jest.fn(),
       fetchQuote: jest.fn(),
       fetchQuoteShort: jest.fn(),
+      fetchGeneralNews: jest.fn(),
     };
 
     fixtures = {
@@ -699,5 +701,67 @@ describe('FinancialModelingPrepProvider', () => {
     fixtures.readFixture.mockResolvedValue([]);
 
     await expect(provider.getFundQuote('SPY')).resolves.toBeNull();
+  });
+
+  it('should return normalized general news from fixtures', async () => {
+    fixtures.readFixture.mockResolvedValue([
+      {
+        symbol: null,
+        publishedDate: '2026-07-12 10:40:44',
+        publisher: 'Investopedia',
+        title: 'What to Expect in Markets this Week',
+        site: 'investopedia.com',
+        text: 'Inflation will loom large this week.',
+        url: 'https://www.investopedia.com/markets-this-week',
+      },
+    ]);
+
+    await expect(provider.getGeneralNews(4)).resolves.toEqual([
+      {
+        title: 'What to Expect in Markets this Week',
+        summary: 'Inflation will loom large this week.',
+        source: 'Investopedia',
+        publishedAt: '2026-07-12',
+        url: 'https://www.investopedia.com/markets-this-week',
+      },
+    ]);
+    expect(client.fetchGeneralNews).not.toHaveBeenCalled();
+  });
+
+  it('should fetch general news from the live client when mocks are disabled', async () => {
+    configMock.fmpUsesMocks = false;
+    client.fetchGeneralNews.mockResolvedValue([
+      {
+        symbol: null,
+        publishedDate: '2026-07-12 10:40:44',
+        publisher: 'Investopedia',
+        title: 'What to Expect in Markets this Week',
+        site: 'investopedia.com',
+        text: 'Inflation will loom large this week.',
+        url: 'https://www.investopedia.com/markets-this-week',
+      },
+      {
+        symbol: null,
+        publishedDate: '2026-07-11 09:24:00',
+        publisher: 'Invezz',
+        title: 'S&P 500 nears all-time high',
+        site: 'invezz.com',
+        text: 'Big tech rebound pushed the index close to its record.',
+        url: 'https://invezz.com/sp500-high',
+      },
+    ]);
+
+    await expect(provider.getGeneralNews(1)).resolves.toEqual([
+      {
+        title: 'What to Expect in Markets this Week',
+        summary: 'Inflation will loom large this week.',
+        source: 'Investopedia',
+        publishedAt: '2026-07-12',
+        url: 'https://www.investopedia.com/markets-this-week',
+      },
+    ]);
+    expect(client.fetchGeneralNews).toHaveBeenCalledWith(1);
+
+    configMock.fmpUsesMocks = true;
   });
 });

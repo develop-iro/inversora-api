@@ -16,12 +16,12 @@ export class InvestmentNewsController {
 
   @Get()
   @ApiOperation({
-    summary: 'Get curated educational investment news',
+    summary: 'Get investment news for the home feed',
     description:
-      'Returns editorial headlines for the home news section. Content is curated for beginners and does not include live market feeds.',
+      'Returns market headlines sourced from Financial Modeling Prep. Falls back to curated educational headlines when the provider is unavailable.',
   })
   @ApiOkResponse({
-    description: 'Curated educational news items for the home dashboard.',
+    description: 'Investment news items for the home dashboard.',
   })
   @ApiBadRequestResponse({
     description: 'Invalid query parameters (e.g. out-of-range `limit`).',
@@ -35,7 +35,7 @@ export class InvestmentNewsController {
   })
   getInvestmentNews(
     @Query() query: Record<string, unknown>,
-  ): InvestmentNewsResponse {
+  ): Promise<InvestmentNewsResponse> {
     return this.investmentNewsService.getInvestmentNews(query);
   }
 }

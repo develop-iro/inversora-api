@@ -15,6 +15,7 @@ export const FMP_FIXTURE_FILES = {
   etfList: 'etf-list.dev.json',
   quoteShort: 'quote-short.symbol-spy.json',
   quoteFull: 'quote.symbol-spy.json',
+  newsGeneralLatest: 'news-general-latest.json',
 } as const;
 
 /**

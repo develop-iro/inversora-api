@@ -12,11 +12,13 @@ import type {
 import { AssistantCacheRepository } from '../repositories/assistant-cache.repository';
 import { AssistantConversationRepository } from '../repositories/assistant-conversation.repository';
 import { AssistantContextBuilderService } from './assistant-context.builder';
+import { AssistantLlmOrchestratorService } from './assistant-llm-orchestrator.service';
 import { AssistantOutputGuardrailsService } from './assistant-output.guardrails';
+import { AssistantRagService } from './assistant-rag.service';
 import { AssistantService } from './assistant.service';
+import { DeterministicAssistantService } from './deterministic-assistant.service';
 import { GlossaryService } from './glossary.service';
 import { IntentClassifierService } from './intent-classifier.service';
-import { OpenAiAssistantService } from './openai-assistant.service';
 import { PythonAgentAssistantService } from './python-agent-assistant.service';
 
 describe('AssistantService', () => {
@@ -32,8 +34,17 @@ describe('AssistantService', () => {
     findRecentMessages: jest.Mock;
     saveTurn: jest.Mock;
   };
-  let openAiAssistant: { generate: jest.Mock };
+  let llmOrchestrator: { generate: jest.Mock };
+  let deterministicAssistant: { tryBuild: jest.Mock };
+  let ragService: { retrieve: jest.Mock };
   let pythonAgentAssistant: { generate: jest.Mock };
+
+  const mockLlmResult = (text: string) => ({
+    text,
+    source: 'qwen' as const,
+    model: 'qwen-2.5-7b-instruct',
+    confidence: 0.9,
+  });
   let contextBuilder: { build: jest.Mock };
 
   beforeEach(async () => {
@@ -51,8 +62,14 @@ describe('AssistantService', () => {
       findRecentMessages: jest.fn().mockResolvedValue([]),
       saveTurn: jest.fn(),
     };
-    openAiAssistant = {
+    llmOrchestrator = {
       generate: jest.fn(),
+    };
+    deterministicAssistant = {
+      tryBuild: jest.fn().mockReturnValue(null),
+    };
+    ragService = {
+      retrieve: jest.fn().mockReturnValue({ chunks: [], queryTerms: [] }),
     };
     pythonAgentAssistant = {
       generate: jest.fn(),
@@ -92,8 +109,16 @@ describe('AssistantService', () => {
           useValue: contextBuilder,
         },
         {
-          provide: OpenAiAssistantService,
-          useValue: openAiAssistant,
+          provide: DeterministicAssistantService,
+          useValue: deterministicAssistant,
+        },
+        {
+          provide: AssistantRagService,
+          useValue: ragService,
+        },
+        {
+          provide: AssistantLlmOrchestratorService,
+          useValue: llmOrchestrator,
         },
         {
           provide: PythonAgentAssistantService,
@@ -113,7 +138,48 @@ describe('AssistantService', () => {
 
     expect(response.source).toBe('glossary');
     expect(response.title).toBe('TER');
-    expect(openAiAssistant.generate).not.toHaveBeenCalled();
+    expect(llmOrchestrator.generate).not.toHaveBeenCalled();
+  });
+
+  it('returns deterministic template responses without calling the LLM', async () => {
+    deterministicAssistant.tryBuild.mockReturnValue({
+      title: 'Explicación del Score Inversora',
+      text: 'Explicación determinística del score para el fondo en contexto.',
+    });
+
+    const response = await service.explain({
+      surface: 'fund-detail',
+      message: 'Por que este fondo aparece arriba en la categoria',
+      fund: { isin: 'IE00B4L5Y983' },
+    });
+
+    expect(response.source).toBe('template');
+    expect(response.title).toBe('Explicación del Score Inversora');
+    expect(llmOrchestrator.generate).not.toHaveBeenCalled();
+    expect(cacheRepository.save).toHaveBeenCalled();
+  });
+
+  it('returns deterministic compare templates in chat mode', async () => {
+    deterministicAssistant.tryBuild.mockReturnValue({
+      title: 'Como comparar fondos en Inversora',
+      text: 'Comparativa educativa entre dos fondos indexados con datos disponibles.',
+    });
+
+    const response = await service.chat({
+      surface: 'compare',
+      message: 'Compara estos dos fondos similares en detalle',
+      sessionId: 'session-template',
+      funds: [{ isin: 'US78462F1030' }, { isin: 'US46090E1038' }],
+    });
+
+    expect(response.source).toBe('template');
+    expect(llmOrchestrator.generate).not.toHaveBeenCalled();
+    expect(conversationRepository.saveTurn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sessionId: 'session-template',
+        intent: 'compare',
+      }),
+    );
   });
 
   it('rejects forbidden user intents', async () => {
@@ -155,8 +221,10 @@ describe('AssistantService', () => {
 
   it('returns cache on the second identical explain request', async () => {
     config.assistantEnabled = true;
-    openAiAssistant.generate.mockResolvedValue(
-      'MSCI World es un índice global de acciones de mercados desarrollados.',
+    llmOrchestrator.generate.mockResolvedValue(
+      mockLlmResult(
+        'MSCI World es un índice global de acciones de mercados desarrollados.',
+      ),
     );
 
     const request = {
@@ -183,10 +251,12 @@ describe('AssistantService', () => {
     expect(second.cached).toBe(true);
   });
 
-  it('generates OpenAI responses when enabled and glossary misses', async () => {
+  it('generates Qwen responses when enabled and glossary misses', async () => {
     config.assistantEnabled = true;
-    openAiAssistant.generate.mockResolvedValue(
-      'MSCI World es un índice global de acciones de mercados desarrollados.',
+    llmOrchestrator.generate.mockResolvedValue(
+      mockLlmResult(
+        'MSCI World es un índice global de acciones de mercados desarrollados.',
+      ),
     );
 
     const response = await service.explain({
@@ -194,7 +264,7 @@ describe('AssistantService', () => {
       message: 'Explícame MSCI World en detalle educativo',
     });
 
-    expect(response.source).toBe('openai');
+    expect(response.source).toBe('qwen');
     expect(response.title).toBe('Respuesta de SORA');
     expect(pythonAgentAssistant.generate).not.toHaveBeenCalled();
     expect(cacheRepository.save).toHaveBeenCalled();
@@ -213,7 +283,7 @@ describe('AssistantService', () => {
     });
 
     expect(response.source).toBe('openai');
-    expect(openAiAssistant.generate).not.toHaveBeenCalled();
+    expect(llmOrchestrator.generate).not.toHaveBeenCalled();
     expect(pythonAgentAssistant.generate).toHaveBeenCalledWith(
       expect.objectContaining({ surface: 'home', intent: 'compare' }),
       'ExplÃ­came la diferencia entre dos fondos indexados',
@@ -222,8 +292,8 @@ describe('AssistantService', () => {
 
   it('generates uncached chat responses with selected funds', async () => {
     config.assistantEnabled = true;
-    openAiAssistant.generate.mockResolvedValue(
-      'Comparacion educativa entre los fondos seleccionados.',
+    llmOrchestrator.generate.mockResolvedValue(
+      mockLlmResult('Comparacion educativa entre los fondos seleccionados.'),
     );
 
     const response = await service.chat({
@@ -234,12 +304,12 @@ describe('AssistantService', () => {
     });
 
     expect(response).toMatchObject({
-      source: 'openai',
+      source: 'qwen',
       cached: false,
       sessionId: 'session-1',
       title: 'Cómo comparar fondos en Inversora',
     });
-    expect(cacheRepository.findValid).not.toHaveBeenCalled();
+    expect(cacheRepository.findValid).toHaveBeenCalled();
     expect(cacheRepository.save).not.toHaveBeenCalled();
     expect(conversationRepository.saveTurn).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -279,7 +349,9 @@ describe('AssistantService', () => {
       },
     ];
     conversationRepository.findRecentMessages.mockResolvedValue(recentMessages);
-    openAiAssistant.generate.mockResolvedValue('Respuesta con memoria.');
+    llmOrchestrator.generate.mockResolvedValue(
+      mockLlmResult('Respuesta con memoria.'),
+    );
 
     await service.chat({
       surface: 'home',
@@ -317,7 +389,7 @@ describe('AssistantService', () => {
     });
 
     expect(response.source).toBe('glossary');
-    expect(openAiAssistant.generate).not.toHaveBeenCalled();
+    expect(llmOrchestrator.generate).not.toHaveBeenCalled();
     expect(conversationRepository.saveTurn).toHaveBeenCalledWith(
       expect.objectContaining({
         sessionId: 'session-1',
@@ -339,8 +411,8 @@ describe('AssistantService', () => {
 
   it('returns relatedFundIsin for chat requests with a single selected fund', async () => {
     config.assistantEnabled = true;
-    openAiAssistant.generate.mockResolvedValue(
-      'Explicacion educativa del fondo.',
+    llmOrchestrator.generate.mockResolvedValue(
+      mockLlmResult('Explicacion educativa del fondo.'),
     );
 
     const response = await service.chat({
@@ -355,7 +427,9 @@ describe('AssistantService', () => {
 
   it('generates a session id for chat responses when the client omits one', async () => {
     config.assistantEnabled = true;
-    openAiAssistant.generate.mockResolvedValue('Respuesta educativa.');
+    llmOrchestrator.generate.mockResolvedValue(
+      mockLlmResult('Respuesta educativa.'),
+    );
 
     const response = await service.chat({
       surface: 'home',
@@ -371,9 +445,11 @@ describe('AssistantService', () => {
     );
   });
 
-  it('builds compare and score titles for OpenAI responses', async () => {
+  it('builds compare and score titles for LLM responses', async () => {
     config.assistantEnabled = true;
-    openAiAssistant.generate.mockResolvedValue('Texto educativo.');
+    llmOrchestrator.generate.mockResolvedValue(
+      mockLlmResult('Texto educativo.'),
+    );
 
     const compareResponse = await service.explain({
       surface: 'compare',
@@ -389,9 +465,11 @@ describe('AssistantService', () => {
     expect(scoreResponse.title).toBe('Explicación del Score Inversora');
   });
 
-  it('capitalizes question titles for OpenAI responses', async () => {
+  it('capitalizes question titles for LLM responses', async () => {
     config.assistantEnabled = true;
-    openAiAssistant.generate.mockResolvedValue('Texto educativo.');
+    llmOrchestrator.generate.mockResolvedValue(
+      mockLlmResult('Texto educativo.'),
+    );
 
     const response = await service.explain({
       surface: 'home',
@@ -401,9 +479,11 @@ describe('AssistantService', () => {
     expect(response.title).toBe('Como funciona esto?');
   });
 
-  it('persists locale and related fund ISIN in OpenAI responses', async () => {
+  it('persists locale and related fund ISIN in LLM responses', async () => {
     config.assistantEnabled = true;
-    openAiAssistant.generate.mockResolvedValue('Texto educativo.');
+    llmOrchestrator.generate.mockResolvedValue(
+      mockLlmResult('Texto educativo.'),
+    );
 
     const response = await service.explain({
       surface: 'fund_detail',

@@ -43,7 +43,17 @@ export const assistantChatRequestSchema = z.object({
 export const assistantResponseSourceSchema = z.enum([
   'glossary',
   'cache',
+  'template',
+  'qwen',
+  'openai-fallback',
   'openai',
+]);
+
+/** Optional metadata when the LLM layer handles a request. */
+export const assistantFallbackReasonSchema = z.enum([
+  'error',
+  'low_confidence',
+  'guardrails',
 ]);
 
 /** Response payload for `POST /assistant/explain`. */
@@ -55,6 +65,9 @@ export const assistantExplainResponseSchema = z.object({
   disclaimer: z.string().min(1),
   relatedFundIsin: z.string().optional(),
   promptVersion: z.string().min(1),
+  model: z.string().min(1).optional(),
+  confidence: z.number().min(0).max(1).optional(),
+  fallbackReason: assistantFallbackReasonSchema.optional(),
 });
 
 /** Response payload for `POST /assistant/chat`. */
@@ -84,6 +97,9 @@ export type AssistantChatResponse = z.infer<typeof assistantChatResponseSchema>;
 export type AssistantIntent = z.infer<typeof assistantIntentSchema>;
 export type AssistantResponseSource = z.infer<
   typeof assistantResponseSourceSchema
+>;
+export type AssistantFallbackReason = z.infer<
+  typeof assistantFallbackReasonSchema
 >;
 
 /**

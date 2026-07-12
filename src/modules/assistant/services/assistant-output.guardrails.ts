@@ -17,7 +17,7 @@ const FORBIDDEN_OUTPUT_PATTERNS: readonly RegExp[] = [
 
 /** Safe educational fallback when model output violates guardrails. */
 export const ASSISTANT_GUARDRAIL_FALLBACK_TEXT =
-  'Inversora comparte información educativa. No puedo recomendar comprar, vender o suscribir un fondo concreto. Si quieres, te explico conceptos, métricas o el significado del score en lenguaje sencillo.';
+  'Inversora comparte información educativa. No puedo dar instrucciones operativas sobre un fondo concreto. Puedo explicarte conceptos, métricas o el significado del score en lenguaje sencillo.';
 
 const MAX_RESPONSE_LENGTH = 2_000;
 

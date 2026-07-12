@@ -7,17 +7,22 @@ import { AssistantToolsController } from './controllers/assistant-tools.controll
 import { AssistantInternalApiKeyGuard } from './guards/assistant-internal-api-key.guard';
 import { AssistantCacheRepository } from './repositories/assistant-cache.repository';
 import { AssistantConversationRepository } from './repositories/assistant-conversation.repository';
+import { AssistantConfidenceService } from './services/assistant-confidence.service';
 import { AssistantContextBuilderService } from './services/assistant-context.builder';
+import { AssistantLlmOrchestratorService } from './services/assistant-llm-orchestrator.service';
 import { AssistantOutputGuardrailsService } from './services/assistant-output.guardrails';
+import { AssistantRagService } from './services/assistant-rag.service';
 import { AssistantService } from './services/assistant.service';
 import { AssistantToolsService } from './services/assistant-tools.service';
+import { DeterministicAssistantService } from './services/deterministic-assistant.service';
 import { GlossaryService } from './services/glossary.service';
 import { IntentClassifierService } from './services/intent-classifier.service';
+import { LlmChatCompletionService } from './services/llm-chat-completion.service';
 import { OpenAiAssistantService } from './services/openai-assistant.service';
 import { PythonAgentAssistantService } from './services/python-agent-assistant.service';
 
 /**
- * SORA educational assistant module (OpenAI + glossary + PostgreSQL cache).
+ * SORA educational assistant module (layered rules, RAG, Qwen primary, OpenAI fallback).
  */
 @Module({
   imports: [FundsModule, ScoringModule],
@@ -31,6 +36,11 @@ import { PythonAgentAssistantService } from './services/python-agent-assistant.s
     AssistantCacheRepository,
     AssistantConversationRepository,
     AssistantContextBuilderService,
+    DeterministicAssistantService,
+    AssistantRagService,
+    LlmChatCompletionService,
+    AssistantConfidenceService,
+    AssistantLlmOrchestratorService,
     OpenAiAssistantService,
     PythonAgentAssistantService,
     AssistantOutputGuardrailsService,

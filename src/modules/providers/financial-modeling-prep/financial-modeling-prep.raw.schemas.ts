@@ -125,6 +125,23 @@ export const fmpQuoteShortSchema = z
 /** Inferred type for a raw FMP quote-short row. */
 export type FmpQuoteShort = z.infer<typeof fmpQuoteShortSchema>;
 
+/** Zod schema for a raw FMP `news/general-latest` article row. */
+export const fmpNewsArticleSchema = z
+  .object({
+    symbol: z.string().nullable().optional(),
+    publishedDate: z.string(),
+    publisher: z.string().nullable().optional(),
+    title: z.string(),
+    image: z.string().nullable().optional(),
+    site: z.string().nullable().optional(),
+    text: z.string().nullable().optional(),
+    url: z.string(),
+  })
+  .passthrough();
+
+/** Inferred type for a raw FMP news article row. */
+export type FmpNewsArticle = z.infer<typeof fmpNewsArticleSchema>;
+
 /** Zod schema for a raw FMP `quote` row. */
 export const fmpQuoteSchema = z
   .object({

@@ -9,6 +9,7 @@ import type {
   ProviderFundProfile,
   ProviderFundQuote,
   ProviderFundSearchResult,
+  ProviderNewsArticle,
 } from './financial-modeling-prep.domain.schemas';
 import { FinancialModelingPrepClient } from './financial-modeling-prep.client';
 import { FMP_PROVIDER_NAME } from './financial-modeling-prep.constants';
@@ -25,6 +26,7 @@ import {
   normalizeProviderFundFullQuote,
   normalizeProviderFundQuote,
   normalizeProviderFundSearchResults,
+  normalizeProviderNewsArticles,
 } from './financial-modeling-prep.normalizers';
 import {
   fmpCountryWeightingSchema,
@@ -32,6 +34,7 @@ import {
   fmpFundHoldingSchema,
   fmpFundProfileSchema,
   fmpHistoricalPriceSchema,
+  fmpNewsArticleSchema,
   fmpQuoteSchema,
   fmpQuoteShortSchema,
   fmpSearchResultSchema,
@@ -240,6 +243,24 @@ export class FinancialModelingPrepProvider {
 
       throw error;
     }
+  }
+
+  /**
+   * Retrieves the latest general market news articles.
+   *
+   * @param limit - Maximum number of normalized articles to return.
+   * @returns Normalized news articles sorted by published date descending.
+   */
+  async getGeneralNews(limit: number): Promise<ProviderNewsArticle[]> {
+    const rawArticles = this.config.fmpUsesMocks
+      ? await this.getFixtureArray(
+          FMP_FIXTURE_FILES.newsGeneralLatest,
+          fmpNewsArticleSchema,
+          'news/general-latest',
+        )
+      : await this.client.fetchGeneralNews(limit);
+
+    return normalizeProviderNewsArticles(rawArticles).slice(0, limit);
   }
 
   /**

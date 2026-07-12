@@ -15,6 +15,7 @@ import {
   deriveBenchmarkLabelFromName,
   normalizeProviderFundFullQuote,
   normalizeProviderFundQuote,
+  normalizeProviderNewsArticles,
   resolveQuoteAsOf,
   resolveQuoteChangePercent,
 } from './financial-modeling-prep.normalizers';
@@ -577,5 +578,59 @@ describe('FinancialModelingPrep normalizers', () => {
     expect(resolveQuoteAsOf(1_782_763_200_000)).toBe(
       new Date(1_782_763_200_000).toISOString(),
     );
+  });
+
+  it('should normalize news articles and discard incomplete rows', () => {
+    const articles = normalizeProviderNewsArticles([
+      {
+        symbol: null,
+        publishedDate: '2026-07-11 09:24:00',
+        publisher: 'Invezz',
+        title: 'S&P 500 nears all-time high',
+        site: 'invezz.com',
+        text: 'Big tech rebound pushed the index close to its record.',
+        url: 'https://invezz.com/sp500-high',
+      },
+      {
+        symbol: null,
+        publishedDate: '2026-07-12 10:40:44',
+        publisher: null,
+        title: 'What to Expect in Markets this Week',
+        site: 'investopedia.com',
+        text: 'Inflation will loom large this week.',
+        url: 'https://www.investopedia.com/markets-this-week',
+      },
+      {
+        publishedDate: '2026-07-10 08:00:00',
+        publisher: 'Some Site',
+        title: 'Article without summary',
+        text: '',
+        url: 'https://example.com/no-summary',
+      },
+      {
+        publishedDate: '2026-07-09 08:00:00',
+        publisher: 'Some Site',
+        title: 'Article with insecure link',
+        text: 'Body text.',
+        url: 'http://example.com/insecure',
+      },
+    ]);
+
+    expect(articles).toEqual([
+      {
+        title: 'What to Expect in Markets this Week',
+        summary: 'Inflation will loom large this week.',
+        source: 'investopedia.com',
+        publishedAt: '2026-07-12',
+        url: 'https://www.investopedia.com/markets-this-week',
+      },
+      {
+        title: 'S&P 500 nears all-time high',
+        summary: 'Big tech rebound pushed the index close to its record.',
+        source: 'Invezz',
+        publishedAt: '2026-07-11',
+        url: 'https://invezz.com/sp500-high',
+      },
+    ]);
   });
 });
