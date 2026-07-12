@@ -5,7 +5,7 @@ import {
   FundVehicleType,
   InvestmentTheme,
 } from '@prisma/client';
-import { Decimal } from '@prisma/client/runtime/client';
+import { Decimal } from '@prisma/client/runtime/library';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../../shared/database/prisma.service';
 import { FundsRepository } from './funds.repository';

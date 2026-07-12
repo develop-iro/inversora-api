@@ -4,7 +4,7 @@ import {
   type FundHolding as PrismaFundHolding,
   type Prisma,
 } from '@prisma/client';
-import type { Decimal } from '@prisma/client/runtime/client';
+import type { Decimal } from '@prisma/client/runtime/library';
 import type { ProviderFundHolding } from '../../providers/financial-modeling-prep/financial-modeling-prep.domain.schemas';
 import { formatFundPriceDate, parseFundPriceDate } from './fund-price.mapper';
 import {

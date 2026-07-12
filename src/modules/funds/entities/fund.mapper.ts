@@ -7,7 +7,7 @@ import {
   type Fund as PrismaFund,
   type Prisma,
 } from '@prisma/client';
-import type { Decimal } from '@prisma/client/runtime/client';
+import type { Decimal } from '@prisma/client/runtime/library';
 import type { ProviderFundProfile } from '../../providers/financial-modeling-prep/financial-modeling-prep.domain.schemas';
 import { fundSchema, upsertFundInputSchema } from './fund.schema';
 import type {
