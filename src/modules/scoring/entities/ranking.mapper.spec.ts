@@ -104,6 +104,7 @@ describe('buildRankingsResponse', () => {
       groupsLimit: 24,
       limit: 10,
       hasMoreGroups: false,
+      totalEligibleFunds: 4,
     });
     expect(response.data[0]).toMatchObject({
       benchmark: 'MSCI World',

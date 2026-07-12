@@ -41,4 +41,11 @@ describe('createPrismaClient', () => {
 
     expect(client).toBeDefined();
   });
+
+  it('creates a Prisma Client with the resolved connection string', () => {
+    process.env.DATABASE_URL =
+      'postgresql://resolved:inversora@localhost:5432/inversora';
+
+    expect(createPrismaClient()).toBeDefined();
+  });
 });
