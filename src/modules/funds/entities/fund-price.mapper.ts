@@ -1,5 +1,5 @@
 import type { FundPrice as PrismaFundPrice, Prisma } from '@prisma/client';
-import type { Decimal } from '@prisma/client/runtime/library';
+import type { Decimal } from '@prisma/client/runtime/client';
 import type { ProviderFundHistoricalPrice } from '../../providers/financial-modeling-prep/financial-modeling-prep.domain.schemas';
 import { fundPriceSchema } from './fund-price.schema';
 import type { FundPrice, UpsertFundPriceInput } from './fund-price.schema';

@@ -1,6 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { createPrismaClient } from './create-prisma-client.mjs';
 
-const prisma = new PrismaClient();
+const prisma = createPrismaClient();
 
 try {
   await prisma.$connect();
