@@ -2,7 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { Test, type TestingModule } from '@nestjs/testing';
-import { PrismaClient } from '@prisma/client';
+import { createPrismaClient } from '../../src/shared/database/create-prisma-client';
 import { AppConfigService } from '../../src/shared/config/config.service';
 import { validateEnv } from '../../src/shared/config/env.schema';
 import { PrismaModule } from '../../src/shared/database/prisma.module';
@@ -73,13 +73,7 @@ class IntegrationTestConfigModule {}
  * @returns `true` when the database accepts connections.
  */
 export async function isDatabaseAvailable(): Promise<boolean> {
-  const prisma = new PrismaClient({
-    datasources: {
-      db: {
-        url: integrationTestEnv.DATABASE_URL,
-      },
-    },
-  });
+  const prisma = createPrismaClient(integrationTestEnv.DATABASE_URL);
 
   try {
     await prisma.$connect();

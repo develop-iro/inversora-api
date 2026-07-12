@@ -1,9 +1,9 @@
-import { PrismaClient } from '@prisma/client';
 import { getDatabaseHostLabel, loadProjectEnv } from './load-project-env.mjs';
+import { createPrismaClient } from './create-prisma-client.mjs';
 
 loadProjectEnv();
 
-const prisma = new PrismaClient();
+const prisma = createPrismaClient();
 
 try {
   const [total, visible, quarantined, blocked] = await Promise.all([
