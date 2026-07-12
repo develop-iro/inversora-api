@@ -72,6 +72,8 @@ export const rankingsMetaSchema = z.object({
   groupsLimit: z.number().int().positive(),
   limit: z.number().int().positive(),
   hasMoreGroups: z.boolean(),
+  /** Total ranking-eligible funds across all benchmark groups before pagination. */
+  totalEligibleFunds: z.number().int().nonnegative(),
 });
 
 /** Inferred type for rankings pagination metadata. */

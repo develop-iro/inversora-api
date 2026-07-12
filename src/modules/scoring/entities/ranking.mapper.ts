@@ -183,6 +183,11 @@ export function buildRankingsResponse(
   const totalGroups =
     benchmarkFilter === undefined ? sortedGroups.length : data.length;
 
+  const totalEligibleFunds = sortedGroups.reduce(
+    (sum, [, groupFunds]) => sum + groupFunds.length,
+    0,
+  );
+
   return rankingsResponseSchema.parse({
     data,
     meta: {
@@ -191,6 +196,7 @@ export function buildRankingsResponse(
       groupsLimit,
       limit: query.limit,
       hasMoreGroups: benchmarkFilter === undefined && totalGroups > data.length,
+      totalEligibleFunds,
     },
   });
 }

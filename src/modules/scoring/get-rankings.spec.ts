@@ -47,6 +47,7 @@ describe('GetRankingsUseCase', () => {
       groupsLimit: 24,
       limit: 10,
       hasMoreGroups: false,
+      totalEligibleFunds: 4,
     });
     expect(response.data[1]?.benchmarkKey).toBe('s&p 500');
     expect(response.data[0]?.funds[0]?.returns).toEqual({
