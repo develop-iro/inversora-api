@@ -136,7 +136,8 @@ export function findFeaturedSelectionByQuarterKey(
  * Returns the most recent configured featured selection by quarter key.
  */
 export function findLatestFeaturedSelection():
-  FeaturedQuarterSelection | undefined {
+  | FeaturedQuarterSelection
+  | undefined {
   if (FEATURED_FUNDS_SELECTIONS.length === 0) {
     return undefined;
   }
