@@ -192,6 +192,23 @@ describe('featured-funds.mapper', () => {
     expect(mapped.idealForBeginners).toBe(false);
   });
 
+  it('should prefer an explicit live efficiency score over the persisted score', () => {
+    const mapped = mapFundToFeaturedFund({
+      fund,
+      quarter,
+      efficiencyScore: 47,
+      editorial: {
+        isin: 'US78462F1030',
+        themeLabel: 'Referencia S&P 500',
+        badge: 'Núcleo USA',
+        benefitSummary: 'Summary',
+        featuredReason: 'Reason',
+      },
+    });
+
+    expect(mapped.efficiencyScore).toBe(47);
+  });
+
   it('should validate the example fixture shape', () => {
     const parsed = featuredFundsResponseSchema.parse(featuredFixture);
 
