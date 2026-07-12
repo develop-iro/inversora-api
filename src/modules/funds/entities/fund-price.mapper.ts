@@ -1,5 +1,5 @@
 import type { FundPrice as PrismaFundPrice, Prisma } from '@prisma/client';
-import type { Decimal } from '@prisma/client/runtime/library';
+import type { Decimal } from '@prisma/client/runtime/client';
 import type { ProviderFundHistoricalPrice } from '../../providers/financial-modeling-prep/financial-modeling-prep.domain.schemas';
 import { fundPriceSchema } from './fund-price.schema';
 import type { FundPrice, UpsertFundPriceInput } from './fund-price.schema';
@@ -122,7 +122,7 @@ export function mapProviderFundHistoricalPriceToUpsertInput(
     volume: price.volume ?? null,
     change: price.change ?? null,
     changePercent: price.changePercent ?? null,
-    vwap: price.vwap ?? null,
+    vwap: price.vwap !== undefined && price.vwap > 0 ? price.vwap : null,
   };
 }
 

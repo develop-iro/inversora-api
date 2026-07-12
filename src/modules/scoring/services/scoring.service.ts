@@ -185,7 +185,7 @@ export class ScoringService {
   }
 
   /**
-   * Computes rounded Inversora Scores for multiple funds using peer comparison.
+   * Computes rounded Invesora Scores for multiple funds using peer comparison.
    *
    * Loads metrics only for funds that share a peer group with the requested ids
    * so list and featured cards stay aligned with fund detail scoring.
@@ -223,18 +223,18 @@ export class ScoringService {
         metrics: await this.buildMetricsForFund(peerFund),
       }),
     );
-    const scores = this.calculateCategoryScores(entries);
-    const results = new Map<string, number>();
+    const categoryScores = this.calculateCategoryScores(entries);
+    const scores = new Map<string, number>();
 
     for (const fundId of fundIds) {
-      const computed = scores.get(fundId);
+      const score = categoryScores.get(fundId);
 
-      if (computed !== undefined) {
-        results.set(fundId, Math.round(computed.score));
+      if (score !== undefined) {
+        scores.set(fundId, Math.round(score.score));
       }
     }
 
-    return results;
+    return scores;
   }
 
   /**

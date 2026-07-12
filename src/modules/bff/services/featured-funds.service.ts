@@ -29,6 +29,7 @@ import {
 } from '../../funds/entities/fund-returns.enricher';
 import { FundsRepository } from '../../funds/repositories/funds.repository';
 import { FundPricesService } from '../../funds/services/fund-prices.service';
+import { ScoringService } from '../../scoring/services/scoring.service';
 import { AppConfigService } from '../../../shared/config/config.service';
 
 const FEATURED_FUNDS_CACHE_TTL_MS = 5 * 60 * 1000;
@@ -49,6 +50,7 @@ export class FeaturedFundsService {
     private readonly fundsRepository: FundsRepository,
     private readonly configService: AppConfigService,
     private readonly fundPricesService: FundPricesService,
+    private readonly scoringService: ScoringService,
   ) {}
 
   /**
@@ -169,14 +171,23 @@ export class FeaturedFundsService {
 
     const isins = selection.entries.map((entry) => entry.isin);
     const fundsByIsin = await this.fundsRepository.findByIsins(isins);
-    const hydrated = selection.entries.flatMap((editorial) => {
+    const visibleFunds = selection.entries.flatMap((editorial) => {
       const fund = fundsByIsin.get(editorial.isin);
 
       if (fund === undefined || fund.isin === null || !isCatalogVisible(fund)) {
         return [];
       }
 
-      if ((fund.score ?? 0) < 30) {
+      return [{ fund, editorial }];
+    });
+    const liveScores = await this.scoringService.calculateScoresForFundIds(
+      visibleFunds.map(({ fund }) => fund.id),
+    );
+    const hydrated = visibleFunds.flatMap(({ fund, editorial }) => {
+      const efficiencyScore =
+        liveScores.get(fund.id) ?? Math.round(fund.score ?? 0);
+
+      if (efficiencyScore < 30) {
         return [];
       }
 
@@ -186,6 +197,7 @@ export class FeaturedFundsService {
           editorial,
           quarter: effectiveQuarter,
           brandfetchClientId: this.configService.brandfetchClientId,
+          efficiencyScore,
         }),
       ];
     });

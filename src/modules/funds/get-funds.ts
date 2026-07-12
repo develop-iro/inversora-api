@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  forwardRef,
+} from '@nestjs/common';
 import { z } from 'zod';
 import { parseApiResponse } from '../../core/api/parse-api-response';
 import {
@@ -20,8 +25,10 @@ import {
 } from './entities/fund-list.mapper';
 import { mapFundsToApiFunds } from './entities/fund-api.mapper';
 import type { FundApi } from './entities/fund-api.schema';
+import { enrichFundApiPayloadsWithScores } from './entities/fund-scores.enricher.mapper';
 import { enrichFundApiPayloadsWithReturns } from './entities/fund-returns.enricher.mapper';
 import { loadReturnSnapshotsByFundIds } from './entities/fund-returns.enricher';
+import { ScoringService } from '../scoring/services/scoring.service';
 import {
   filterEnrichedFundsByMinReturn,
   sortEnrichedFundsByCatalogField,
@@ -39,6 +46,8 @@ export class GetFundsUseCase {
     private readonly fundsRepository: FundsRepository,
     private readonly configService: AppConfigService,
     private readonly fundPricesService: FundPricesService,
+    @Inject(forwardRef(() => ScoringService))
+    private readonly scoringService: ScoringService,
   ) {}
 
   /**
@@ -120,12 +129,26 @@ export class GetFundsUseCase {
       this.configService.brandfetchClientId,
     );
     const fundIds = items.map((item) => item.id);
-    const returnSnapshots = await loadReturnSnapshotsByFundIds(
-      this.fundPricesService,
+    const fundIdsMissingScore = items
+      .filter((item) => item.score === null)
+      .map((item) => item.id);
+    const [liveScores, returnSnapshots] = await Promise.all([
+      fundIdsMissingScore.length > 0
+        ? this.scoringService.calculateScoresForFundIds(fundIdsMissingScore)
+        : Promise.resolve(new Map<string, number>()),
+      loadReturnSnapshotsByFundIds(this.fundPricesService, fundIds),
+    ]);
+    const withScores = enrichFundApiPayloadsWithScores(
+      apiFunds,
       fundIds,
+      liveScores,
     );
 
-    return enrichFundApiPayloadsWithReturns(apiFunds, fundIds, returnSnapshots);
+    return enrichFundApiPayloadsWithReturns(
+      withScores,
+      fundIds,
+      returnSnapshots,
+    );
   }
 
   private parseListQuery(rawQuery: Record<string, unknown>): FundListQuery {

@@ -1,4 +1,4 @@
-import { Decimal } from '@prisma/client/runtime/library';
+import { Decimal } from '@prisma/client/runtime/client';
 import {
   addDaysToIsoDate,
   formatFundPriceDate,
@@ -69,6 +69,21 @@ describe('fund-price.mapper', () => {
       volume: null,
       change: null,
       changePercent: null,
+      vwap: null,
+    });
+  });
+
+  it('should map zero provider vwap values to null', () => {
+    expect(
+      mapProviderFundHistoricalPriceToUpsertInput({
+        date: '2024-01-31',
+        open: 10,
+        high: 11,
+        low: 9,
+        close: 10.5,
+        vwap: 0,
+      }),
+    ).toMatchObject({
       vwap: null,
     });
   });
