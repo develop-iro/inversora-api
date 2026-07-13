@@ -3,6 +3,7 @@ import {
   FundCategory as PrismaFundCategory,
   FundProvider as PrismaFundProvider,
   FundVehicleType as PrismaFundVehicleType,
+  type Prisma,
 } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/client';
 import { rankingsQuerySchema } from '../../../core/api/schemas/rankings.schema';
@@ -13,6 +14,8 @@ import {
   queryRankingFundsForQuery,
   queryRankingGroupTotals,
 } from './ranking-funds.query';
+
+type QueryRaw = <T>(query: Prisma.Sql) => Promise<T>;
 
 const rankingPrismaFundRow = {
   id: '550e8400-e29b-41d4-a716-446655440001',
@@ -53,10 +56,10 @@ const rankingPrismaFundRow = {
 };
 
 describe('ranking-funds.query', () => {
-  let queryRaw: jest.Mock;
+  let queryRaw: jest.MockedFunction<QueryRaw>;
 
   beforeEach(() => {
-    queryRaw = jest.fn();
+    queryRaw = jest.fn() as jest.MockedFunction<QueryRaw>;
   });
 
   describe('queryRankingFundsForQuery', () => {
@@ -70,6 +73,10 @@ describe('ranking-funds.query', () => {
       );
 
       expect(queryRaw).toHaveBeenCalledTimes(1);
+      const sql = queryRaw.mock.calls[0]?.[0] as { strings: readonly string[] };
+      expect(sql.strings.join('')).toContain(
+        `"catalogVisibility" != 'blocked'`,
+      );
       expect(funds).toHaveLength(1);
       expect(funds[0]?.isin).toBe('IE00B4L5Y983');
       expect(funds[0]?.materialized.peerGroupKey).toBe('msci world');

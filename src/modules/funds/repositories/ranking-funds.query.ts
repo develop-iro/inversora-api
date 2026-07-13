@@ -40,7 +40,7 @@ function buildRankingEligibleWhereSql(benchmarkKey: string | null): Prisma.Sql {
       : Prisma.sql`AND "peerGroupKey" = ${benchmarkKey}`;
 
   return Prisma.sql`
-    "catalogVisibility" != 'BLOCKED'
+    "catalogVisibility" != 'blocked'
     AND benchmark IS NOT NULL
     AND isin IS NOT NULL
     AND score IS NOT NULL
