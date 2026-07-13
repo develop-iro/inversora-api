@@ -10,6 +10,7 @@ import {
 } from '@nestjs/swagger';
 import type { FundListResponse } from '../entities/fund-list.schema';
 import type { CatalogSummaryResponse } from '../../../core/api/schemas/catalog-summary.schema';
+import type { FundCatalogMetricsResponse } from '../../../core/api/schemas/fund-catalog-metrics.schema';
 import { FundListResponseDto } from '../dto/fund-list-response.dto';
 import { FundChartResponseDto } from '../dto/fund-chart-response.dto';
 import { FundCountryExposureResponseDto } from '../dto/fund-country-exposure-response.dto';
@@ -116,6 +117,27 @@ export class FundsController {
   })
   getCatalogSummary(): Promise<CatalogSummaryResponse> {
     return this.fundsService.getCatalogSummary();
+  }
+
+  @Get('catalog-metrics')
+  @ApiOperation({
+    summary: 'Catalog totals and category metrics for app filters',
+  })
+  @ApiOkResponse({
+    description:
+      'Lightweight counts used by the app catalog without loading all funds.',
+  })
+  @ApiBadRequestResponse({ description: 'Invalid query parameters.' })
+  @ApiQuery({
+    name: 'riskProfile',
+    required: false,
+    enum: ['all', 'low', 'medium', 'high'],
+    description: 'App risk filter bucket used by the catalog UI.',
+  })
+  getCatalogMetrics(
+    @Query() query: Record<string, unknown>,
+  ): Promise<FundCatalogMetricsResponse> {
+    return this.fundsService.getCatalogMetrics(query);
   }
 
   @Get(':id/exposure/sectors')

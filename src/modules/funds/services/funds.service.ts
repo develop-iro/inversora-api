@@ -6,6 +6,7 @@ import {
 import { z } from 'zod';
 import type { FundListResponse } from '../entities/fund-list.schema';
 import type { CatalogSummaryResponse } from '../../../core/api/schemas/catalog-summary.schema';
+import type { FundCatalogMetricsResponse } from '../../../core/api/schemas/fund-catalog-metrics.schema';
 import { fundIdParamSchema, fundSchema } from '../entities/fund.schema';
 import type { Fund } from '../entities/fund.schema';
 import {
@@ -29,6 +30,7 @@ import type { FundSectorExposureResponse } from '../entities/fund-sector-exposur
 import { FundsRepository } from '../repositories/funds.repository';
 import { GetFundsUseCase } from '../get-funds';
 import { GetCatalogSummaryUseCase } from '../get-catalog-summary';
+import { GetFundCatalogMetricsUseCase } from '../get-fund-catalog-metrics';
 import { CatalogVisibilityService } from './catalog-visibility.service';
 import { FundCompositionService } from './fund-composition.service';
 import { FundPricesService } from './fund-prices.service';
@@ -41,6 +43,7 @@ export class FundsService {
   constructor(
     private readonly getFundsUseCase: GetFundsUseCase,
     private readonly getCatalogSummaryUseCase: GetCatalogSummaryUseCase,
+    private readonly getFundCatalogMetricsUseCase: GetFundCatalogMetricsUseCase,
     private readonly fundsRepository: FundsRepository,
     private readonly catalogVisibilityService: CatalogVisibilityService,
     private readonly fundPricesService: FundPricesService,
@@ -66,6 +69,18 @@ export class FundsService {
    */
   async getCatalogSummary(): Promise<CatalogSummaryResponse> {
     return this.getCatalogSummaryUseCase.execute();
+  }
+
+  /**
+   * Returns lightweight totals and category facets for catalog UI controls.
+   *
+   * @param rawQuery - Raw HTTP query parameters.
+   * @returns Matching total and category counts.
+   */
+  async getCatalogMetrics(
+    rawQuery: Record<string, unknown>,
+  ): Promise<FundCatalogMetricsResponse> {
+    return this.getFundCatalogMetricsUseCase.execute(rawQuery);
   }
 
   /**

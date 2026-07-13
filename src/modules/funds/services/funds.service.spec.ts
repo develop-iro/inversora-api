@@ -2,6 +2,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { GetFundsUseCase } from '../get-funds';
 import { GetCatalogSummaryUseCase } from '../get-catalog-summary';
+import { GetFundCatalogMetricsUseCase } from '../get-fund-catalog-metrics';
 import { FundsRepository } from '../repositories/funds.repository';
 import { CatalogVisibilityService } from './catalog-visibility.service';
 import { FundCompositionService } from './fund-composition.service';
@@ -41,6 +42,7 @@ describe('FundsService', () => {
   let service: FundsService;
   let getFundsUseCase: { execute: jest.Mock };
   let getCatalogSummaryUseCase: { execute: jest.Mock };
+  let getFundCatalogMetricsUseCase: { execute: jest.Mock };
   let repository: { findMany: jest.Mock; findById: jest.Mock };
   let fundPricesService: {
     getLatestDate: jest.Mock;
@@ -56,6 +58,9 @@ describe('FundsService', () => {
       execute: jest.fn(),
     };
     getCatalogSummaryUseCase = {
+      execute: jest.fn(),
+    };
+    getFundCatalogMetricsUseCase = {
       execute: jest.fn(),
     };
     repository = {
@@ -159,6 +164,10 @@ describe('FundsService', () => {
           useValue: getCatalogSummaryUseCase,
         },
         {
+          provide: GetFundCatalogMetricsUseCase,
+          useValue: getFundCatalogMetricsUseCase,
+        },
+        {
           provide: FundsRepository,
           useValue: repository,
         },
@@ -221,6 +230,28 @@ describe('FundsService', () => {
 
     await expect(service.getCatalogSummary()).resolves.toBe(summary);
     expect(getCatalogSummaryUseCase.execute).toHaveBeenCalledTimes(1);
+  });
+
+  it('should delegate catalog metric reads to GetFundCatalogMetricsUseCase', async () => {
+    const metrics = {
+      total: 1,
+      categories: [
+        {
+          id: 'us-equity',
+          label: 'Renta variable USA',
+          fundCount: 1,
+          topScore: 82.5,
+        },
+      ],
+    };
+    getFundCatalogMetricsUseCase.execute.mockResolvedValue(metrics);
+
+    await expect(
+      service.getCatalogMetrics({ riskProfile: 'medium' }),
+    ).resolves.toBe(metrics);
+    expect(getFundCatalogMetricsUseCase.execute).toHaveBeenCalledWith({
+      riskProfile: 'medium',
+    });
   });
 
   it('should return a fund by id', async () => {
