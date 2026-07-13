@@ -1,0 +1,83 @@
+name: Market data sync
+
+on:
+  schedule:
+    # Run incremental batches every 3 hours without depending on a merge to main.
+    - cron: '17 */3 * * *'
+  workflow_dispatch:
+    inputs:
+      price_batch_size:
+        description: Symbols per price batch.
+        required: false
+        default: '120'
+      max_batches:
+        description: Maximum batches to process in this run.
+        required: false
+        default: '1'
+      pause_ms:
+        description: Pause between batches in milliseconds.
+        required: false
+        default: '65000'
+
+concurrency:
+  group: sync-production-data
+  cancel-in-progress: false
+
+jobs:
+  sync-production-data:
+    name: Sync production market data
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    env:
+      APP_ENV: pro
+      NODE_ENV: production
+      DATABASE_URL: ${{ secrets.DATABASE_URL_PRODUCTION }}
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER_PRODUCTION }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD_PRODUCTION }}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB_PRODUCTION }}
+      POSTGRES_HOST: ${{ secrets.POSTGRES_HOST_PRODUCTION }}
+      POSTGRES_PORT: ${{ secrets.POSTGRES_PORT_PRODUCTION }}
+      FMP_API_KEY: ${{ secrets.FMP_API_KEY_PRODUCTION }}
+      FMP_DATA_SOURCE: live
+      FMP_SAVE_FIXTURES: false
+      SYNC_SCHEDULER_ENABLED: false
+      SYNC_COMPOSITION_ENABLED: false
+      ADMIN_SYNC_ENABLED: false
+      ADMIN_CATALOG_ENABLED: false
+      ASSISTANT_ENABLED: false
+      SWAGGER_ENABLED: false
+      PRODUCTION_SYNC_PRICE_BATCH_SIZE: ${{ github.event.inputs.price_batch_size || vars.PRODUCTION_SYNC_PRICE_BATCH_SIZE || '120' }}
+      PRODUCTION_SYNC_MAX_BATCHES: ${{ github.event.inputs.max_batches || vars.PRODUCTION_SYNC_MAX_BATCHES || '1' }}
+      PRODUCTION_SYNC_PAUSE_MS: ${{ github.event.inputs.pause_ms || vars.PRODUCTION_SYNC_PAUSE_MS || '65000' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate production sync secrets
+        run: |
+          missing=0
+          for key in DATABASE_URL POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB POSTGRES_HOST POSTGRES_PORT FMP_API_KEY; do
+            if [ -z "${!key}" ]; then
+              echo "::error::Missing required production sync secret: ${key}"
+              missing=1
+            fi
+          done
+          exit "${missing}"
+
+      - name: Sync missing production price history and scoring
+        run: >-
+          npm run sync:postdeploy --
+          --price-batch-size "${PRODUCTION_SYNC_PRICE_BATCH_SIZE}"
+          --max-batches "${PRODUCTION_SYNC_MAX_BATCHES}"
+          --pause-ms "${PRODUCTION_SYNC_PAUSE_MS}"

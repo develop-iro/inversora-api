@@ -48,6 +48,7 @@
     "sync:batches": "node scripts/ensure-prisma-client.cjs && node -r ./scripts/preload-env.cjs -r ts-node/register -r tsconfig-paths/register src/cli/run-etf-catalog-batches.ts",
     "sync:prices:batches": "node scripts/ensure-prisma-client.cjs && node scripts/run-cli-with-dotenv.mjs src/cli/run-price-sync-batches.ts",
     "sync:production": "node scripts/ensure-prisma-client.cjs && node scripts/run-cli-with-dotenv.mjs src/cli/run-production-sync.ts",
+    "sync:postdeploy": "node scripts/ensure-prisma-client.cjs && node scripts/run-cli-with-dotenv.mjs src/cli/run-production-sync.ts --skip-metadata",
     "sync:reconcile-visibility": "node scripts/ensure-prisma-client.cjs && node -r ./scripts/preload-env.cjs -r ts-node/register -r tsconfig-paths/register src/cli/run-catalog-visibility-reconcile.ts",
     "sync:backfill-themes": "node scripts/ensure-prisma-client.cjs && node -r ./scripts/preload-env.cjs -r ts-node/register -r tsconfig-paths/register src/cli/run-fund-theme-backfill.ts",
     "sync:backfill-benchmarks": "node scripts/ensure-prisma-client.cjs && node -r ./scripts/preload-env.cjs -r ts-node/register -r tsconfig-paths/register src/cli/backfill-fund-benchmarks.ts",
