@@ -79,4 +79,70 @@ describe('AnonymousDevicesService', () => {
     expect(touchDevice).toHaveBeenCalledWith('device-1', '1.2.0');
     expect(result).toEqual({ ok: true });
   });
+
+  it('returns undefined when no device token header is provided', async () => {
+    const repository: Pick<AnonymousDevicesRepository, 'findByToken'> = {
+      findByToken: jest.fn(),
+    };
+    const service = new AnonymousDevicesService(
+      repository as AnonymousDevicesRepository,
+    );
+
+    await expect(
+      service.resolveOptionalDeviceId(undefined),
+    ).resolves.toBeUndefined();
+    expect(repository.findByToken).not.toHaveBeenCalled();
+  });
+
+  it('resolves a valid device token to a device id', async () => {
+    const repository: Pick<AnonymousDevicesRepository, 'findByToken'> = {
+      findByToken: jest.fn().mockResolvedValue({ id: 'device-1' }),
+    };
+    const service = new AnonymousDevicesService(
+      repository as AnonymousDevicesRepository,
+    );
+
+    await expect(
+      service.resolveOptionalDeviceId('dev_' + 'a'.repeat(40)),
+    ).resolves.toBe('device-1');
+  });
+
+  it('rejects invalid device tokens', async () => {
+    const repository: Pick<AnonymousDevicesRepository, 'findByToken'> = {
+      findByToken: jest.fn(),
+    };
+    const service = new AnonymousDevicesService(
+      repository as AnonymousDevicesRepository,
+    );
+
+    await expect(service.resolveOptionalDeviceId('invalid')).rejects.toThrow(
+      'Device token is invalid.',
+    );
+  });
+
+  it('rejects unknown device tokens', async () => {
+    const repository: Pick<AnonymousDevicesRepository, 'findByToken'> = {
+      findByToken: jest.fn().mockResolvedValue(null),
+    };
+    const service = new AnonymousDevicesService(
+      repository as AnonymousDevicesRepository,
+    );
+
+    await expect(
+      service.resolveOptionalDeviceId('dev_' + 'a'.repeat(40)),
+    ).rejects.toThrow('Device token is invalid.');
+  });
+
+  it('treats blank device tokens as omitted', async () => {
+    const repository: Pick<AnonymousDevicesRepository, 'findByToken'> = {
+      findByToken: jest.fn(),
+    };
+    const service = new AnonymousDevicesService(
+      repository as AnonymousDevicesRepository,
+    );
+
+    await expect(
+      service.resolveOptionalDeviceId('   '),
+    ).resolves.toBeUndefined();
+  });
 });

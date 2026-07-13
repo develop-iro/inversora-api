@@ -5,7 +5,6 @@ import {
   Headers,
   Post,
   ServiceUnavailableException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
 import {
@@ -34,8 +33,7 @@ import {
 } from '../entities/assistant-context.schema';
 import { AssistantThrottle } from '../decorators/assistant-throttle.decorator';
 import { AssistantService } from '../services/assistant.service';
-import { isDeviceTokenFormatValid } from '../../anonymous-devices/entities/device-token.utils';
-import { AnonymousDevicesRepository } from '../../anonymous-devices/repositories/anonymous-devices.repository';
+import { AnonymousDevicesService } from '../../anonymous-devices/services/anonymous-devices.service';
 
 @ApiTags('assistant')
 @Controller('assistant')
@@ -44,7 +42,7 @@ import { AnonymousDevicesRepository } from '../../anonymous-devices/repositories
 export class AssistantController {
   constructor(
     private readonly assistantService: AssistantService,
-    private readonly anonymousDevicesRepository: AnonymousDevicesRepository,
+    private readonly anonymousDevicesService: AnonymousDevicesService,
   ) {}
 
   @Post('explain')
@@ -120,7 +118,8 @@ export class AssistantController {
   ): Promise<AssistantChatResponse> {
     try {
       const request = parseAssistantChatRequest(body);
-      const deviceId = await this.resolveOptionalDeviceId(deviceToken);
+      const deviceId =
+        await this.anonymousDevicesService.resolveOptionalDeviceId(deviceToken);
       return await this.assistantService.chat(request, deviceId);
     } catch (error: unknown) {
       if (error instanceof ZodError) {
@@ -143,27 +142,6 @@ export class AssistantController {
 
       throw error;
     }
-  }
-
-  private async resolveOptionalDeviceId(
-    deviceToken: string | undefined,
-  ): Promise<string | undefined> {
-    if (deviceToken === undefined || deviceToken.trim().length === 0) {
-      return undefined;
-    }
-
-    if (!isDeviceTokenFormatValid(deviceToken)) {
-      throw new UnauthorizedException('Device token is invalid.');
-    }
-
-    const device =
-      await this.anonymousDevicesRepository.findByToken(deviceToken);
-
-    if (device === null) {
-      throw new UnauthorizedException('Device token is invalid.');
-    }
-
-    return device.id;
   }
 }
 

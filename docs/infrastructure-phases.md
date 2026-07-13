@@ -100,7 +100,7 @@ La app Inversora deja de usar mocks locales y consume la API en un entorno stagi
 
 ### Objetivo
 
-Servir datos reales de fondos indexados a usuarios de la app con disponibilidad y frescura garantizadas.
+Servir datos reales de productos indexados a usuarios de la app con disponibilidad y frescura garantizadas.
 
 ### Componentes adicionales
 

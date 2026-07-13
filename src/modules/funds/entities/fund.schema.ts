@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { catalogVisibilitySchema } from './catalog-visibility.schema';
 import { fundEditorialSchema } from './fund-editorial.schema';
 import { investmentThemeSchema } from './investment-theme.schema';
+import { fundMaterializedFieldsSchema } from './fund-materialized.schema';
 
 /** Supported external providers for persisted fund records. */
 export const fundProviderSchema = z.enum(['financial-modeling-prep']);
@@ -69,6 +70,7 @@ export const fundSchema = z.object({
   score: z.number().min(0).max(100).nullable(),
   editorial: fundEditorialSchema,
   catalogVisibility: catalogVisibilitySchema,
+  materialized: fundMaterializedFieldsSchema,
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 });
@@ -90,6 +92,7 @@ export const createFundInputSchema = fundSchema
     id: true,
     createdAt: true,
     updatedAt: true,
+    materialized: true,
   })
   .extend({
     isin: fundSchema.shape.isin.optional(),

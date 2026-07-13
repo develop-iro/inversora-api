@@ -34,8 +34,9 @@ describe('RankingsService', () => {
         groupsLimit: 24,
         limit: 10,
         hasMoreGroups: false,
+        totalEligibleFunds: 0,
       },
-    } as RankingsResponse;
+    } satisfies RankingsResponse;
     getRankingsUseCase.execute.mockResolvedValue(response);
 
     await expect(

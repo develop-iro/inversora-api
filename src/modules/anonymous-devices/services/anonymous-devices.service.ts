@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 
 import type { AnonymousEducationalProfileInput } from '../entities/anonymous-educational-profile.schema';
+import { isDeviceTokenFormatValid } from '../entities/device-token.utils';
 import type {
   HeartbeatAnonymousDeviceInput,
   RegisterAnonymousDeviceInput,
@@ -72,5 +73,31 @@ export class AnonymousDevicesService {
       saved: true,
       deviceId,
     };
+  }
+
+  /**
+   * Resolves an optional anonymous device id from a request header token.
+   *
+   * @param deviceToken - Plain device token from `x-device-token`.
+   */
+  async resolveOptionalDeviceId(
+    deviceToken: string | undefined,
+  ): Promise<string | undefined> {
+    if (deviceToken === undefined || deviceToken.trim().length === 0) {
+      return undefined;
+    }
+
+    if (!isDeviceTokenFormatValid(deviceToken)) {
+      throw new UnauthorizedException('Device token is invalid.');
+    }
+
+    const device =
+      await this.anonymousDevicesRepository.findByToken(deviceToken);
+
+    if (device === null) {
+      throw new UnauthorizedException('Device token is invalid.');
+    }
+
+    return device.id;
   }
 }

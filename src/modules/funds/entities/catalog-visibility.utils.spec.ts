@@ -1,4 +1,5 @@
 import type { Fund } from './fund.schema';
+import { buildFundTestFixture } from '../test-utils/fund.entity.fixtures';
 import {
   buildAutomaticCatalogVisibilityReason,
   collectCatalogDataQualityIssues,
@@ -6,7 +7,7 @@ import {
   resolveAutomaticCatalogVisibility,
 } from './catalog-visibility.utils';
 
-const completeFund: Fund = {
+const completeFund: Fund = buildFundTestFixture({
   id: '550e8400-e29b-41d4-a716-446655440000',
   symbol: 'SPY',
   isin: 'US78462F1030',
@@ -31,7 +32,7 @@ const completeFund: Fund = {
   editorial: { badge: '', themeLabel: '', idealForBeginners: false },
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   updatedAt: new Date('2024-02-01T00:00:00.000Z'),
-};
+});
 
 describe('catalog-visibility.utils', () => {
   it('should detect missing catalog data fields', () => {

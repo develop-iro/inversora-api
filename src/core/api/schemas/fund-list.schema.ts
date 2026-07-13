@@ -77,6 +77,11 @@ export const fundListQuerySchema = z.object({
 /** Parsed query type for `GET /funds`. */
 export type FundListQuery = z.infer<typeof fundListQuerySchema>;
 
+/** Filter-only subset used by SQL where builders (pagination/sort omitted). */
+export type FundListFilterQuery = Partial<
+  Omit<FundListQuery, 'page' | 'limit' | 'sortBy' | 'sortOrder'>
+>;
+
 /** Pagination metadata returned by fund list endpoints. */
 export const fundListMetaSchema = z.object({
   page: z.number().int().positive(),

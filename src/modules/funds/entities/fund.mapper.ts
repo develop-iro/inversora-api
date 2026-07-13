@@ -25,6 +25,7 @@ import {
   DEFAULT_FUND_EDITORIAL,
   type FundEditorial,
 } from './fund-editorial.schema';
+import { mapPrismaFundMaterializedFields } from './fund-materialized.mapper';
 
 const ISO_4217_CURRENCY_PATTERN = /^[A-Z]{3}$/;
 const ISO_6166_ISIN_PATTERN = /^[A-Z]{2}[A-Z0-9]{9}[0-9]$/;
@@ -273,6 +274,7 @@ export function mapPrismaFundToFund(record: PrismaFund): Fund {
     score: mapNullableDecimal(record.score),
     editorial: mapPrismaFundEditorial(record),
     catalogVisibility: mapPrismaCatalogVisibility(record.catalogVisibility),
+    materialized: mapPrismaFundMaterializedFields(record),
     createdAt: record.createdAt,
     updatedAt: record.updatedAt,
   });

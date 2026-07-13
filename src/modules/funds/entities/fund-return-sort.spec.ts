@@ -148,7 +148,11 @@ describe('fund-return-sort', () => {
 
   describe('sortEnrichedFundsByCatalogField', () => {
     it('sorts by symbol ascending with nulls last', () => {
-      const nullSymbolFund = { ...baseFund, id: '9', symbol: null } as FundApi;
+      const nullSymbolFund = {
+        ...baseFund,
+        id: '9',
+        symbol: null,
+      } as unknown as FundApi;
 
       expect(
         sortEnrichedFundsByCatalogField(
@@ -194,7 +198,7 @@ describe('fund-return-sort', () => {
       const olderFund = {
         ...baseFund,
         id: '8',
-        updatedAt: '2024-06-01T00:00:00.000Z',
+        updatedAt: new Date('2024-06-01T00:00:00.000Z'),
       } as FundApi;
 
       expect(

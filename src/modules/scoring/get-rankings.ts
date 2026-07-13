@@ -9,11 +9,6 @@ import type {
   RankingsQuery,
   RankingsResponse,
 } from '../../core/api/schemas/rankings.schema';
-import {
-  loadReturnSnapshotsByFundIds,
-  resolveFundReturnSnapshot,
-} from '../funds/entities/fund-returns.enricher';
-import { FundPricesService } from '../funds/services/fund-prices.service';
 import { FundsRepository } from '../funds/repositories/funds.repository';
 import { buildRankingsResponse } from './entities/ranking.mapper';
 
@@ -22,10 +17,7 @@ import { buildRankingsResponse } from './entities/ranking.mapper';
  */
 @Injectable()
 export class GetRankingsUseCase {
-  constructor(
-    private readonly fundsRepository: FundsRepository,
-    private readonly fundPricesService: FundPricesService,
-  ) {}
+  constructor(private readonly fundsRepository: FundsRepository) {}
 
   /**
    * Returns funds ranked by Inversora Score inside comparable benchmark groups.
@@ -35,26 +27,15 @@ export class GetRankingsUseCase {
    */
   async execute(rawQuery: Record<string, unknown>): Promise<RankingsResponse> {
     const query = this.parseRankingsQuery(rawQuery);
-    const funds = await this.fundsRepository.findRankingEligible();
-    const baseResponse = buildRankingsResponse(funds, query);
-    const fundIds = baseResponse.data.flatMap((group) =>
-      group.funds.map((entry) => entry.id),
-    );
-    const returnSnapshots = await loadReturnSnapshotsByFundIds(
-      this.fundPricesService,
-      fundIds,
-    );
-    const data = baseResponse.data.map((group) => ({
-      ...group,
-      funds: group.funds.map((entry) => ({
-        ...entry,
-        returns: resolveFundReturnSnapshot(returnSnapshots, entry.id),
-      })),
-    }));
+    const [funds, aggregation] = await Promise.all([
+      this.fundsRepository.findRankingFundsForQuery(query),
+      this.fundsRepository.findRankingFundsAggregation(query),
+    ]);
+    const baseResponse = buildRankingsResponse(funds, query, aggregation);
 
     return parseApiResponse(
       rankingsResponseSchema,
-      { data, meta: baseResponse.meta },
+      baseResponse,
       'get-rankings',
     );
   }

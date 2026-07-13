@@ -9,6 +9,7 @@ import {
   getTodayIsoDate,
 } from '../entities/fund-price.mapper';
 import { FundsRepository } from '../repositories/funds.repository';
+import { FundMaterializedReturnsService } from './fund-materialized-returns.service';
 import { FundPricesService } from './fund-prices.service';
 import type {
   FundPriceSyncOptions,
@@ -27,6 +28,7 @@ export class FundPriceSyncService {
     private readonly fmpProvider: FinancialModelingPrepProvider,
     private readonly fundsRepository: FundsRepository,
     private readonly fundPricesService: FundPricesService,
+    private readonly fundMaterializedReturnsService: FundMaterializedReturnsService,
   ) {}
 
   /**
@@ -62,6 +64,7 @@ export class FundPriceSyncService {
 
     if (range.upToDate) {
       const pricesPruned = await this.pruneRetention(fund.id);
+      await this.fundMaterializedReturnsService.refreshForFundId(fund.id);
 
       return {
         fundId: fund.id,
@@ -85,6 +88,7 @@ export class FundPriceSyncService {
 
     if (history.length === 0) {
       const pricesPruned = await this.pruneRetention(fund.id);
+      await this.fundMaterializedReturnsService.refreshForFundId(fund.id);
 
       return {
         fundId: fund.id,
@@ -102,6 +106,7 @@ export class FundPriceSyncService {
       history,
     );
     const pricesPruned = await this.pruneRetention(fund.id);
+    await this.fundMaterializedReturnsService.refreshForFundId(fund.id);
 
     return {
       fundId: fund.id,

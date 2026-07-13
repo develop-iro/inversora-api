@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { FundsModule } from '../funds/funds.module';
 import { AdminFundsController } from './controllers/admin-funds.controller';
 import { AdminSyncController } from './controllers/admin-sync.controller';
+import { GetAdminFundsUseCase } from './get-admin-funds';
 import { AdminApiKeyGuard } from './guards/admin-api-key.guard';
 import { AdminCatalogEnabledGuard } from './guards/admin-catalog-enabled.guard';
 import { AdminSyncEnabledGuard } from './guards/admin-sync-enabled.guard';
@@ -13,6 +14,7 @@ import { AdminSyncEnabledGuard } from './guards/admin-sync-enabled.guard';
   imports: [FundsModule],
   controllers: [AdminSyncController, AdminFundsController],
   providers: [
+    GetAdminFundsUseCase,
     AdminApiKeyGuard,
     AdminSyncEnabledGuard,
     AdminCatalogEnabledGuard,

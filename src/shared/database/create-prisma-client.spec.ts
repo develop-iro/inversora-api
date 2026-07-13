@@ -31,7 +31,8 @@ describe('createPrismaClient', () => {
   });
 
   it('builds Prisma Client options with a PostgreSQL adapter', () => {
-    expect(createPrismaClientOptions().adapter).toBeDefined();
+    const options = createPrismaClientOptions();
+    expect(options?.adapter).toBeDefined();
   });
 
   it('creates a Prisma Client with an optional connection override', () => {

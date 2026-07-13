@@ -113,9 +113,12 @@ describe('buildFundListOrderByInput', () => {
     expect(buildFundListOrderByInput('ter', 'asc')).toEqual({ ter: 'asc' });
   });
 
-  it('should fallback to score when sorting by return snapshots', () => {
+  it('should map return snapshot sorts to materialized columns', () => {
     expect(buildFundListOrderByInput('return1y', 'desc')).toEqual({
-      score: 'desc',
+      return1y: 'desc',
+    });
+    expect(buildFundListOrderByInput('return3y', 'asc')).toEqual({
+      return3y: 'asc',
     });
   });
 });

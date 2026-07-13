@@ -1,11 +1,25 @@
 import { NotFoundException } from '@nestjs/common';
 
+import { FUND_MATERIALIZED_FIELD_DEFAULTS } from '../../funds/test-utils/fund.entity.fixtures';
 import { AssistantToolsService } from './assistant-tools.service';
+
+const persistedScore = {
+  score: 88,
+  summary: 'Coste bajo.',
+  warnings: [],
+  version: 'rn-04' as const,
+  breakdown: {
+    ter: { points: 36, maxPoints: 40, label: 'TER' },
+    tracking: { points: 34, maxPoints: 40, label: 'Tracking error' },
+    aum: { points: 8, maxPoints: 10, label: 'AUM' },
+    age: { points: 10, maxPoints: 10, label: 'Antigüedad' },
+  },
+};
 
 describe('AssistantToolsService', () => {
   let service: AssistantToolsService;
   let fundsRepository: { findByIsin: jest.Mock; findByIsins: jest.Mock };
-  let scoringService: { calculateScoreForFundId: jest.Mock };
+  let scoringReadService: { getPersistedScoreByFundId: jest.Mock };
   let catalogVisibilityService: { assertPublicCatalogVisible: jest.Mock };
   let glossaryService: { lookup: jest.Mock };
 
@@ -14,8 +28,8 @@ describe('AssistantToolsService', () => {
       findByIsin: jest.fn(),
       findByIsins: jest.fn(),
     };
-    scoringService = {
-      calculateScoreForFundId: jest.fn(),
+    scoringReadService = {
+      getPersistedScoreByFundId: jest.fn(),
     };
     catalogVisibilityService = {
       assertPublicCatalogVisible: jest.fn(),
@@ -25,7 +39,7 @@ describe('AssistantToolsService', () => {
     };
     service = new AssistantToolsService(
       fundsRepository as never,
-      scoringService as never,
+      scoringReadService as never,
       catalogVisibilityService as never,
       glossaryService as never,
     );
@@ -33,18 +47,9 @@ describe('AssistantToolsService', () => {
 
   it('returns score breakdown details', async () => {
     fundsRepository.findByIsin.mockResolvedValue(buildFund());
-    scoringService.calculateScoreForFundId.mockResolvedValue({
-      score: 88,
-      summary: 'Coste bajo.',
-      warnings: [],
-      version: 'rn-04',
-      breakdown: {
-        ter: { points: 36, maxPoints: 40, label: 'TER' },
-        tracking: { points: 34, maxPoints: 40, label: 'Tracking error' },
-        aum: { points: 8, maxPoints: 10, label: 'AUM' },
-        age: { points: 10, maxPoints: 10, label: 'Antigüedad' },
-      },
-    });
+    scoringReadService.getPersistedScoreByFundId.mockResolvedValue(
+      persistedScore,
+    );
 
     await expect(
       service.getScoreBreakdown('us78462f1030'),
@@ -157,7 +162,7 @@ describe('AssistantToolsService', () => {
 
   it('returns score breakdown with null score when scoring is unavailable', async () => {
     fundsRepository.findByIsin.mockResolvedValue(buildFund());
-    scoringService.calculateScoreForFundId.mockResolvedValue(null);
+    scoringReadService.getPersistedScoreByFundId.mockResolvedValue(null);
 
     await expect(service.getScoreBreakdown('us78462f1030')).resolves.toEqual({
       isin: 'US78462F1030',
@@ -168,17 +173,9 @@ describe('AssistantToolsService', () => {
 
   it('returns score breakdown with full scoring metadata', async () => {
     fundsRepository.findByIsin.mockResolvedValue(buildFund());
-    scoringService.calculateScoreForFundId.mockResolvedValue({
-      score: 88,
-      version: 'rn-04',
-      summary: 'Coste bajo.',
+    scoringReadService.getPersistedScoreByFundId.mockResolvedValue({
+      ...persistedScore,
       warnings: ['Tracking error no disponible'],
-      breakdown: {
-        ter: { points: 36, maxPoints: 40, label: 'TER' },
-        tracking: { points: 34, maxPoints: 40, label: 'Tracking error' },
-        aum: { points: 8, maxPoints: 10, label: 'AUM' },
-        age: { points: 10, maxPoints: 10, label: 'Antigüedad' },
-      },
     });
 
     await expect(service.getScoreBreakdown('us78462f1030')).resolves.toEqual({
@@ -188,12 +185,7 @@ describe('AssistantToolsService', () => {
       version: 'rn-04',
       summary: 'Coste bajo.',
       warnings: ['Tracking error no disponible'],
-      breakdown: {
-        ter: { points: 36, maxPoints: 40, label: 'TER' },
-        tracking: { points: 34, maxPoints: 40, label: 'Tracking error' },
-        aum: { points: 8, maxPoints: 10, label: 'AUM' },
-        age: { points: 10, maxPoints: 10, label: 'Antigüedad' },
-      },
+      breakdown: persistedScore.breakdown,
     });
   });
 
@@ -223,13 +215,14 @@ describe('AssistantToolsService', () => {
   });
 
   it('returns a fund snapshot with score details', async () => {
-    fundsRepository.findByIsin.mockResolvedValue(buildFund());
-    scoringService.calculateScoreForFundId.mockResolvedValue({
-      score: 88,
-      summary: 'Coste bajo.',
-      warnings: [],
-      version: 'rn-04',
-    });
+    fundsRepository.findByIsin.mockResolvedValue(
+      buildFund({
+        materialized: {
+          ...FUND_MATERIALIZED_FIELD_DEFAULTS,
+          scoreBreakdown: persistedScore,
+        },
+      }),
+    );
 
     await expect(
       service.getFundSnapshot('us78462f1030'),
@@ -253,7 +246,6 @@ describe('AssistantToolsService', () => {
     fundsRepository.findByIsin.mockResolvedValue(
       buildFund({ isin: null as unknown as string }),
     );
-    scoringService.calculateScoreForFundId.mockResolvedValue(null);
 
     await expect(
       service.getFundSnapshot('us78462f1030'),
@@ -268,14 +260,14 @@ describe('AssistantToolsService', () => {
       id: 'fund-1',
       isin: 'US78462F1030',
       symbol: 'SPY',
+      materialized: {
+        ...FUND_MATERIALIZED_FIELD_DEFAULTS,
+        scoreBreakdown: persistedScore,
+      },
     });
     fundsRepository.findByIsins.mockResolvedValue(
       new Map([['US78462F1030', first]]),
     );
-    scoringService.calculateScoreForFundId.mockResolvedValue({
-      score: 88,
-      version: 'rn-04',
-    });
 
     await expect(
       service.compareFunds(['US78462F1030', 'US0000000000']),
@@ -289,11 +281,22 @@ describe('AssistantToolsService', () => {
       id: 'fund-1',
       isin: 'US78462F1030',
       symbol: 'SPY',
+      materialized: {
+        ...FUND_MATERIALIZED_FIELD_DEFAULTS,
+        scoreBreakdown: persistedScore,
+      },
     });
     const second = buildFund({
       id: 'fund-2',
       isin: 'US46090E1038',
       symbol: 'IWM',
+      materialized: {
+        ...FUND_MATERIALIZED_FIELD_DEFAULTS,
+        scoreBreakdown: {
+          ...persistedScore,
+          score: 72,
+        },
+      },
     });
     fundsRepository.findByIsins.mockResolvedValue(
       new Map([
@@ -301,9 +304,6 @@ describe('AssistantToolsService', () => {
         ['US46090E1038', second],
       ]),
     );
-    scoringService.calculateScoreForFundId
-      .mockResolvedValueOnce({ score: 88, version: 'rn-04' })
-      .mockResolvedValueOnce({ score: 72, version: 'rn-04' });
 
     await expect(
       service.compareFunds(['us78462f1030', 'US46090E1038']),
@@ -326,6 +326,7 @@ function buildFund(overrides: Record<string, unknown> = {}) {
     currency: 'USD',
     benchmark: 'S&P 500',
     riskLevel: 4,
+    score: null,
     metrics: {
       ter: 0.09,
       volatility: null,
@@ -335,6 +336,7 @@ function buildFund(overrides: Record<string, unknown> = {}) {
       dividendYield: null,
       trackingError: null,
     },
+    materialized: { ...FUND_MATERIALIZED_FIELD_DEFAULTS },
     ...overrides,
   };
 }

@@ -1,6 +1,6 @@
 # Inversora API
 
-Backend de datos y scoring para [Inversora](https://github.com/), una aplicación educativa para explorar y comparar fondos indexados.
+Backend de datos y scoring para [Inversora](https://github.com/), una aplicación educativa para explorar y comparar productos indexados validados.
 
 ## Documentación
 
@@ -19,7 +19,7 @@ La documentación completa vive en [`docs/README.md`](docs/README.md). Puntos de
 - [NestJS](https://nestjs.com/) + TypeScript
 - PostgreSQL 16 (local via Docker Compose)
 - [Prisma](https://www.prisma.io/) ORM
-- Financial Modeling Prep (proveedor de datos de mercado, mock o live)
+- Financial Modeling Prep (proveedor operativo de datos de mercado, mock o live)
 - ESLint + Prettier + GitHub Actions CI
 
 ## Requisitos
@@ -125,7 +125,7 @@ Respuesta:
 src/
   modules/
     health/           # Health check
-    providers/        # Integración FMP
+    providers/        # Integración FMP y proveedores experimentales
     funds/            # Catálogo, sync, precios, composición
     scoring/          # Score Inversora
   shared/

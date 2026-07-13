@@ -30,6 +30,8 @@ import {
   normalizeOptionalFundIsin,
   resolveFundCurrencyFromProfile,
 } from './fund.mapper';
+import { FUND_MATERIALIZED_FIELD_DEFAULTS } from '../test-utils/fund.entity.fixtures';
+import { PRISMA_FUND_MATERIALIZED_FIELD_DEFAULTS } from '../test-utils/prisma-fund.fixtures';
 
 const prismaFundRow = {
   id: '550e8400-e29b-41d4-a716-446655440000',
@@ -58,6 +60,7 @@ const prismaFundRow = {
   badge: 'Núcleo USA',
   themeLabel: 'Referencia S&P 500',
   idealForBeginners: true,
+  ...PRISMA_FUND_MATERIALIZED_FIELD_DEFAULTS,
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   updatedAt: new Date('2024-02-01T00:00:00.000Z'),
 };
@@ -134,6 +137,7 @@ describe('mapPrismaFundToFund', () => {
         idealForBeginners: true,
       },
       catalogVisibility: 'visible',
+      materialized: FUND_MATERIALIZED_FIELD_DEFAULTS,
       createdAt,
       updatedAt,
     });
@@ -195,6 +199,7 @@ describe('resolveFundCurrencyFromProfile', () => {
       resolveFundCurrencyFromProfile({
         symbol: 'SPY',
         name: 'SPY',
+        vehicle: 'etf',
         currency: 'usd',
       }),
     ).toBe('USD');
@@ -203,6 +208,7 @@ describe('resolveFundCurrencyFromProfile', () => {
       resolveFundCurrencyFromProfile({
         symbol: 'EUNL',
         name: 'iShares Core MSCI World UCITS ETF',
+        vehicle: 'etf',
         navCurrency: 'EUR',
       }),
     ).toBe('EUR');
@@ -211,6 +217,7 @@ describe('resolveFundCurrencyFromProfile', () => {
       resolveFundCurrencyFromProfile({
         symbol: 'INVALID',
         name: 'Invalid Currency Fund',
+        vehicle: 'etf',
         currency: 'US DOLLAR',
       }),
     ).toBe('USD');
@@ -219,6 +226,7 @@ describe('resolveFundCurrencyFromProfile', () => {
       resolveFundCurrencyFromProfile({
         symbol: 'FALLBACK',
         name: 'Fallback Currency Fund',
+        vehicle: 'etf',
       }),
     ).toBe('USD');
   });

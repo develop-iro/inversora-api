@@ -10,9 +10,9 @@ describe('MyInvestorProvider', () => {
   let client: { callTool: jest.Mock };
   let fixtures: { readFixture: jest.Mock };
 
-  const configMock: Pick<AppConfigService, 'myInvestorUsesMocks'> = {
+  const configMock = {
     myInvestorUsesMocks: true,
-  };
+  } as { myInvestorUsesMocks: boolean };
 
   const vanguardRow = {
     isin: 'IE00B03HD191',

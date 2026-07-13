@@ -33,7 +33,9 @@
 ## Jerarquía de fuentes de verdad
 
 ```text
-Documento oficial Inversora (negocio, HUs, RN)   ← fuera del repo; prevalece ante cualquier doc
+Memoria Final Inversora (entrega TFM)            ← fuente de verdad de entrega/as-built
+        ↓
+Documento oficial Inversora                      ← negocio, HUs y RN base
         ↓
 invesora/docs/product/*                          ← reglas de producto (§2, §3, §4, §5, scoring RN…)
         ↓
@@ -44,7 +46,7 @@ README.md + AGENTS.md + CLAUDE.md                ← onboarding rápido para hum
 src/ + Swagger /api/docs                         ← implementación viva
 ```
 
-Ante conflicto entre repos o docs internas, **prevalece el documento oficial**. Luego `invesora/docs/product/*` para reglas de producto y este repositorio para contratos HTTP y datos de servidor.
+Ante conflicto entre repos o docs internas, **prevalece la Memoria Final Inversora como fuente de verdad de entrega**. Luego `invesora/docs/product/*` resume reglas de producto y este repositorio concreta contratos HTTP, datos de servidor e infraestructura.
 
 ## Relación con la app Inversora
 
@@ -72,7 +74,7 @@ La app móvil/web vive en el repositorio hermano `invesora`. **No duplicar** reg
 | Módulo | Responsabilidad |
 |--------|-----------------|
 | `health` | Comprobación de disponibilidad (`GET /health`) |
-| `providers` | Integración con Financial Modeling Prep (FMP) |
+| `providers` | Integración con Financial Modeling Prep (FMP) y adaptadores experimentales no incluidos en la narrativa de entrega |
 | `funds` | Catálogo, sync, precios, composición y exposición |
 | `bff` | Contrato agregado para la app (`GET /funds/:isin`, destacados, noticias) |
 | `scoring` | Cálculo y persistencia del Score Inversora |
@@ -102,4 +104,5 @@ Actualiza la documentación en el mismo PR o issue cuando:
 - [NestJS](https://nestjs.com/)
 - [Prisma](https://www.prisma.io/)
 - [Financial Modeling Prep API](https://site.financialmodelingprep.com/developer/docs)
-- Documento oficial: *Documentación de Proyecto: Inversora* (v1.0) — mantener copia local acordada por el equipo
+- Memoria Final Inversora — fuente de verdad de entrega/as-built
+- Documento oficial: *Documentación de Proyecto: Inversora* (v1.0) — base de negocio y requisitos

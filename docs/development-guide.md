@@ -353,8 +353,19 @@ Ejecuta el mismo pipeline sin levantar el servidor HTTP:
 npm run sync:run -- --symbols SPY,QQQ
 npm run sync:run -- --symbols SPY --no-composition --no-scoring
 npm run sync:run -- --scoring
+npm run sync:returns:backfill -- --visible-only
+npm run sync:score
 npm run sync:run -- --help
 ```
+
+Tras desplegar la migración de campos materializados (`return1y`, `scoreBreakdown`, `peerRank`, etc.), ejecuta **en este orden** antes de activar el read-path en producción:
+
+1. `npm run prisma:migrate:deploy`
+2. `npm run sync:returns:backfill` (o `--visible-only` en el primer pase)
+3. `npm run sync:score` (o `sync:run -- --scoring`)
+4. Validar `GET /funds?sortBy=score`, `GET /rankings` y `GET /funds/:isin`
+
+Hasta completar el backfill, el detalle puede servir score degradado (solo escalar) si falta `scoreBreakdown`; sin score ni breakdown responde `503`.
 
 Requisitos: PostgreSQL activo, migraciones aplicadas y `.env` configurado (incluye `DATABASE_URL` y `FMP_API_KEY`). El CLI no exige `ADMIN_SYNC_ENABLED`; invoca directamente `FundDailySyncService`.
 

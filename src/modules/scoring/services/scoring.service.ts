@@ -263,6 +263,7 @@ export class ScoringService {
       }),
     );
     const scores = this.calculateCategoryScores(entries);
+    const peerRanks = this.buildPeerRanks(entries, scores);
     const results: ScoringSyncItemResult[] = [];
 
     for (const entry of entries) {
@@ -272,9 +273,15 @@ export class ScoringService {
         continue;
       }
 
-      const updatedFund = await this.fundsRepository.updateScore(
+      const peerGroupKey = resolveScoringPeerGroupKey(entry.fund);
+      const updatedFund = await this.fundsRepository.updateMaterializedScoring(
         entry.fund.id,
-        computedScore.score,
+        {
+          score: computedScore.score,
+          scoreBreakdown: computedScore,
+          peerGroupKey,
+          peerRank: peerRanks.get(entry.fund.id) ?? null,
+        },
       );
 
       await this.catalogVisibilityService.applyAutomaticVisibilityRules(
@@ -293,6 +300,55 @@ export class ScoringService {
       updated: results.length,
       results,
     };
+  }
+
+  /**
+   * Builds 1-based peer ranks for each fund inside its scoring group.
+   *
+   * @param entries - Funds with metrics used for scoring.
+   * @param scores - Computed scores keyed by fund id.
+   */
+  private buildPeerRanks(
+    entries: readonly { fund: Fund; metrics: FundScoringMetrics }[],
+    scores: ReadonlyMap<string, InvesoraScore>,
+  ): Map<string, number> {
+    const grouped = new Map<string, Fund[]>();
+
+    for (const entry of entries) {
+      const score = scores.get(entry.fund.id);
+
+      if (score === undefined) {
+        continue;
+      }
+
+      const key = resolveScoringPeerGroupKey(entry.fund);
+      const group = grouped.get(key) ?? [];
+      group.push(entry.fund);
+      grouped.set(key, group);
+    }
+
+    const ranks = new Map<string, number>();
+
+    for (const groupFunds of grouped.values()) {
+      const sorted = [...groupFunds].sort((left, right) => {
+        const leftScore =
+          scores.get(left.id)?.score ?? Number.NEGATIVE_INFINITY;
+        const rightScore =
+          scores.get(right.id)?.score ?? Number.NEGATIVE_INFINITY;
+
+        if (rightScore !== leftScore) {
+          return rightScore - leftScore;
+        }
+
+        return left.symbol.localeCompare(right.symbol);
+      });
+
+      sorted.forEach((fund, index) => {
+        ranks.set(fund.id, index + 1);
+      });
+    }
+
+    return ranks;
   }
 
   private async buildMetricsForFund(fund: Fund): Promise<FundScoringMetrics> {

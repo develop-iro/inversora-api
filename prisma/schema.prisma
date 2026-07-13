@@ -81,6 +81,20 @@ model Fund {
   trackingError           Decimal?                     @db.Decimal(8, 4)
   riskLevel               Int?
   score                   Decimal?                     @db.Decimal(5, 2)
+  /// Materialized 1-year total return (%) from persisted prices (sync-time only).
+  return1y                Decimal?                     @db.Decimal(10, 4)
+  /// Materialized 3-year total return (%) from persisted prices (sync-time only).
+  return3y                Decimal?                     @db.Decimal(10, 4)
+  /// Materialized year-to-date return (%) from persisted prices (sync-time only).
+  returnYtd               Decimal?                     @db.Decimal(10, 4)
+  /// Latest price date used for materialized returns.
+  returnAsOf              DateTime?                    @db.Date
+  /// Persisted RN-04 score breakdown JSON (sync-time only).
+  scoreBreakdown          Json?
+  /// Normalized peer group key used for rankings and score comparison.
+  peerGroupKey            String?
+  /// 1-based rank inside `peerGroupKey` by persisted score.
+  peerRank                Int?
   /// Product badge shown on fund cards (Spanish MVP copy; not sourced from FMP).
   badge                   String                       @default("")
   /// Investment theme label for catalog cards (Spanish MVP copy).
@@ -99,6 +113,10 @@ model Fund {
   @@index([catalogVisibility])
   @@index([idealForBeginners])
   @@index([investmentTheme])
+  @@index([score(sort: Desc)])
+  @@index([peerGroupKey, score(sort: Desc)])
+  @@index([return1y])
+  @@index([return3y])
   @@map("funds")
 }
 

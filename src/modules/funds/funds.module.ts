@@ -16,6 +16,7 @@ import { FundCompositionService } from './services/fund-composition.service';
 import { FundCompositionSyncService } from './services/fund-composition-sync.service';
 import { FundDailySyncService } from './services/fund-daily-sync.service';
 import { FundDiscoveryService } from './services/fund-discovery.service';
+import { FundMaterializedReturnsService } from './services/fund-materialized-returns.service';
 import { FundPriceSyncService } from './services/fund-price-sync.service';
 import { FundPricesService } from './services/fund-prices.service';
 import { FundSyncService } from './services/fund-sync.service';
@@ -39,6 +40,7 @@ import { FundsService } from './services/funds.service';
     FundCompositionService,
     FundCompositionSyncService,
     FundPriceSyncService,
+    FundMaterializedReturnsService,
     FundSyncService,
     FundDiscoveryService,
     FundDailySyncService,
@@ -55,6 +57,7 @@ import { FundsService } from './services/funds.service';
     FundCompositionService,
     FundCompositionSyncService,
     FundPriceSyncService,
+    FundMaterializedReturnsService,
     FundSyncService,
     FundDailySyncService,
   ],

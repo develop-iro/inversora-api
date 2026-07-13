@@ -9,6 +9,7 @@ import { Decimal } from '@prisma/client/runtime/client';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../../shared/database/prisma.service';
 import { FundsRepository } from './funds.repository';
+import { PRISMA_FUND_MATERIALIZED_FIELD_DEFAULTS } from '../test-utils/prisma-fund.fixtures';
 
 const prismaFundRow = {
   id: '550e8400-e29b-41d4-a716-446655440000',
@@ -37,6 +38,7 @@ const prismaFundRow = {
   badge: '',
   themeLabel: '',
   idealForBeginners: false,
+  ...PRISMA_FUND_MATERIALIZED_FIELD_DEFAULTS,
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   updatedAt: new Date('2024-02-01T00:00:00.000Z'),
 };

@@ -3,7 +3,6 @@ import { Injectable } from '@nestjs/common';
 import { FundsRepository } from '../../funds/repositories/funds.repository';
 import type { Fund } from '../../funds/entities/fund.schema';
 import type { InvesoraScore } from '../../scoring/entities/invesora-score.schema';
-import { ScoringService } from '../../scoring/services/scoring.service';
 import type {
   AssistantChatRequest,
   AssistantExplainRequest,
@@ -50,10 +49,7 @@ export type AssistantPromptContext = {
  */
 @Injectable()
 export class AssistantContextBuilderService {
-  constructor(
-    private readonly fundsRepository: FundsRepository,
-    private readonly scoringService: ScoringService,
-  ) {}
+  constructor(private readonly fundsRepository: FundsRepository) {}
 
   /**
    * Loads fund and score data for the assistant prompt context.
@@ -93,17 +89,15 @@ export class AssistantContextBuilderService {
       intent,
       request.surface,
     );
-    const funds = await Promise.all(
-      requestedIsins
-        .map((isin) => ({ isin, fund: persistedFunds.get(isin) }))
-        .filter(
-          (entry): entry is { isin: string; fund: Fund } =>
-            entry.fund !== undefined,
-        )
-        .map((entry) =>
-          this.buildFundContext(entry.fund, entry.isin, includeBreakdown),
-        ),
-    );
+    const funds = requestedIsins
+      .map((isin) => ({ isin, fund: persistedFunds.get(isin) }))
+      .filter(
+        (entry): entry is { isin: string; fund: Fund } =>
+          entry.fund !== undefined,
+      )
+      .map((entry) =>
+        this.buildFundContext(entry.fund, entry.isin, includeBreakdown),
+      );
 
     const enriched: AssistantPromptContext = {
       ...base,
@@ -160,12 +154,12 @@ export class AssistantContextBuilderService {
     return [...new Set(isins)];
   }
 
-  private async buildFundContext(
+  private buildFundContext(
     fund: Fund,
     requestedIsin: string,
     includeBreakdown: boolean,
-  ): Promise<AssistantFundPromptContext> {
-    const score = await this.scoringService.calculateScoreForFundId(fund.id);
+  ): AssistantFundPromptContext {
+    const score = fund.materialized.scoreBreakdown;
 
     return {
       isin: fund.isin ?? requestedIsin,
@@ -175,7 +169,7 @@ export class AssistantContextBuilderService {
       trackingError: fund.metrics.trackingError ?? null,
       currency: fund.currency,
       vehicle: fund.vehicle,
-      score: score?.score ?? null,
+      score: score?.score ?? fund.score,
       scoreSummary: score?.summary,
       scoreWarnings: score?.warnings,
       scoreVersion: score?.version,

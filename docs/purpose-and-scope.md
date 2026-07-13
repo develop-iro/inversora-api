@@ -1,6 +1,6 @@
 # Propósito y alcance de Inversora API
 
-Resumen alineado al documento oficial (*Documentación de Proyecto: Inversora*, v1.0). Las reglas de producto completas viven en `invesora/docs/product/`. Ante conflicto, **prevalece el documento oficial**.
+Resumen alineado a la Memoria Final Inversora y al documento oficial (*Documentación de Proyecto: Inversora*, v1.0). Las reglas de producto completas viven en `invesora/docs/product/`. Ante conflicto, **prevalece la Memoria Final Inversora como fuente de verdad de entrega/as-built**.
 
 | Sección doc oficial | Doc canónica en `invesora` |
 |---------------------|----------------------------|
@@ -11,11 +11,11 @@ Resumen alineado al documento oficial (*Documentación de Proyecto: Inversora*, 
 
 ## Qué es
 
-**Inversora API** es el backend de datos y scoring de [Inversora](https://github.com/): una aplicación educativa que ayuda a principiantes a **explorar, entender y comparar fondos indexados** sin ejecutar inversiones ni ofrecer asesoramiento personalizado.
+**Inversora API** es el backend de datos y scoring de [Inversora](https://github.com/): una aplicación educativa que ayuda a principiantes a **explorar, entender y comparar productos indexados validados** sin ejecutar inversiones ni ofrecer asesoramiento personalizado.
 
 La API cumple tres funciones principales en el MVP:
 
-1. **Catálogo** — Exponer fondos indexados validados con metadatos, métricas y estado de calidad de datos.
+1. **Catálogo** — Exponer productos indexados validados con metadatos, métricas y estado de calidad de datos.
 2. **Scoring** — Calcular y persistir el Score Inversora de forma determinista, trazable y auditable.
 3. **Datos de mercado** — Sincronizar precios históricos, composición y exposición desde proveedores externos (hoy Financial Modeling Prep).
 
@@ -55,7 +55,7 @@ flowchart LR
 | App Inversora | `invesora` | UI, favoritos locales, calculadora, avisos legales |
 | inversora-api | este repositorio | Datos, sync, scoring, contrato HTTP |
 | PostgreSQL | Docker local / DB gestionada | Persistencia de fondos, precios y composición |
-| FMP | `src/modules/providers/` | Datos de mercado externos (mock o live) |
+| FMP | `src/modules/providers/financial-modeling-prep/` | Proveedor operativo de datos de mercado externos (mock o live) |
 
 ## Backend oficial
 
@@ -87,7 +87,7 @@ Si la documentación de la app menciona Supabase Edge Functions como backend pla
 - Health check y documentación OpenAPI (Swagger).
 - Registro de dispositivos anónimos y sync del perfil educativo derivado (`anonymous-devices`).
 - Ingesta de eventos de analytics anónimos (`analytics`, HU-41).
-- Sincronización de fondos indexados desde FMP (metadata + precios EOD).
+- Sincronización de productos indexados desde FMP (metadata + precios EOD).
 - Endpoints de lectura: listado, detalle, gráfico histórico, holdings, exposición sectorial y geográfica, score, rankings.
 - Contrato BFF orientado a la app (`bff`: `GET /funds/:isin`, destacados).
 - Módulo de asistente: herramientas y contexto para explicaciones (sin alterar scoring).
@@ -107,7 +107,7 @@ Si la documentación de la app menciona Supabase Edge Functions como backend pla
 - Autenticación, registro y cuentas de usuario.
 - Watchlists, carteras y alertas personalizadas.
 - Órdenes de compra/venta y conexión con brokers.
-- ETFs/acciones/cripto fuera del catálogo de fondos indexados.
+- Acciones, cripto, gestión activa y cualquier vehículo fuera del catálogo indexado validado.
 - Panel de administración avanzado (“Clínica de Datos”).
 
 ## Criterios de éxito (backend MVP)

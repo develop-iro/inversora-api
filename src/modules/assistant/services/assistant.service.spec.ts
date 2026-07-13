@@ -461,7 +461,7 @@ describe('AssistantService', () => {
     );
 
     const response = await service.chat({
-      surface: 'fund_detail',
+      surface: 'fund-detail',
       message: 'Explicame este fondo',
       sessionId: 'session-1',
       fund: { isin: 'US78462F1030' },
@@ -501,7 +501,7 @@ describe('AssistantService', () => {
       message: 'SPY versus QQQ para aprender diferencias',
     });
     const scoreResponse = await service.explain({
-      surface: 'fund_detail',
+      surface: 'fund-detail',
       message: 'Por que este fondo aparece asi',
       fund: { isin: 'US78462F1030' },
     });
@@ -531,11 +531,11 @@ describe('AssistantService', () => {
     );
 
     const response = await service.explain({
-      surface: 'fund_detail',
+      surface: 'fund-detail',
       message: 'SPY versus QQQ para aprender diferencias',
       locale: 'en',
       fund: { isin: 'US78462F1030' },
-    });
+    } as unknown as AssistantExplainRequest);
 
     expect(response.relatedFundIsin).toBe('US78462F1030');
     expect(cacheRepository.save).toHaveBeenCalledWith(
