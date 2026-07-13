@@ -124,11 +124,24 @@ sequenceDiagram
 | Paso | Responsable | Resultado |
 |------|-------------|-----------|
 | 1. Metadata del fondo | `FundSyncService` | Fila en tabla `funds` |
-| 2. Precios históricos | `FundPriceSyncService` | Filas en `fund_prices` |
-| 3. Recálculo de scores | `ScoringService` | Campo `score` actualizado en `funds` |
+| 2. Precios históricos | `FundPriceSyncService` | Filas en `fund_prices` + columnas `return1y` / `return3y` / `returnYtd` / `returnAsOf` |
+| 3. Recálculo de scores | `ScoringService` | `score`, `scoreBreakdown`, `peerGroupKey` y `peerRank` en `funds` |
 | 4. Composición | `FundCompositionSyncService` → `FundCompositionService` | Filas en `fund_holdings` y `fund_allocations` |
 
 El scheduler (`FundSyncScheduler`) está desactivado por defecto (`SYNC_SCHEDULER_ENABLED=false`). En desarrollo local, el sync se dispara manualmente o se activa el cron en `.env`.
+
+## Lecturas HTTP vs escritura en sync
+
+Principio: **sync escribe, HTTP lee**.
+
+| Capa | Responsabilidad |
+|------|-----------------|
+| `FundPriceSyncService`, `ScoringService.recalculateAllScores` | Materializar rentabilidades, score, desglose RN-04 y ranking por grupo |
+| `GetFundsUseCase`, `GetRankingsUseCase`, `GetFundByIsinUseCase` | Consultas paginadas o agregadas delgadas sobre columnas persistidas |
+| `ScoringReadService` | Leer `scoreBreakdown` persistido (`GET /funds/:id/score`, herramientas del asistente) |
+| `ScoringService.calculateScoreForFundId` | Solo sync, admin o recálculo batch — no en lecturas públicas |
+
+Backfill operativo de rentabilidades materializadas: `npm run sync:returns:backfill` (opcional `--visible-only`, `--dry-run`).
 
 ## Endpoints públicos actuales
 

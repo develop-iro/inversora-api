@@ -3,10 +3,11 @@ import { CatalogVisibilityService } from '../../funds/services/catalog-visibilit
 import { FundsRepository } from '../../funds/repositories/funds.repository';
 import { FundCompositionService } from '../../funds/services/fund-composition.service';
 import { FundPricesService } from '../../funds/services/fund-prices.service';
+import { buildFundTestFixture } from '../../funds/test-utils/fund.entity.fixtures';
 import type { FundScoringMetrics } from '../entities/invesora-score.schema';
 import { ScoringService } from './scoring.service';
 
-const fund = {
+const fund = buildFundTestFixture({
   id: '550e8400-e29b-41d4-a716-446655440000',
   symbol: 'SPY',
   isin: 'US78462F1030',
@@ -32,7 +33,7 @@ const fund = {
   editorial: { badge: '', themeLabel: '', idealForBeginners: false },
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   updatedAt: new Date('2024-02-01T00:00:00.000Z'),
-};
+});
 
 const scoringMetrics: FundScoringMetrics = {
   ...fund.metrics,
@@ -49,19 +50,19 @@ describe('ScoringService', () => {
   let fundsRepository: {
     findById: jest.Mock;
     findAll: jest.Mock;
-    updateScore: jest.Mock;
+    updateMaterializedScoring: jest.Mock;
   };
 
   beforeEach(async () => {
     fundsRepository = {
       findById: jest.fn().mockResolvedValue(fund),
       findAll: jest.fn().mockResolvedValue([fund]),
-      updateScore: jest
+      updateMaterializedScoring: jest
         .fn()
-        .mockImplementation((id: string, score: number) => ({
+        .mockImplementation((id: string, input: { score: number }) => ({
           ...fund,
           id,
-          score,
+          score: input.score,
         })),
     };
 
@@ -209,7 +210,7 @@ describe('ScoringService', () => {
       updated: 0,
       results: [],
     });
-    expect(fundsRepository.updateScore).not.toHaveBeenCalled();
+    expect(fundsRepository.updateMaterializedScoring).not.toHaveBeenCalled();
   });
 
   it('should recalculate and persist scores for all funds', async () => {
@@ -223,9 +224,11 @@ describe('ScoringService', () => {
         symbol: 'SPY',
       }),
     ]);
-    expect(fundsRepository.updateScore).toHaveBeenCalledWith(
+    expect(fundsRepository.updateMaterializedScoring).toHaveBeenCalledWith(
       fund.id,
-      expect.any(Number),
+      expect.objectContaining({
+        peerGroupKey: 's&p 500',
+      }),
     );
   });
 
@@ -241,7 +244,7 @@ describe('ScoringService', () => {
 
     expect(result.total).toBe(5);
     expect(result.updated).toBe(5);
-    expect(fundsRepository.updateScore).toHaveBeenCalledTimes(5);
+    expect(fundsRepository.updateMaterializedScoring).toHaveBeenCalledTimes(5);
   });
 
   it('should score funds within and across benchmark peer groups', () => {
@@ -276,6 +279,6 @@ describe('ScoringService', () => {
       updated: 0,
       results: [],
     });
-    expect(fundsRepository.updateScore).not.toHaveBeenCalled();
+    expect(fundsRepository.updateMaterializedScoring).not.toHaveBeenCalled();
   });
 });

@@ -1,6 +1,6 @@
 import type { Fund } from '../../funds/entities/fund.schema';
 import { mapFundCardBranding } from '../../funds/entities/fund-api.mapper';
-import { EMPTY_FUND_RETURN_SNAPSHOT } from '../../funds/entities/fund-returns.enricher';
+import { mapMaterializedFieldsToReturnSnapshot } from '../../funds/entities/fund-materialized.mapper';
 import { resolveIdealForBeginners } from '../../funds/entities/fund-editorial.utils';
 import {
   buildCategoryLabel,
@@ -62,7 +62,7 @@ export function mapFundToFeaturedFund(
     benefitSummary: editorial.benefitSummary,
     featuredReason: editorial.featuredReason,
     isFeatured: true,
-    returns: EMPTY_FUND_RETURN_SNAPSHOT,
+    returns: mapMaterializedFieldsToReturnSnapshot(fund.materialized),
   };
 }
 

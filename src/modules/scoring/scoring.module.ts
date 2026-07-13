@@ -4,6 +4,7 @@ import { RankingsController } from './controllers/rankings.controller';
 import { ScoringController } from './controllers/scoring.controller';
 import { GetRankingsUseCase } from './get-rankings';
 import { RankingsService } from './services/rankings.service';
+import { ScoringReadService } from './services/scoring-read.service';
 import { ScoringService } from './services/scoring.service';
 
 /**
@@ -12,7 +13,12 @@ import { ScoringService } from './services/scoring.service';
 @Module({
   imports: [forwardRef(() => FundsModule)],
   controllers: [ScoringController, RankingsController],
-  providers: [GetRankingsUseCase, ScoringService, RankingsService],
-  exports: [ScoringService, RankingsService],
+  providers: [
+    GetRankingsUseCase,
+    ScoringService,
+    ScoringReadService,
+    RankingsService,
+  ],
+  exports: [ScoringService, ScoringReadService, RankingsService],
 })
 export class ScoringModule {}

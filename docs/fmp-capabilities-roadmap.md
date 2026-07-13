@@ -8,7 +8,7 @@ Este documento resume que puede aportar [Financial Modeling Prep (FMP)](https://
 
 FMP debe ser un proveedor de datos, no una fuente de decisiones. El backend debe:
 
-- descubrir fondos indexados y ETFs candidatos;
+- descubrir productos indexados candidatos;
 - normalizar metadata, historicos, composicion y exposiciones;
 - persistir snapshots auditables en PostgreSQL;
 - calcular score, rankings y advertencias de calidad de datos en servidor;
@@ -261,7 +261,7 @@ Solo tendria sentido si construimos un agente interno server-side. En ese caso h
 6. Convertir toda salida MCP a schemas Zod propios antes de persistir o servir a la app.
 7. Mantener `FMP_DATA_SOURCE=mock` y fixtures para CI.
 
-La conclusion practica: MCP es muy util como interfaz de agente para analisis y descubrimiento, pero no reemplaza nuestra capa REST tipada. Para el producto, `FinancialModelingPrepClient` debe seguir siendo la fuente de integracion estable.
+La conclusion practica: MCP es muy util como interfaz de agente para analisis y descubrimiento, pero no reemplaza nuestra capa REST tipada. Para la entrega TFM y para el producto, `FinancialModelingPrepClient` sigue siendo la fuente de integracion estable; la app y SORA de usuario final consumen solo datos normalizados por `inversora-api`.
 
 ## Backlog backend recomendado
 

@@ -1,4 +1,5 @@
 import type { Fund } from '../../funds/entities/fund.schema';
+import { buildFundTestFixture } from '../../funds/test-utils/fund.entity.fixtures';
 import type { InvesoraScore } from '../../scoring/entities/invesora-score.schema';
 import type { FundPrice } from '../../funds/entities/fund-price.schema';
 import {
@@ -25,7 +26,7 @@ import {
   normalizeFundIsin as parseIsin,
 } from './fund-isin.utils';
 
-const fund: Fund = {
+const fund: Fund = buildFundTestFixture({
   id: '550e8400-e29b-41d4-a716-446655440000',
   symbol: 'SPY',
   isin: 'US78462F1030',
@@ -51,7 +52,7 @@ const fund: Fund = {
   editorial: { badge: '', themeLabel: '', idealForBeginners: false },
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   updatedAt: new Date('2024-02-01T00:00:00.000Z'),
-};
+});
 
 const score: InvesoraScore = {
   score: 82,
@@ -227,18 +228,28 @@ describe('fund-detail.mapper', () => {
       countries: {
         fundId: fund.id,
         asOf: '2026-01-01',
-        countries: [{ label: 'United States', weight: 99.1, sortOrder: 0 }],
+        countries: [
+          {
+            id: 'country-1',
+            label: 'United States',
+            weight: 99.1,
+            sortOrder: 0,
+          },
+        ],
       },
       sectors: {
         fundId: fund.id,
         asOf: '2026-01-01',
-        sectors: [{ label: 'Technology', weight: 31.2, sortOrder: 0 }],
+        sectors: [
+          { id: 'sector-1', label: 'Technology', weight: 31.2, sortOrder: 0 },
+        ],
       },
       holdings: {
         fundId: fund.id,
         asOf: '2026-01-01',
         holdings: [
           {
+            id: 'holding-1',
             rank: 1,
             asset: 'AAPL',
             name: 'Apple Inc.',
@@ -316,7 +327,14 @@ describe('fund-detail.mapper', () => {
       countries: {
         fundId: fund.id,
         asOf: '2026-01-01',
-        countries: [{ label: 'United States', weight: 99.1, sortOrder: 0 }],
+        countries: [
+          {
+            id: 'country-1',
+            label: 'United States',
+            weight: 99.1,
+            sortOrder: 0,
+          },
+        ],
       },
       volatility: null,
     });

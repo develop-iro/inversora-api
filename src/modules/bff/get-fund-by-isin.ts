@@ -9,20 +9,30 @@ import {
   fundDetailResponseSchema,
   type FundDetailResponse,
 } from '../../core/api/schemas/fund-detail.schema';
-import { isCatalogVisible } from '../funds/entities/catalog-visibility.schema';
+import {
+  buildFundChartResponse,
+  resolveChartDateRange,
+} from '../funds/entities/fund-chart.mapper';
+import type { FundChartPeriod } from '../funds/entities/fund-chart.schema';
+import type { FundPrice } from '../funds/entities/fund-price.schema';
 import { FundsRepository } from '../funds/repositories/funds.repository';
 import { CatalogVisibilityService } from '../funds/services/catalog-visibility.service';
 import { FundCompositionService } from '../funds/services/fund-composition.service';
 import { FundPricesService } from '../funds/services/fund-prices.service';
 import { FundsService } from '../funds/services/funds.service';
-import { resolveScoringPeerGroupKey } from '../scoring/entities/fund-scoring-metrics.builder';
-import { ScoringService } from '../scoring/services/scoring.service';
 import {
   buildFundDetailResponse,
   filterPricesForYtd,
 } from './entities/fund-detail.mapper';
 import { normalizeFundIsin } from './entities/fund-isin.utils';
 import { AppConfigService } from '../../shared/config/config.service';
+import { resolvePersistedInvesoraScore } from '../funds/entities/fund-materialized.mapper';
+
+const DETAIL_CHART_PERIODS = [
+  '1Y',
+  '3Y',
+  '5Y',
+] as const satisfies readonly FundChartPeriod[];
 
 /**
  * Use case for aggregated mobile fund detail reads (`GET /funds/:isin`).
@@ -35,7 +45,6 @@ export class GetFundByIsinUseCase {
     private readonly fundsService: FundsService,
     private readonly fundPricesService: FundPricesService,
     private readonly fundCompositionService: FundCompositionService,
-    private readonly scoringService: ScoringService,
     private readonly configService: AppConfigService,
   ) {}
 
@@ -70,12 +79,18 @@ export class GetFundByIsinUseCase {
 
     this.catalogVisibilityService.assertPublicCatalogVisible(fund);
 
+    const score = resolvePersistedInvesoraScore(fund);
+
+    if (score === null) {
+      throw new ServiceUnavailableException({
+        message: 'Fund detail temporarily unavailable',
+        error: 'Service Unavailable',
+        statusCode: 503,
+      });
+    }
+
     try {
       const [
-        score,
-        chart1Y,
-        chart3Y,
-        chart5Y,
         countries,
         sectors,
         holdings,
@@ -84,12 +99,7 @@ export class GetFundByIsinUseCase {
         capitalizationSnapshot,
         latestDate,
         allPrices,
-        rank,
       ] = await Promise.all([
-        this.scoringService.calculateScoreForFundId(fund.id),
-        this.fundsService.getFundChart(fund.id, { period: '1Y' }),
-        this.fundsService.getFundChart(fund.id, { period: '3Y' }),
-        this.fundsService.getFundChart(fund.id, { period: '5Y' }),
         this.fundsService.getFundCountryExposure(fund.id, {}),
         this.fundsService.getFundSectorExposure(fund.id, {}),
         this.fundsService.getFundHoldings(fund.id, {}),
@@ -107,28 +117,16 @@ export class GetFundByIsinUseCase {
         ),
         this.fundPricesService.getLatestDate(fund.id),
         this.fundPricesService.getHistory(fund.id),
-        this.resolveRankForFund(fund.id),
       ]);
 
-      if (score === null) {
-        throw new ServiceUnavailableException({
-          message: 'Fund detail temporarily unavailable',
-          error: 'Service Unavailable',
-          statusCode: 503,
-        });
-      }
-
+      const charts = this.buildChartsFromPrices(fund.id, allPrices, latestDate);
       const resolvedYtdPrices = filterPricesForYtd(allPrices, latestDate);
       const response = buildFundDetailResponse({
         fund,
         score,
-        rank,
+        rank: fund.materialized.peerRank ?? undefined,
         brandfetchClientId: this.configService.brandfetchClientId,
-        charts: {
-          '1Y': chart1Y,
-          '3Y': chart3Y,
-          '5Y': chart5Y,
-        },
+        charts,
         ytdPrices: resolvedYtdPrices,
         maxPrices: allPrices,
         allPrices,
@@ -165,31 +163,43 @@ export class GetFundByIsinUseCase {
   }
 
   /**
-   * Resolves the 1-based rank of a fund inside its scoring peer group.
+   * Builds chart payloads for standard detail lookback windows from one price series.
    *
    * @param fundId - Persisted fund identifier.
+   * @param allPrices - Full ascending price history.
+   * @param latestDate - Latest persisted price date.
    */
-  private async resolveRankForFund(
+  private buildChartsFromPrices(
     fundId: string,
-  ): Promise<number | undefined> {
-    const fund = await this.fundsRepository.findById(fundId);
+    allPrices: readonly FundPrice[],
+    latestDate: string | null,
+  ): Record<'1Y' | '3Y' | '5Y', ReturnType<typeof buildFundChartResponse>> {
+    return DETAIL_CHART_PERIODS.reduce(
+      (charts, period) => {
+        const range = resolveChartDateRange(period, latestDate);
+        const prices =
+          range.to === null
+            ? []
+            : allPrices.filter(
+                (price) =>
+                  price.date >= range.from &&
+                  (range.to === null || price.date <= range.to),
+              );
 
-    if (fund === null) {
-      return undefined;
-    }
+        charts[period] = buildFundChartResponse(
+          fundId,
+          period,
+          range.from,
+          range.to,
+          prices,
+        );
 
-    const peerGroupKey = resolveScoringPeerGroupKey(fund);
-    const peers = await this.fundsRepository.findAll();
-    const rankedPeers = peers
-      .filter(
-        (peer) =>
-          isCatalogVisible(peer) &&
-          resolveScoringPeerGroupKey(peer) === peerGroupKey &&
-          peer.score !== null,
-      )
-      .sort((left, right) => right.score! - left.score!);
-    const index = rankedPeers.findIndex((peer) => peer.id === fundId);
-
-    return index >= 0 ? index + 1 : undefined;
+        return charts;
+      },
+      {} as Record<
+        '1Y' | '3Y' | '5Y',
+        ReturnType<typeof buildFundChartResponse>
+      >,
+    );
   }
 }

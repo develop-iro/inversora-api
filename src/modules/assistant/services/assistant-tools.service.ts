@@ -4,7 +4,7 @@ import type { Fund } from '../../funds/entities/fund.schema';
 import { CatalogVisibilityService } from '../../funds/services/catalog-visibility.service';
 import { FundsRepository } from '../../funds/repositories/funds.repository';
 import type { InvesoraScore } from '../../scoring/entities/invesora-score.schema';
-import { ScoringService } from '../../scoring/services/scoring.service';
+import { ScoringReadService } from '../../scoring/services/scoring-read.service';
 import { evaluateComparisonFairness } from '../entities/assistant-comparison.utils';
 import { GlossaryService } from './glossary.service';
 
@@ -47,7 +47,7 @@ export type AssistantGlossaryToolResponse = {
 export class AssistantToolsService {
   constructor(
     private readonly fundsRepository: FundsRepository,
-    private readonly scoringService: ScoringService,
+    private readonly scoringReadService: ScoringReadService,
     private readonly catalogVisibilityService: CatalogVisibilityService,
     private readonly glossaryService: GlossaryService,
   ) {}
@@ -64,7 +64,9 @@ export class AssistantToolsService {
   ): Promise<AssistantScoreBreakdownToolResponse> {
     const normalizedIsin = normalizeIsin(isin);
     const fund = await this.findVisibleFund(normalizedIsin);
-    const score = await this.scoringService.calculateScoreForFundId(fund.id);
+    const score = await this.scoringReadService.getPersistedScoreByFundId(
+      fund.id,
+    );
 
     return {
       isin: fund.isin ?? normalizedIsin,
@@ -82,18 +84,16 @@ export class AssistantToolsService {
   ): Promise<{ funds: AssistantFundToolSnapshot[] }> {
     const normalizedIsins = [...new Set(isins.map(normalizeIsin))].slice(0, 5);
     const funds = await this.fundsRepository.findByIsins(normalizedIsins);
-    const snapshots = await Promise.all(
-      normalizedIsins
-        .map((isin) => ({ isin, fund: funds.get(isin) }))
-        .filter(
-          (entry): entry is { isin: string; fund: Fund } =>
-            entry.fund !== undefined,
-        )
-        .map((entry) => {
-          this.catalogVisibilityService.assertPublicCatalogVisible(entry.fund);
-          return this.buildSnapshot(entry.fund, entry.isin);
-        }),
-    );
+    const snapshots = normalizedIsins
+      .map((isin) => ({ isin, fund: funds.get(isin) }))
+      .filter(
+        (entry): entry is { isin: string; fund: Fund } =>
+          entry.fund !== undefined,
+      )
+      .map((entry) => {
+        this.catalogVisibilityService.assertPublicCatalogVisible(entry.fund);
+        return this.buildSnapshot(entry.fund, entry.isin);
+      });
 
     return { funds: snapshots };
   }
@@ -154,11 +154,11 @@ export class AssistantToolsService {
     return fund;
   }
 
-  private async buildSnapshot(
+  private buildSnapshot(
     fund: Fund,
     requestedIsin: string,
-  ): Promise<AssistantFundToolSnapshot> {
-    const score = await this.scoringService.calculateScoreForFundId(fund.id);
+  ): AssistantFundToolSnapshot {
+    const score = fund.materialized.scoreBreakdown;
 
     return {
       isin: fund.isin ?? requestedIsin,
@@ -170,7 +170,7 @@ export class AssistantToolsService {
       riskLevel: fund.riskLevel,
       metrics: fund.metrics,
       score: {
-        value: score?.score ?? null,
+        value: score?.score ?? fund.score,
         summary: score?.summary,
         warnings: score?.warnings,
         version: score?.version,

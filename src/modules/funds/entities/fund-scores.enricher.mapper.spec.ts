@@ -1,3 +1,4 @@
+import { FUND_MATERIALIZED_FIELD_DEFAULTS } from '../test-utils/fund.entity.fixtures';
 import { enrichFundApiPayloadsWithScores } from './fund-scores.enricher.mapper';
 import type { FundApi } from './fund-api.schema';
 
@@ -28,6 +29,7 @@ const baseFund = {
   riskLevel: 4,
   editorial: { badge: '', themeLabel: '', idealForBeginners: false },
   catalogVisibility: 'visible' as const,
+  materialized: FUND_MATERIALIZED_FIELD_DEFAULTS,
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   updatedAt: new Date('2024-02-01T00:00:00.000Z'),
   returns: {

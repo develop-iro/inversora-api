@@ -27,9 +27,9 @@ describe('FinancialModelingPrepProvider', () => {
     filterHistoricalFixture: jest.Mock;
   };
 
-  const configMock: Pick<AppConfigService, 'fmpUsesMocks'> = {
+  const configMock = {
     fmpUsesMocks: true,
-  };
+  } as { fmpUsesMocks: boolean };
 
   beforeEach(async () => {
     client = {

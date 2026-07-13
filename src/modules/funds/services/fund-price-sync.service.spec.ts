@@ -9,6 +9,7 @@ import {
 import { FundsRepository } from '../repositories/funds.repository';
 import { FundPriceSyncService } from './fund-price-sync.service';
 import { FundPricesService } from './fund-prices.service';
+import { FundMaterializedReturnsService } from './fund-materialized-returns.service';
 
 describe('FundPriceSyncService', () => {
   let service: FundPriceSyncService;
@@ -19,6 +20,7 @@ describe('FundPriceSyncService', () => {
     saveProviderPrices: jest.Mock;
     pruneRetentionForFund: jest.Mock;
   };
+  let fundMaterializedReturnsService: { refreshForFundId: jest.Mock };
 
   const persistedFund = {
     id: '550e8400-e29b-41d4-a716-446655440000',
@@ -72,6 +74,9 @@ describe('FundPriceSyncService', () => {
       saveProviderPrices: jest.fn().mockResolvedValue(2),
       pruneRetentionForFund: jest.fn().mockResolvedValue(0),
     };
+    fundMaterializedReturnsService = {
+      refreshForFundId: jest.fn().mockResolvedValue(undefined),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -93,6 +98,10 @@ describe('FundPriceSyncService', () => {
         {
           provide: FundPricesService,
           useValue: fundPricesService,
+        },
+        {
+          provide: FundMaterializedReturnsService,
+          useValue: fundMaterializedReturnsService,
         },
       ],
     }).compile();

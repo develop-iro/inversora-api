@@ -1,11 +1,12 @@
 import type { Fund } from './fund.schema';
+import { buildFundTestFixture } from '../test-utils/fund.entity.fixtures';
 import {
   computeIdealForBeginnersFromMetrics,
   hasPersistedEditorialContent,
   resolveIdealForBeginners,
 } from './fund-editorial.utils';
 
-const baseFund: Fund = {
+const baseFund: Fund = buildFundTestFixture({
   id: '550e8400-e29b-41d4-a716-446655440000',
   symbol: 'SPY',
   isin: 'US78462F1030',
@@ -34,7 +35,7 @@ const baseFund: Fund = {
   catalogVisibility: 'visible',
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   updatedAt: new Date('2024-02-01T00:00:00.000Z'),
-};
+});
 
 describe('fund-editorial.utils', () => {
   it('should detect persisted editorial copy', () => {

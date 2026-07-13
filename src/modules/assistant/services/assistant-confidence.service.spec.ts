@@ -5,7 +5,7 @@ describe('AssistantConfidenceService', () => {
   const service = new AssistantConfidenceService();
 
   const baseContext: AssistantPromptContext = {
-    surface: 'fund_detail',
+    surface: 'fund-detail',
     intent: 'explain_score',
     locale: 'es',
     userMessage: 'Explica el score',
@@ -104,7 +104,7 @@ describe('AssistantConfidenceService', () => {
       text: 'Explicación general del score sin fondo en contexto.',
       intent: 'explain_score',
       context: {
-        surface: 'fund_detail',
+        surface: 'fund-detail',
         intent: 'explain_score',
         locale: 'es',
         userMessage: 'Explica el score',

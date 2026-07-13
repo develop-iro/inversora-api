@@ -1,20 +1,29 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { FUND_MATERIALIZED_FIELD_DEFAULTS } from '../../funds/test-utils/fund.entity.fixtures';
 import { FundsRepository } from '../../funds/repositories/funds.repository';
-import { ScoringService } from '../../scoring/services/scoring.service';
 import { AssistantContextBuilderService } from './assistant-context.builder';
+
+const persistedScore = {
+  score: 88,
+  summary: 'Buen equilibrio entre coste y tamano.',
+  warnings: ['Tracking error no disponible'],
+  version: 'rn-04' as const,
+  breakdown: {
+    ter: { points: 36, maxPoints: 40, label: 'TER' },
+    tracking: { points: 34, maxPoints: 40, label: 'Tracking error' },
+    aum: { points: 8, maxPoints: 10, label: 'AUM' },
+    age: { points: 10, maxPoints: 10, label: 'Antigüedad' },
+  },
+};
 
 describe('AssistantContextBuilderService', () => {
   let service: AssistantContextBuilderService;
   let fundsRepository: { findByIsins: jest.Mock };
-  let scoringService: { calculateScoreForFundId: jest.Mock };
 
   beforeEach(async () => {
     fundsRepository = {
       findByIsins: jest.fn(),
-    };
-    scoringService = {
-      calculateScoreForFundId: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -23,10 +32,6 @@ describe('AssistantContextBuilderService', () => {
         {
           provide: FundsRepository,
           useValue: fundsRepository,
-        },
-        {
-          provide: ScoringService,
-          useValue: scoringService,
         },
       ],
     }).compile();
@@ -89,7 +94,6 @@ describe('AssistantContextBuilderService', () => {
     );
 
     expect(context.fund).toBeUndefined();
-    expect(scoringService.calculateScoreForFundId).not.toHaveBeenCalled();
   });
 
   it('enriches context with fund and score data', async () => {
@@ -104,23 +108,16 @@ describe('AssistantContextBuilderService', () => {
             benchmark: 'S&P 500',
             currency: 'USD',
             vehicle: 'etf',
+            score: 88,
             metrics: { ter: 0.09, trackingError: 0.03 },
+            materialized: {
+              ...FUND_MATERIALIZED_FIELD_DEFAULTS,
+              scoreBreakdown: persistedScore,
+            },
           },
         ],
       ]),
     );
-    scoringService.calculateScoreForFundId.mockResolvedValue({
-      score: 88,
-      summary: 'Buen equilibrio entre coste y tamano.',
-      warnings: ['Tracking error no disponible'],
-      version: 'rn-04',
-      breakdown: {
-        ter: { points: 36, maxPoints: 40, label: 'TER' },
-        tracking: { points: 34, maxPoints: 40, label: 'Tracking error' },
-        aum: { points: 8, maxPoints: 10, label: 'AUM' },
-        age: { points: 10, maxPoints: 10, label: 'Antigüedad' },
-      },
-    });
 
     const context = await service.build(
       {
@@ -163,12 +160,15 @@ describe('AssistantContextBuilderService', () => {
             isin: null,
             name: 'Fondo sin ISIN persistido',
             benchmark: null,
-            metrics: { ter: null },
+            currency: 'USD',
+            vehicle: 'etf',
+            score: null,
+            metrics: { ter: null, trackingError: null },
+            materialized: { ...FUND_MATERIALIZED_FIELD_DEFAULTS },
           },
         ],
       ]),
     );
-    scoringService.calculateScoreForFundId.mockResolvedValue(null);
 
     const context = await service.build(
       {
@@ -195,7 +195,17 @@ describe('AssistantContextBuilderService', () => {
             benchmark: 'S&P 500',
             currency: 'USD',
             vehicle: 'etf',
+            score: 88,
             metrics: { ter: 0.09, trackingError: 0.03 },
+            materialized: {
+              ...FUND_MATERIALIZED_FIELD_DEFAULTS,
+              scoreBreakdown: {
+                score: 88,
+                summary: 'Coste bajo.',
+                warnings: [],
+                version: 'rn-04',
+              },
+            },
           },
         ],
         [
@@ -207,24 +217,21 @@ describe('AssistantContextBuilderService', () => {
             benchmark: 'Russell 2000',
             currency: 'USD',
             vehicle: 'etf',
+            score: 72,
             metrics: { ter: 0.19, trackingError: 0.08 },
+            materialized: {
+              ...FUND_MATERIALIZED_FIELD_DEFAULTS,
+              scoreBreakdown: {
+                score: 72,
+                summary: 'Mayor coste.',
+                warnings: ['Mayor volatilidad esperada'],
+                version: 'rn-04',
+              },
+            },
           },
         ],
       ]),
     );
-    scoringService.calculateScoreForFundId
-      .mockResolvedValueOnce({
-        score: 88,
-        summary: 'Coste bajo.',
-        warnings: [],
-        version: 'rn-04',
-      })
-      .mockResolvedValueOnce({
-        score: 72,
-        summary: 'Mayor coste.',
-        warnings: ['Mayor volatilidad esperada'],
-        version: 'rn-04',
-      });
 
     const context = await service.build(
       {
@@ -267,23 +274,16 @@ describe('AssistantContextBuilderService', () => {
             benchmark: 'S&P 500',
             currency: 'USD',
             vehicle: 'etf',
+            score: 88,
             metrics: { ter: 0.09, trackingError: 0.03 },
+            materialized: {
+              ...FUND_MATERIALIZED_FIELD_DEFAULTS,
+              scoreBreakdown: persistedScore,
+            },
           },
         ],
       ]),
     );
-    scoringService.calculateScoreForFundId.mockResolvedValue({
-      score: 88,
-      summary: 'Coste bajo.',
-      warnings: [],
-      version: 'rn-04',
-      breakdown: {
-        ter: { points: 36, maxPoints: 40, label: 'TER' },
-        tracking: { points: 34, maxPoints: 40, label: 'Tracking error' },
-        aum: { points: 8, maxPoints: 10, label: 'AUM' },
-        age: { points: 10, maxPoints: 10, label: 'Antigüedad' },
-      },
-    });
 
     const context = await service.build(
       {
@@ -310,15 +310,19 @@ describe('AssistantContextBuilderService', () => {
             benchmark: 'S&P 500',
             currency: 'USD',
             vehicle: 'etf',
-            metrics: { ter: 0.09 },
+            score: 88,
+            metrics: { ter: 0.09, trackingError: null },
+            materialized: {
+              ...FUND_MATERIALIZED_FIELD_DEFAULTS,
+              scoreBreakdown: {
+                score: 88,
+                version: 'rn-04',
+              },
+            },
           },
         ],
       ]),
     );
-    scoringService.calculateScoreForFundId.mockResolvedValue({
-      score: 88,
-      version: 'rn-04',
-    });
 
     const context = await service.build(
       {

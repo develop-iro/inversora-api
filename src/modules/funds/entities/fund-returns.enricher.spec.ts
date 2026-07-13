@@ -1,7 +1,9 @@
 import type { FundPrice } from './fund-price.schema';
 import {
+  buildCatalogListReturnSnapshotsFromPrices,
   buildReturnSnapshotsFromPrices,
   EMPTY_FUND_RETURN_SNAPSHOT,
+  loadCatalogListReturnSnapshotsByFundIds,
   loadReturnSnapshotsByFundIds,
   resolveFundReturnSnapshot,
 } from './fund-returns.enricher';
@@ -32,7 +34,10 @@ describe('fund returns enricher', () => {
     } satisfies Pick<FundPricesService, 'getHistoriesByFundIds'>;
 
     await expect(
-      loadReturnSnapshotsByFundIds(fundPricesService as FundPricesService, []),
+      loadReturnSnapshotsByFundIds(
+        fundPricesService as unknown as FundPricesService,
+        [],
+      ),
     ).resolves.toEqual(new Map());
 
     expect(fundPricesService.getHistoriesByFundIds).not.toHaveBeenCalled();
@@ -53,7 +58,7 @@ describe('fund returns enricher', () => {
     } satisfies Pick<FundPricesService, 'getHistoriesByFundIds'>;
 
     const snapshots = await loadReturnSnapshotsByFundIds(
-      fundPricesService as FundPricesService,
+      fundPricesService as unknown as FundPricesService,
       ['fund-1'],
     );
 
@@ -81,5 +86,40 @@ describe('fund returns enricher', () => {
     expect(resolveFundReturnSnapshot(new Map(), 'missing-fund')).toBe(
       EMPTY_FUND_RETURN_SNAPSHOT,
     );
+  });
+
+  it('should build catalog list snapshots with only one-year returns', () => {
+    const snapshots = buildCatalogListReturnSnapshotsFromPrices(
+      new Map([
+        [
+          'fund-1',
+          [buildPrice('2025-06-01', 100), buildPrice('2026-06-01', 120)],
+        ],
+      ]),
+    );
+
+    expect(snapshots.get('fund-1')?.oneYear).toEqual(expect.any(Number));
+    expect(snapshots.get('fund-1')).toMatchObject({
+      ytd: null,
+      threeYear: null,
+      asOf: '2026-06-01',
+    });
+  });
+
+  it('should load catalog list snapshots with a shorter lookback window', async () => {
+    const fundPricesService = {
+      getHistoriesByFundIds: jest.fn().mockResolvedValue(new Map()),
+    } satisfies Pick<FundPricesService, 'getHistoriesByFundIds'>;
+
+    await loadCatalogListReturnSnapshotsByFundIds(
+      fundPricesService as unknown as FundPricesService,
+      ['fund-1'],
+    );
+
+    const historyCall = fundPricesService.getHistoriesByFundIds.mock
+      .calls[0] as [string[], { from: string }] | undefined;
+
+    expect(historyCall?.[0]).toEqual(['fund-1']);
+    expect(historyCall?.[1]?.from).toEqual(expect.any(String));
   });
 });

@@ -100,7 +100,7 @@ La app Inversora deja de usar mocks locales y consume la API en un entorno stagi
 
 ### Objetivo
 
-Servir datos reales de fondos indexados a usuarios de la app con disponibilidad y frescura garantizadas.
+Servir datos reales de productos indexados a usuarios de la app con disponibilidad y frescura garantizadas.
 
 ### Componentes adicionales
 
@@ -210,12 +210,47 @@ lint → prisma-validate → build → unit-tests + integration-tests → report
 ### `main.yml` — Rama principal
 
 ```text
-lint → prisma-validate → build → unit-tests + integration-tests + e2e-tests → report
+lint → prisma-validate → build → unit-tests + integration-tests + e2e-tests → migrate-production → sync-production-data → report
 ```
 
 - Se dispara en `push` a `main`.
 - Incluye tests E2E adicionales (supertest contra la app NestJS).
+- Aplica migraciones de producción con `DATABASE_URL_PRODUCTION`.
+- Ejecuta el hook post-deploy `npm run sync:postdeploy`, limitado por defecto a 1 lote de 120 símbolos para respetar cuota FMP y evitar bloquear CI demasiado tiempo.
+- El hook importa históricos pendientes y ejecuta post-procesado: temática, benchmark, visibilidad de catálogo y scoring. Así rankings, filtros por temática y rentabilidades reflejan los nuevos datos importados.
 - Publica artefacto de cobertura unitaria (retención 30 días).
+
+Secrets requeridos para `sync-production-data`:
+
+```text
+DATABASE_URL_PRODUCTION
+POSTGRES_USER_PRODUCTION
+POSTGRES_PASSWORD_PRODUCTION
+POSTGRES_DB_PRODUCTION
+POSTGRES_HOST_PRODUCTION
+POSTGRES_PORT_PRODUCTION
+FMP_API_KEY_PRODUCTION
+```
+
+Variables opcionales de GitHub Actions:
+
+```text
+PRODUCTION_SYNC_PRICE_BATCH_SIZE  # default 120
+PRODUCTION_SYNC_MAX_BATCHES       # default 1
+PRODUCTION_SYNC_PAUSE_MS          # default 65000
+```
+
+### `market-data-sync.yml` — Sync programado
+
+```text
+schedule/manual → sync:postdeploy
+```
+
+- Se dispara cada 3 horas (`17 */3 * * *`) y tambien manualmente desde GitHub Actions.
+- Usa la misma concurrencia que `main.yml` (`sync-production-data`), de modo que no corren dos syncs de produccion a la vez.
+- Reutiliza los mismos secrets y variables opcionales que el hook post-deploy.
+- Sirve para drenar historicos pendientes y mantener la base fresca aunque no haya merges a `main`.
+- No sustituye un backfill inicial masivo si faltan miles de fondos: ese caso debe ejecutarse como operacion manual o worker dedicado.
 
 ### Checklist pre-merge (desarrollador)
 

@@ -10,7 +10,7 @@
 
 ## Contexto
 
-Inversora necesita un Score Inversora **determinista, trazable y auditable** (0–100) para rankings públicos de fondos indexados comparables. Existen tres artefactos con modelos distintos:
+Inversora necesita un Score Inversora **determinista, trazable y auditable** (0–100) para rankings públicos de productos indexados comparables. Existen tres artefactos con modelos distintos:
 
 | Artefacto | Versión | Criterios | Ubicación |
 |-----------|---------|-----------|-----------|

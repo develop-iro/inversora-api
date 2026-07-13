@@ -8,7 +8,7 @@ import {
 } from './fund.mapper';
 import { CatalogVisibility as PrismaCatalogVisibility } from '@prisma/client';
 import type {
-  FundListQuery,
+  FundListFilterQuery,
   FundListSortField,
   FundListSortOrder,
 } from './fund-list.schema';
@@ -34,6 +34,14 @@ const SORT_FIELD_TO_PRISMA_COLUMN: Record<
   currency: 'currency',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
+};
+
+const RETURN_SORT_FIELD_TO_PRISMA_COLUMN: Record<
+  'return1y' | 'return3y',
+  keyof Prisma.FundOrderByWithRelationInput
+> = {
+  return1y: 'return1y',
+  return3y: 'return3y',
 };
 
 /**
@@ -69,7 +77,7 @@ export function buildPublicCatalogVisibilityWhereInput(): Prisma.FundWhereInput 
  * @returns Prisma where input.
  */
 export function buildFundListWhereInput(
-  query: FundListQuery,
+  query: FundListFilterQuery,
   options: {
     catalogVisibility?: readonly CatalogVisibility[];
   } = {},
@@ -152,6 +160,18 @@ export function buildFundListWhereInput(
     });
   }
 
+  if (query.minReturn1y !== undefined) {
+    conditions.push({
+      return1y: { gte: query.minReturn1y },
+    });
+  }
+
+  if (query.minReturn3y !== undefined) {
+    conditions.push({
+      return3y: { gte: query.minReturn3y },
+    });
+  }
+
   if (query.idealForBeginnersOnly !== undefined) {
     conditions.push({
       idealForBeginners: query.idealForBeginnersOnly,
@@ -182,16 +202,10 @@ export function isReturnBasedSortField(
 }
 
 /**
- * Returns true when the list query needs return snapshot enrichment.
- *
- * @param query - Validated fund list query.
+ * @deprecated Return sorts and filters use materialized SQL columns.
  */
-export function requiresReturnEnrichment(query: FundListQuery): boolean {
-  return (
-    isReturnBasedSortField(query.sortBy) ||
-    query.minReturn1y !== undefined ||
-    query.minReturn3y !== undefined
-  );
+export function requiresReturnEnrichment(): boolean {
+  return false;
 }
 
 /**
@@ -206,7 +220,11 @@ export function buildFundListOrderByInput(
   sortOrder: FundListSortOrder,
 ): Prisma.FundOrderByWithRelationInput {
   if (isReturnBasedSortField(sortBy)) {
-    return { score: 'desc' };
+    const field = RETURN_SORT_FIELD_TO_PRISMA_COLUMN[sortBy];
+
+    return {
+      [field]: sortOrder,
+    };
   }
 
   const field = SORT_FIELD_TO_PRISMA_COLUMN[sortBy];

@@ -7,6 +7,9 @@ import type { FundPricesService } from '../services/fund-prices.service';
 /** Lookback window used when batch-loading price history for return snapshots. */
 export const FUND_RETURN_HISTORY_LOOKBACK_DAYS = 365 * 5;
 
+/** Lookback window for catalog list cards (1Y historical return only). */
+export const FUND_CATALOG_LIST_RETURN_LOOKBACK_DAYS = 400;
+
 /** Empty return snapshot used before price enrichment. */
 export const EMPTY_FUND_RETURN_SNAPSHOT: FundReturnSnapshot = {
   ytd: null,
@@ -42,6 +45,34 @@ export async function loadReturnSnapshotsByFundIds(
 }
 
 /**
+ * Loads lightweight 1Y return snapshots for catalog list cards.
+ *
+ * Avoids loading multi-year price history on paginated catalog reads.
+ *
+ * @param fundPricesService - Fund prices application service.
+ * @param fundIds - Persisted fund identifiers.
+ */
+export async function loadCatalogListReturnSnapshotsByFundIds(
+  fundPricesService: FundPricesService,
+  fundIds: readonly string[],
+): Promise<Map<string, FundReturnSnapshot>> {
+  if (fundIds.length === 0) {
+    return new Map();
+  }
+
+  const from = addDaysToIsoDate(
+    getTodayIsoDate(),
+    -FUND_CATALOG_LIST_RETURN_LOOKBACK_DAYS,
+  );
+  const pricesByFundId = await fundPricesService.getHistoriesByFundIds(
+    fundIds,
+    { from },
+  );
+
+  return buildCatalogListReturnSnapshotsFromPrices(pricesByFundId);
+}
+
+/**
  * Builds return snapshots from grouped ascending price rows.
  *
  * @param pricesByFundId - Price rows grouped by fund id.
@@ -53,6 +84,30 @@ export function buildReturnSnapshotsFromPrices(
 
   for (const [fundId, prices] of pricesByFundId.entries()) {
     snapshots.set(fundId, buildFundReturnSnapshot(prices));
+  }
+
+  return snapshots;
+}
+
+/**
+ * Builds catalog-list return snapshots with only 1Y and `asOf` populated.
+ *
+ * @param pricesByFundId - Price rows grouped by fund id.
+ */
+export function buildCatalogListReturnSnapshotsFromPrices(
+  pricesByFundId: ReadonlyMap<string, readonly FundPrice[]>,
+): Map<string, FundReturnSnapshot> {
+  const snapshots = new Map<string, FundReturnSnapshot>();
+
+  for (const [fundId, prices] of pricesByFundId.entries()) {
+    const snapshot = buildFundReturnSnapshot(prices);
+
+    snapshots.set(fundId, {
+      ytd: null,
+      oneYear: snapshot.oneYear,
+      threeYear: null,
+      asOf: snapshot.asOf,
+    });
   }
 
   return snapshots;

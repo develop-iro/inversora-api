@@ -87,7 +87,7 @@ describe('classifyFundInvestmentTheme', () => {
   });
 
   it('should return unclassified when classifier input is empty', () => {
-    expect(classifyFundInvestmentTheme({})).toMatchObject({
+    expect(classifyFundInvestmentTheme({ name: '' })).toMatchObject({
       theme: 'unclassified',
       matchedRule: 'empty-corpus',
     });

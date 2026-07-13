@@ -1,13 +1,12 @@
 import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { FundsRepository } from '../../funds/repositories/funds.repository';
 import { CatalogVisibilityService } from '../../funds/services/catalog-visibility.service';
 import { FundEditorialService } from '../../funds/services/fund-editorial.service';
-import { AppConfigService } from '../../../shared/config/config.service';
+import { buildFundTestFixture } from '../../funds/test-utils/fund.entity.fixtures';
 import { AdminApiKeyGuard } from '../guards/admin-api-key.guard';
 import { AdminCatalogEnabledGuard } from '../guards/admin-catalog-enabled.guard';
+import { GetAdminFundsUseCase } from '../get-admin-funds';
 import { AdminFundsController } from './admin-funds.controller';
-import { buildFundTestFixture } from '../../funds/test-utils/fund.entity.fixtures';
 
 const fund = buildFundTestFixture({
   id: '550e8400-e29b-41d4-a716-446655440000',
@@ -39,7 +38,7 @@ const fund = buildFundTestFixture({
 
 describe('AdminFundsController', () => {
   let controller: AdminFundsController;
-  let fundsRepository: { findMany: jest.Mock };
+  let getAdminFundsUseCase: { execute: jest.Mock };
   let catalogVisibilityService: {
     updateCatalogVisibility: jest.Mock;
     listVisibilityAudits: jest.Mock;
@@ -47,8 +46,11 @@ describe('AdminFundsController', () => {
   let fundEditorialService: { updateEditorial: jest.Mock };
 
   beforeEach(async () => {
-    fundsRepository = {
-      findMany: jest.fn().mockResolvedValue({ items: [fund], total: 1 }),
+    getAdminFundsUseCase = {
+      execute: jest.fn().mockResolvedValue({
+        data: [fund],
+        meta: { page: 1, limit: 20, total: 1, totalPages: 1 },
+      }),
     };
     catalogVisibilityService = {
       updateCatalogVisibility: jest.fn().mockResolvedValue(fund),
@@ -61,16 +63,12 @@ describe('AdminFundsController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminFundsController],
       providers: [
-        { provide: FundsRepository, useValue: fundsRepository },
+        { provide: GetAdminFundsUseCase, useValue: getAdminFundsUseCase },
         {
           provide: CatalogVisibilityService,
           useValue: catalogVisibilityService,
         },
         { provide: FundEditorialService, useValue: fundEditorialService },
-        {
-          provide: AppConfigService,
-          useValue: { brandfetchClientId: undefined },
-        },
       ],
     })
       .overrideGuard(AdminApiKeyGuard)
@@ -86,7 +84,7 @@ describe('AdminFundsController', () => {
     const response = await controller.listFunds({ page: '1', limit: '20' });
 
     expect(response.data).toHaveLength(1);
-    expect(fundsRepository.findMany).toHaveBeenCalled();
+    expect(getAdminFundsUseCase.execute).toHaveBeenCalled();
   });
 
   it('should update catalog visibility', async () => {
@@ -129,6 +127,10 @@ describe('AdminFundsController', () => {
   });
 
   it('should reject invalid admin list queries', () => {
+    getAdminFundsUseCase.execute.mockImplementation(() => {
+      throw new BadRequestException();
+    });
+
     expect(() => controller.listFunds({ page: '0' })).toThrow(
       BadRequestException,
     );

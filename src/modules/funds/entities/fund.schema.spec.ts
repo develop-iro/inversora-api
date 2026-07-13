@@ -4,6 +4,7 @@ import {
   fundSchema,
   updateFundInputSchema,
 } from './fund.schema';
+import { FUND_MATERIALIZED_FIELD_DEFAULTS } from '../test-utils/fund.entity.fixtures';
 
 describe('fundSchema', () => {
   const validMetrics = {
@@ -39,6 +40,7 @@ describe('fundSchema', () => {
       idealForBeginners: true,
     },
     catalogVisibility: 'visible',
+    materialized: FUND_MATERIALIZED_FIELD_DEFAULTS,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-02-01T00:00:00.000Z',
   };

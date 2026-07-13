@@ -46,6 +46,7 @@ NestJS + PostgreSQL is the canonical backend for Inversora. The mobile app (`inv
 - `npm run prisma:migrate:deploy` : apply migrations
 - `npm run prisma:validate` : validate Prisma schema and DB connection
 - `npm run sync:run` : run manual fund sync pipeline via CLI (requires PostgreSQL)
+- `npm run sync:returns:backfill` : backfill materialized return columns from stored prices
 
 **Key Files**
 

@@ -9,12 +9,12 @@ import {
 } from '@nestjs/swagger';
 import { InvesoraScoreResponseDto } from '../dto/invesora-score-response.dto';
 import type { InvesoraScore } from '../entities/invesora-score.schema';
-import { ScoringService } from '../services/scoring.service';
+import { ScoringReadService } from '../services/scoring-read.service';
 
 @ApiTags('funds')
 @Controller('funds')
 export class ScoringController {
-  constructor(private readonly scoringService: ScoringService) {}
+  constructor(private readonly scoringReadService: ScoringReadService) {}
 
   @Get(':id/score')
   @ApiOperation({ summary: 'Get Invesora Score for a fund' })
@@ -30,7 +30,7 @@ export class ScoringController {
   @ApiBadRequestResponse({ description: 'Invalid fund id.' })
   @ApiNotFoundResponse({ description: 'Fund not found.' })
   async getFundScore(@Param('id') id: string): Promise<InvesoraScore> {
-    const score = await this.scoringService.calculateScoreForFundId(id);
+    const score = await this.scoringReadService.getPersistedScoreByFundId(id);
 
     if (score === null) {
       throw new NotFoundException(`Fund ${id} was not found`);

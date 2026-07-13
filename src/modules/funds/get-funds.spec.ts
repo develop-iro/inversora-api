@@ -1,9 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppConfigService } from '../../shared/config/config.service';
-import { ScoringService } from '../scoring/services/scoring.service';
 import { FundsRepository } from './repositories/funds.repository';
-import { FundPricesService } from './services/fund-prices.service';
 import { GetFundsUseCase } from './get-funds';
 import { buildFundTestFixture } from './test-utils/fund.entity.fixtures';
 
@@ -39,8 +37,6 @@ describe('GetFundsUseCase', () => {
   let useCase: GetFundsUseCase;
   let repository: { findMany: jest.Mock };
   let configService: { brandfetchClientId: string | undefined };
-  let fundPricesService: { getHistoriesByFundIds: jest.Mock };
-  let scoringService: { calculateScoresForFundIds: jest.Mock };
 
   beforeEach(async () => {
     repository = {
@@ -51,12 +47,6 @@ describe('GetFundsUseCase', () => {
     };
     configService = {
       brandfetchClientId: 'test-client-id',
-    };
-    fundPricesService = {
-      getHistoriesByFundIds: jest.fn().mockResolvedValue(new Map()),
-    };
-    scoringService = {
-      calculateScoresForFundIds: jest.fn().mockResolvedValue(new Map()),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -69,14 +59,6 @@ describe('GetFundsUseCase', () => {
         {
           provide: AppConfigService,
           useValue: configService,
-        },
-        {
-          provide: FundPricesService,
-          useValue: fundPricesService,
-        },
-        {
-          provide: ScoringService,
-          useValue: scoringService,
         },
       ],
     }).compile();
@@ -132,10 +114,9 @@ describe('GetFundsUseCase', () => {
     });
 
     expect(response.data[0]?.score).toBe(fund.score);
-    expect(scoringService.calculateScoresForFundIds).not.toHaveBeenCalled();
   });
 
-  it('should compute live scores only for funds missing persisted scores', async () => {
+  it('should keep null scores on catalog list reads', async () => {
     const fundWithoutScore = {
       ...fund,
       id: '550e8400-e29b-41d4-a716-446655440099',
@@ -147,9 +128,6 @@ describe('GetFundsUseCase', () => {
       items: [fundWithoutScore],
       total: 1,
     });
-    scoringService.calculateScoresForFundIds.mockResolvedValue(
-      new Map([[fundWithoutScore.id, 76]]),
-    );
 
     const response = await useCase.execute({
       page: '1',
@@ -158,10 +136,7 @@ describe('GetFundsUseCase', () => {
       sortOrder: 'desc',
     });
 
-    expect(scoringService.calculateScoresForFundIds).toHaveBeenCalledWith([
-      fundWithoutScore.id,
-    ]);
-    expect(response.data[0]?.score).toBe(76);
+    expect(response.data[0]?.score).toBeNull();
   });
 
   it('should reject invalid query parameters', async () => {
@@ -172,77 +147,53 @@ describe('GetFundsUseCase', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
-  it('should sort by one-year return after enrichment', async () => {
-    const lowReturnFund = {
-      ...fund,
-      id: '550e8400-e29b-41d4-a716-446655440001',
-      symbol: 'LOW',
-      name: 'Low Return Fund',
-    };
-    const highReturnFund = {
-      ...fund,
-      id: '550e8400-e29b-41d4-a716-446655440002',
-      symbol: 'HIGH',
-      name: 'High Return Fund',
-    };
-
+  it('should sort by one-year return using materialized columns', async () => {
     repository.findMany.mockResolvedValue({
-      items: [lowReturnFund, highReturnFund],
-      total: 2,
+      items: [fund],
+      total: 1,
     });
 
-    fundPricesService.getHistoriesByFundIds.mockResolvedValue(
-      new Map([
-        [
-          '550e8400-e29b-41d4-a716-446655440001',
-          [{ date: '2025-01-01', close: 100 }],
-        ],
-        [
-          '550e8400-e29b-41d4-a716-446655440002',
-          [{ date: '2025-01-01', close: 100 }],
-        ],
-      ]),
-    );
-
-    const response = await useCase.execute({
+    await useCase.execute({
       page: '1',
       limit: '20',
       sortBy: 'return1y',
       sortOrder: 'desc',
     });
 
-    expect(response.data).toHaveLength(2);
     expect(repository.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         skip: 0,
-        take: 500,
+        take: 20,
+        orderBy: { return1y: 'desc' },
       }),
     );
   });
 
-  it('should sort by three-year return after enrichment', async () => {
+  it('should sort by three-year return using materialized columns', async () => {
     repository.findMany.mockResolvedValue({
       items: [fund],
       total: 1,
     });
-    fundPricesService.getHistoriesByFundIds.mockResolvedValue(new Map());
 
-    const response = await useCase.execute({
+    await useCase.execute({
       page: '1',
       limit: '20',
       sortBy: 'return3y',
       sortOrder: 'asc',
     });
 
-    expect(response.data).toHaveLength(1);
+    expect(repository.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderBy: { return3y: 'asc' },
+      }),
+    );
   });
 
-  it('should use return enrichment path when filtering by minimum one-year return', async () => {
+  it('should filter by minimum one-year return in the database query', async () => {
     repository.findMany.mockResolvedValue({
       items: [fund],
       total: 1,
     });
-    fundPricesService.getHistoriesByFundIds.mockResolvedValue(new Map());
 
     await useCase.execute({
       page: '1',
@@ -252,11 +203,13 @@ describe('GetFundsUseCase', () => {
       minReturn1y: '5',
     });
 
-    expect(repository.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        skip: 0,
-        take: 500,
-      }),
+    const findManyMock = repository.findMany as jest.MockedFunction<
+      FundsRepository['findMany']
+    >;
+    const findManyCall = findManyMock.mock.calls[0]?.[0];
+
+    expect(findManyCall?.where?.AND).toEqual(
+      expect.arrayContaining([{ return1y: { gte: 5 } }]),
     );
   });
 });

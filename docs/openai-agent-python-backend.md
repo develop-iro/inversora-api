@@ -1,6 +1,6 @@
 # SORA: agente OpenAI y runtime Python
 
-Este documento define la evolucion de SORA para Inversora: pasar de un endpoint educativo simple en NestJS a un agente interno con tools controladas, memoria conversacional y comparacion explicativa de fondos indexados.
+Este documento define la evolucion de SORA para Inversora: pasar de un endpoint educativo simple en NestJS a un agente interno con tools controladas, memoria conversacional y comparacion explicativa de productos indexados.
 
 ## Estado actual
 

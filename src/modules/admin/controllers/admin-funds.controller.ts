@@ -21,16 +21,8 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { z } from 'zod';
-import {
-  buildFundListMeta,
-  buildFundListOrderByInput,
-  buildFundListWhereInput,
-} from '../../funds/entities/fund-list.mapper';
-import { mapFundsToApiFunds } from '../../funds/entities/fund-api.mapper';
 import { fundIdParamSchema } from '../../funds/entities/fund.schema';
 import type { FundListResponse } from '../../funds/entities/fund-list.schema';
-import { fundListResponseSchema } from '../../funds/entities/fund-list.schema';
-import { FundsRepository } from '../../funds/repositories/funds.repository';
 import { CatalogVisibilityService } from '../../funds/services/catalog-visibility.service';
 import {
   AdminFundListResponseDto,
@@ -41,14 +33,12 @@ import {
 import { AdminApiKeyGuard } from '../guards/admin-api-key.guard';
 import { AdminCatalogEnabledGuard } from '../guards/admin-catalog-enabled.guard';
 import {
-  adminFundListQuerySchema,
   catalogVisibilityAuditListResponseSchema,
   parseAdminUpdateCatalogVisibilityRequest,
   parseAdminUpdateFundEditorialRequest,
-  type AdminFundListQuery,
 } from '../schemas/admin-funds.schema';
 import { FundEditorialService } from '../../funds/services/fund-editorial.service';
-import { AppConfigService } from '../../../shared/config/config.service';
+import { GetAdminFundsUseCase } from '../get-admin-funds';
 
 @ApiTags('admin')
 @ApiSecurity('admin-api-key')
@@ -57,10 +47,9 @@ import { AppConfigService } from '../../../shared/config/config.service';
 @UseGuards(AdminApiKeyGuard, AdminCatalogEnabledGuard)
 export class AdminFundsController {
   constructor(
-    private readonly fundsRepository: FundsRepository,
+    private readonly getAdminFundsUseCase: GetAdminFundsUseCase,
     private readonly catalogVisibilityService: CatalogVisibilityService,
     private readonly fundEditorialService: FundEditorialService,
-    private readonly configService: AppConfigService,
   ) {}
 
   @Get()
@@ -87,36 +76,7 @@ export class AdminFundsController {
   listFunds(
     @Query() query: Record<string, unknown>,
   ): Promise<FundListResponse> {
-    const parsedQuery = this.parseAdminListQuery(query);
-    const where = buildFundListWhereInput(parsedQuery, {
-      catalogVisibility: parsedQuery.catalogVisibility ?? [
-        'visible',
-        'quarantined',
-        'blocked',
-      ],
-    });
-    const orderBy = buildFundListOrderByInput(
-      parsedQuery.sortBy,
-      parsedQuery.sortOrder,
-    );
-    const skip = (parsedQuery.page - 1) * parsedQuery.limit;
-
-    return this.fundsRepository
-      .findMany({
-        where,
-        orderBy,
-        skip,
-        take: parsedQuery.limit,
-      })
-      .then(({ items, total }) =>
-        fundListResponseSchema.parse({
-          data: mapFundsToApiFunds(
-            items,
-            this.configService.brandfetchClientId,
-          ),
-          meta: buildFundListMeta(parsedQuery.page, parsedQuery.limit, total),
-        }),
-      );
+    return this.getAdminFundsUseCase.execute(query);
   }
 
   @Patch(':id/editorial')
@@ -195,21 +155,6 @@ export class AdminFundsController {
       await this.catalogVisibilityService.listVisibilityAudits(fundId);
 
     return catalogVisibilityAuditListResponseSchema.parse({ data });
-  }
-
-  private parseAdminListQuery(
-    rawQuery: Record<string, unknown>,
-  ): AdminFundListQuery {
-    const parsed = adminFundListQuerySchema.safeParse(rawQuery);
-
-    if (!parsed.success) {
-      throw new BadRequestException({
-        message: 'Invalid admin fund list query parameters',
-        issues: z.treeifyError(parsed.error),
-      });
-    }
-
-    return parsed.data;
   }
 
   private parseFundId(id: string): string {

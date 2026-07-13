@@ -1,6 +1,5 @@
 import {
   buildRankingsResponse,
-  enrichRankingsResponseWithReturns,
   isRankingEligible,
   normalizeBenchmarkKey,
 } from './ranking.mapper';
@@ -74,20 +73,29 @@ describe('normalizeBenchmarkKey', () => {
 });
 
 describe('buildRankingsResponse', () => {
-  it('should preserve meta when enriching ranked entries with returns', () => {
-    const baseResponse = buildRankingsResponse(
-      RANKING_FIXTURE_FUNDS,
+  it('should include materialized returns on ranked entries', () => {
+    const fundsWithReturns = RANKING_FIXTURE_FUNDS.map((fund, index) => ({
+      ...fund,
+      materialized: {
+        ...fund.materialized,
+        return1y: 10 + index,
+        return3y: 5 + index,
+        returnYtd: 2,
+        returnAsOf: '2026-01-01',
+      },
+    }));
+
+    const response = buildRankingsResponse(
+      fundsWithReturns,
       rankingsQuerySchema.parse({ benchmark: 'S&P 500', limit: 1 }),
     );
 
-    const enriched = enrichRankingsResponseWithReturns(baseResponse, new Map());
-
-    expect(enriched.meta).toEqual(baseResponse.meta);
-    expect(enriched.data[0]?.funds[0]?.returns).toEqual({
-      ytd: null,
-      oneYear: null,
-      threeYear: null,
-      asOf: null,
+    expect(response.meta).toBeDefined();
+    expect(response.data[0]?.funds[0]?.returns).toEqual({
+      ytd: 2,
+      oneYear: 11,
+      threeYear: 6,
+      asOf: '2026-01-01',
     });
   });
 
@@ -212,5 +220,31 @@ describe('buildRankingsResponse', () => {
       'AAA',
       'ZZZ',
     ]);
+  });
+
+  it('should use SQL aggregation totals when provided', () => {
+    const eligibleFunds = RANKING_FIXTURE_FUNDS.filter(
+      (fund) =>
+        fund.benchmark !== null &&
+        fund.score !== null &&
+        fund.metrics.ter !== null &&
+        fund.isin !== null,
+    );
+
+    const response = buildRankingsResponse(
+      eligibleFunds,
+      { limit: 10, groupsLimit: 24 },
+      {
+        groupTotals: new Map([
+          ['msci world', 12],
+          ['s&p 500', 20],
+        ]),
+        totalGroups: 2,
+        totalEligibleFunds: 32,
+      },
+    );
+
+    expect(response.meta.totalEligibleFunds).toBe(32);
+    expect(response.data[0]?.total).toBe(20);
   });
 });

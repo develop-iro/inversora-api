@@ -21,7 +21,21 @@ import type {
   UpsertFundInput,
 } from '../entities/fund.schema';
 import type { UpdateFundEditorialInput } from '../entities/fund-editorial.schema';
+import type {
+  UpdateFundMaterializedReturnsInput,
+  UpdateFundMaterializedScoringInput,
+} from '../entities/fund-materialized.schema';
+import {
+  mapUpdateFundMaterializedReturnsToPrisma,
+  mapUpdateFundMaterializedScoringToPrisma,
+} from '../entities/fund-materialized.mapper';
 import type { CatalogVisibility } from '../entities/catalog-visibility.schema';
+import type { RankingsQuery } from '../../../core/api/schemas/rankings.schema';
+import {
+  queryRankingFundsAggregation,
+  queryRankingFundsForQuery,
+  type RankingFundsAggregation,
+} from './ranking-funds.query';
 
 /** Options for paginated fund list queries. */
 export interface FindManyFundsOptions {
@@ -156,6 +170,26 @@ export class FundsRepository {
     });
 
     return records.map((record) => mapPrismaFundToFund(record));
+  }
+
+  /**
+   * Returns top-ranked funds per peer group for public rankings (bounded SQL).
+   *
+   * @param query - Validated rankings query.
+   */
+  async findRankingFundsForQuery(query: RankingsQuery): Promise<Fund[]> {
+    return queryRankingFundsForQuery(this.prisma, query);
+  }
+
+  /**
+   * Returns ranking aggregation metadata for response envelopes.
+   *
+   * @param query - Validated rankings query.
+   */
+  async findRankingFundsAggregation(
+    query: RankingsQuery,
+  ): Promise<RankingFundsAggregation> {
+    return queryRankingFundsAggregation(this.prisma, query);
   }
 
   /**
@@ -315,6 +349,42 @@ export class FundsRepository {
     const record = await this.prisma.fund.update({
       where: { id },
       data: { score },
+    });
+
+    return mapPrismaFundToFund(record);
+  }
+
+  /**
+   * Persists materialized return columns for a fund.
+   *
+   * @param id - Fund identifier.
+   * @param input - Materialized return payload.
+   */
+  async updateMaterializedReturns(
+    id: string,
+    input: UpdateFundMaterializedReturnsInput,
+  ): Promise<Fund> {
+    const record = await this.prisma.fund.update({
+      where: { id },
+      data: mapUpdateFundMaterializedReturnsToPrisma(input),
+    });
+
+    return mapPrismaFundToFund(record);
+  }
+
+  /**
+   * Persists materialized scoring columns for a fund.
+   *
+   * @param id - Fund identifier.
+   * @param input - Materialized scoring payload.
+   */
+  async updateMaterializedScoring(
+    id: string,
+    input: UpdateFundMaterializedScoringInput,
+  ): Promise<Fund> {
+    const record = await this.prisma.fund.update({
+      where: { id },
+      data: mapUpdateFundMaterializedScoringToPrisma(input),
     });
 
     return mapPrismaFundToFund(record);

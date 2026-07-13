@@ -1,6 +1,5 @@
-import type { FundPrice } from '../../funds/entities/fund-price.schema';
 import type { Fund } from '../../funds/entities/fund.schema';
-import { buildFundReturnSnapshot } from '../../funds/entities/fund-return-snapshot.builder';
+import { mapMaterializedFieldsToReturnSnapshot } from '../../funds/entities/fund-materialized.mapper';
 import { isCatalogVisible } from '../../funds/entities/catalog-visibility.schema';
 import { resolveScoringPeerGroupKey } from './fund-scoring-metrics.builder';
 import type {
@@ -11,6 +10,7 @@ import type {
 } from './ranking.schema';
 import { RANKINGS_DEFAULT_GROUPS_LIMIT } from '../../../core/api/schemas/rankings.schema';
 import { rankingsResponseSchema } from './ranking.schema';
+import type { RankingFundsAggregation } from '../../funds/repositories/ranking-funds.query';
 
 /**
  * Normalizes a benchmark label for peer-group matching.
@@ -69,7 +69,7 @@ export function mapFundToRankedEntry(
   rank: number,
 ): RankedFundEntry {
   return {
-    rank,
+    rank: fund.materialized.peerRank ?? rank,
     id: fund.id,
     symbol: fund.symbol,
     isin: fund.isin!,
@@ -79,48 +79,21 @@ export function mapFundToRankedEntry(
     currency: fund.currency,
     riskLevel: fund.riskLevel,
     ter: fund.metrics.ter!,
-    returns: {
-      ytd: null,
-      oneYear: null,
-      threeYear: null,
-      asOf: null,
-    },
+    returns: mapMaterializedFieldsToReturnSnapshot(fund.materialized),
   };
-}
-
-/**
- * Replaces placeholder returns on ranked entries using persisted price history.
- *
- * @param response - Rankings response with null return placeholders.
- * @param pricesByFundId - Price rows grouped by fund id.
- */
-export function enrichRankingsResponseWithReturns(
-  response: RankingsResponse,
-  pricesByFundId: ReadonlyMap<string, readonly FundPrice[]>,
-): RankingsResponse {
-  const data: BenchmarkRankingGroup[] = response.data.map((group) => ({
-    ...group,
-    funds: group.funds.map((entry) => ({
-      ...entry,
-      returns: buildFundReturnSnapshot(pricesByFundId.get(entry.id) ?? []),
-    })),
-  }));
-
-  return rankingsResponseSchema.parse({
-    data,
-    meta: response.meta,
-  });
 }
 
 /**
  * Builds benchmark-scoped ranking groups from persisted funds (RN-02).
  *
- * @param funds - Persisted fund entities.
+ * @param funds - Persisted fund entities (typically top-N per group from SQL).
  * @param query - Validated rankings query.
+ * @param aggregation - Optional precomputed group totals for bounded SQL reads.
  */
 export function buildRankingsResponse(
   funds: readonly Fund[],
   query: RankingsQuery,
+  aggregation?: RankingFundsAggregation,
 ): RankingsResponse {
   const benchmarkFilter =
     query.benchmark === undefined
@@ -145,17 +118,23 @@ export function buildRankingsResponse(
     grouped.set(benchmarkKey, group);
   }
 
-  const sortedGroups = [...grouped.entries()].sort(
-    ([leftKey, leftFunds], [rightKey, rightFunds]) => {
-      const totalDifference = rightFunds.length - leftFunds.length;
+  const sortedGroups = [...grouped.entries()].sort(([leftKey], [rightKey]) => {
+    const leftTotal =
+      aggregation?.groupTotals.get(leftKey) ??
+      grouped.get(leftKey)?.length ??
+      0;
+    const rightTotal =
+      aggregation?.groupTotals.get(rightKey) ??
+      grouped.get(rightKey)?.length ??
+      0;
+    const totalDifference = rightTotal - leftTotal;
 
-      if (totalDifference !== 0) {
-        return totalDifference;
-      }
+    if (totalDifference !== 0) {
+      return totalDifference;
+    }
 
-      return leftKey.localeCompare(rightKey);
-    },
-  );
+    return leftKey.localeCompare(rightKey);
+  });
 
   const groupsLimit = query.groupsLimit ?? RANKINGS_DEFAULT_GROUPS_LIMIT;
 
@@ -172,7 +151,7 @@ export function buildRankingsResponse(
       return {
         benchmark: limitedFunds[0]?.benchmark?.trim() ?? benchmarkKey,
         benchmarkKey,
-        total: sortedFunds.length,
+        total: aggregation?.groupTotals.get(benchmarkKey) ?? sortedFunds.length,
         funds: limitedFunds.map((fund, index) =>
           mapFundToRankedEntry(fund, index + 1),
         ),
@@ -180,13 +159,11 @@ export function buildRankingsResponse(
     },
   );
 
-  const totalGroups =
-    benchmarkFilter === undefined ? sortedGroups.length : data.length;
+  const totalGroups = aggregation?.totalGroups ?? sortedGroups.length;
 
-  const totalEligibleFunds = sortedGroups.reduce(
-    (sum, [, groupFunds]) => sum + groupFunds.length,
-    0,
-  );
+  const totalEligibleFunds =
+    aggregation?.totalEligibleFunds ??
+    sortedGroups.reduce((sum, [, groupFunds]) => sum + groupFunds.length, 0);
 
   return rankingsResponseSchema.parse({
     data,

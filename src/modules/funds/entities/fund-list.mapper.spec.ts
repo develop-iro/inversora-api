@@ -10,6 +10,8 @@ import {
   buildFundListOrderByInput,
   buildFundListWhereInput,
   buildPublicCatalogVisibilityWhereInput,
+  isReturnBasedSortField,
+  requiresReturnEnrichment,
 } from './fund-list.mapper';
 
 describe('fund-list.mapper', () => {
@@ -90,12 +92,60 @@ describe('fund-list.mapper', () => {
 
     expect(
       buildFundListWhereInput({
+        maxScore: 90,
+      }).AND,
+    ).toEqual([
+      buildPublicCatalogVisibilityWhereInput(),
+      { score: { lte: 90 } },
+    ]);
+
+    expect(
+      buildFundListWhereInput({
         maxTer: 0.2,
       }).AND,
     ).toEqual([
       buildPublicCatalogVisibilityWhereInput(),
       { ter: { lte: 0.2 } },
     ]);
+
+    expect(
+      buildFundListWhereInput({
+        minTer: 0.05,
+      }).AND,
+    ).toEqual([
+      buildPublicCatalogVisibilityWhereInput(),
+      { ter: { gte: 0.05 } },
+    ]);
+  });
+
+  it('should filter by materialized return thresholds', () => {
+    expect(
+      buildFundListWhereInput({
+        minReturn1y: 5,
+        minReturn3y: 10,
+      }),
+    ).toEqual({
+      AND: [
+        buildPublicCatalogVisibilityWhereInput(),
+        { return1y: { gte: 5 } },
+        { return3y: { gte: 10 } },
+      ],
+    });
+  });
+
+  it('should raise the minimum score floor for beginner-only listings', () => {
+    expect(
+      buildFundListWhereInput({
+        idealForBeginnersOnly: true,
+        minScore: 40,
+      }),
+    ).toEqual({
+      AND: [
+        buildPublicCatalogVisibilityWhereInput(),
+        { score: { gte: 40 } },
+        { idealForBeginners: true },
+      ],
+    });
   });
 
   it('should filter by idealForBeginners when requested', () => {
@@ -146,6 +196,25 @@ describe('fund-list.mapper', () => {
       limit: 10,
       total: 25,
       totalPages: 3,
+    });
+  });
+
+  it('should identify return-based sort fields', () => {
+    expect(isReturnBasedSortField('return1y')).toBe(true);
+    expect(isReturnBasedSortField('return3y')).toBe(true);
+    expect(isReturnBasedSortField('score')).toBe(false);
+  });
+
+  it('should not require return enrichment on list reads', () => {
+    expect(requiresReturnEnrichment()).toBe(false);
+  });
+
+  it('should order by materialized return columns', () => {
+    expect(buildFundListOrderByInput('return1y', 'desc')).toEqual({
+      return1y: 'desc',
+    });
+    expect(buildFundListOrderByInput('return3y', 'asc')).toEqual({
+      return3y: 'asc',
     });
   });
 });

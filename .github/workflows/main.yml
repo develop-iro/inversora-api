@@ -261,11 +261,81 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_PRODUCTION }}
 
+  sync-production-data:
+    name: Sync production market data
+    needs: migrate-production
+    if: needs.migrate-production.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    concurrency:
+      group: sync-production-data
+      cancel-in-progress: false
+
+    env:
+      APP_ENV: pro
+      NODE_ENV: production
+      DATABASE_URL: ${{ secrets.DATABASE_URL_PRODUCTION }}
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER_PRODUCTION }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD_PRODUCTION }}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB_PRODUCTION }}
+      POSTGRES_HOST: ${{ secrets.POSTGRES_HOST_PRODUCTION }}
+      POSTGRES_PORT: ${{ secrets.POSTGRES_PORT_PRODUCTION }}
+      FMP_API_KEY: ${{ secrets.FMP_API_KEY_PRODUCTION }}
+      FMP_DATA_SOURCE: live
+      FMP_SAVE_FIXTURES: false
+      SYNC_SCHEDULER_ENABLED: false
+      SYNC_COMPOSITION_ENABLED: false
+      ADMIN_SYNC_ENABLED: false
+      ADMIN_CATALOG_ENABLED: false
+      ASSISTANT_ENABLED: false
+      SWAGGER_ENABLED: false
+      PRODUCTION_SYNC_PRICE_BATCH_SIZE: ${{ vars.PRODUCTION_SYNC_PRICE_BATCH_SIZE || '120' }}
+      PRODUCTION_SYNC_MAX_BATCHES: ${{ vars.PRODUCTION_SYNC_MAX_BATCHES || '1' }}
+      PRODUCTION_SYNC_PAUSE_MS: ${{ vars.PRODUCTION_SYNC_PAUSE_MS || '65000' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate production sync secrets
+        run: |
+          missing=0
+          for key in DATABASE_URL POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB POSTGRES_HOST POSTGRES_PORT FMP_API_KEY; do
+            if [ -z "${!key}" ]; then
+              echo "::error::Missing required production sync secret: ${key}"
+              missing=1
+            fi
+          done
+          exit "${missing}"
+
+      - name: Sync missing production price history and scoring
+        run: >-
+          npm run sync:postdeploy --
+          --price-batch-size "${PRODUCTION_SYNC_PRICE_BATCH_SIZE}"
+          --max-batches "${PRODUCTION_SYNC_MAX_BATCHES}"
+          --pause-ms "${PRODUCTION_SYNC_PAUSE_MS}"
+
   # ── Phase 3: Report ─────────────────────────────────────────────────────────
 
   report:
     name: Test report
-    needs: [unit-tests, integration-tests, e2e-tests, migrate-production]
+    needs:
+      [
+        unit-tests,
+        integration-tests,
+        e2e-tests,
+        migrate-production,
+        sync-production-data,
+      ]
     if: always() && !cancelled()
     runs-on: ubuntu-latest
 
@@ -283,6 +353,7 @@ jobs:
           INTEGRATION_RESULT: ${{ needs.integration-tests.result }}
           E2E_RESULT: ${{ needs.e2e-tests.result }}
           MIGRATE_RESULT: ${{ needs.migrate-production.result }}
+          SYNC_RESULT: ${{ needs.sync-production-data.result }}
         run: |
           {
             echo "## Main branch test report"
@@ -293,6 +364,7 @@ jobs:
             echo "| Integration tests | ${INTEGRATION_RESULT} |"
             echo "| E2E tests | ${E2E_RESULT} |"
             echo "| Production migrations | ${MIGRATE_RESULT} |"
+            echo "| Production data sync | ${SYNC_RESULT} |"
             echo ""
           } >> "${GITHUB_STEP_SUMMARY}"
 
@@ -330,5 +402,6 @@ jobs:
           needs.unit-tests.result != 'success' ||
           needs.integration-tests.result != 'success' ||
           needs.e2e-tests.result != 'success' ||
-          needs.migrate-production.result != 'success'
+          needs.migrate-production.result != 'success' ||
+          needs.sync-production-data.result != 'success'
         run: exit 1

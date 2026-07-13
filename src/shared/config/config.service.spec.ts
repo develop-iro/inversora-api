@@ -107,8 +107,8 @@ describe('AppConfigService', () => {
   });
 
   it('should expose production deployment profile flags', async () => {
-    const proBaseEnv = { ...validEnv };
-    delete proBaseEnv.NODE_ENV;
+    const { NODE_ENV: _removedNodeEnv, ...proBaseEnv } = validEnv;
+    void _removedNodeEnv;
 
     const module: TestingModule = await Test.createTestingModule({
       imports: [

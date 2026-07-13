@@ -2,6 +2,11 @@ import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis'
 
 import { buildThrottlerModuleOptions } from './throttler.config';
 
+type ResolvedThrottlerModuleOptions = {
+  throttlers: Array<{ name: string; ttl: number; limit: number }>;
+  storage?: unknown;
+};
+
 jest.mock('@nest-lab/throttler-storage-redis', () => ({
   ThrottlerStorageRedisService: jest.fn(),
 }));
@@ -28,7 +33,7 @@ describe('buildThrottlerModuleOptions', () => {
       throttleAnalyticsLimit: 60,
       throttleDeviceRegisterLimit: 10,
       throttleRedisUrl: undefined,
-    } as never);
+    } as never) as ResolvedThrottlerModuleOptions;
 
     expect(options.throttlers).toEqual([
       {
@@ -64,7 +69,7 @@ describe('buildThrottlerModuleOptions', () => {
       throttleAnalyticsLimit: 60,
       throttleDeviceRegisterLimit: 10,
       throttleRedisUrl: 'redis://localhost:6379',
-    } as never);
+    } as never) as ResolvedThrottlerModuleOptions;
 
     expect(ThrottlerStorageRedisService).toHaveBeenCalledWith(
       'redis://localhost:6379',

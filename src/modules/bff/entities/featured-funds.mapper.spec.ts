@@ -1,7 +1,9 @@
 import {
   buildFeaturedFundsResponse,
+  FeaturedQuarterParseError,
   filterFeaturedFunds,
   mapFundToFeaturedFund,
+  parseFeaturedQuarterQuery,
 } from './featured-funds.mapper';
 import { featuredFundsResponseSchema } from './featured-funds.schema';
 import {
@@ -12,8 +14,9 @@ import {
 } from './quarter-metadata.utils';
 import type { Fund } from '../../funds/entities/fund.schema';
 import featuredFixture from '../fixtures/featured-funds-q2-2026.fixture.json';
+import { buildFundTestFixture } from '../../funds/test-utils/fund.entity.fixtures';
 
-const fund: Fund = {
+const fund: Fund = buildFundTestFixture({
   id: '550e8400-e29b-41d4-a716-446655440000',
   symbol: 'SPY',
   isin: 'US78462F1030',
@@ -39,7 +42,7 @@ const fund: Fund = {
   editorial: { badge: '', themeLabel: '', idealForBeginners: false },
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
   updatedAt: new Date('2024-02-01T00:00:00.000Z'),
-};
+});
 
 describe('quarter-metadata.utils', () => {
   it('should parse canonical quarter keys', () => {
@@ -207,6 +210,57 @@ describe('featured-funds.mapper', () => {
     });
 
     expect(mapped.efficiencyScore).toBe(47);
+  });
+
+  it('should fall back to editorial metadata when fund fields are missing', () => {
+    const mapped = mapFundToFeaturedFund({
+      fund: {
+        ...fund,
+        isin: null,
+        editorial: { badge: '', themeLabel: '', idealForBeginners: false },
+      },
+      quarter,
+      editorial: {
+        isin: 'US78462F1030',
+        themeLabel: 'Editorial theme',
+        badge: 'Editorial badge',
+        benefitSummary: 'Summary',
+        featuredReason: 'Reason',
+      },
+    });
+
+    expect(mapped.isin).toBe('US78462F1030');
+    expect(mapped.themeLabel).toBe('Editorial theme');
+    expect(mapped.badge).toBe('Editorial badge');
+  });
+
+  it('should match usa mercado filters via fund name', () => {
+    const mapped = mapFundToFeaturedFund({
+      fund: {
+        ...fund,
+        name: 'S&P 500 Core Fund',
+        benchmark: 'Broad Market',
+      },
+      quarter,
+      editorial: {
+        isin: 'US78462F1030',
+        themeLabel: 'Broad market',
+        badge: 'Core',
+        benefitSummary: 'Summary',
+        featuredReason: 'Reason',
+      },
+    });
+
+    expect(filterFeaturedFunds([mapped], { mercado: 'usa' })).toHaveLength(1);
+  });
+
+  it('should wrap invalid quarter parameters', () => {
+    expect(() => parseFeaturedQuarterQuery('not-a-quarter')).toThrow(
+      FeaturedQuarterParseError,
+    );
+    expect(() => parseFeaturedQuarterQuery('not-a-quarter')).toThrow(
+      /Invalid quarter/i,
+    );
   });
 
   it('should validate the example fixture shape', () => {

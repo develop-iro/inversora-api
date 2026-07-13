@@ -3,20 +3,20 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { AssistantController } from './assistant.controller';
 import { AssistantService } from '../services/assistant.service';
-import { AnonymousDevicesRepository } from '../../anonymous-devices/repositories/anonymous-devices.repository';
+import { AnonymousDevicesService } from '../../anonymous-devices/services/anonymous-devices.service';
 
 describe('AssistantController', () => {
   let controller: AssistantController;
   let assistantService: { explain: jest.Mock; chat: jest.Mock };
-  let anonymousDevicesRepository: { findByToken: jest.Mock };
+  let anonymousDevicesService: { resolveOptionalDeviceId: jest.Mock };
 
   beforeEach(async () => {
     assistantService = {
       explain: jest.fn(),
       chat: jest.fn(),
     };
-    anonymousDevicesRepository = {
-      findByToken: jest.fn(),
+    anonymousDevicesService = {
+      resolveOptionalDeviceId: jest.fn().mockResolvedValue(undefined),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -27,8 +27,8 @@ describe('AssistantController', () => {
           useValue: assistantService,
         },
         {
-          provide: AnonymousDevicesRepository,
-          useValue: anonymousDevicesRepository,
+          provide: AnonymousDevicesService,
+          useValue: anonymousDevicesService,
         },
       ],
     }).compile();
@@ -96,9 +96,9 @@ describe('AssistantController', () => {
 
   it('passes a resolved device id into chat responses', async () => {
     const token = `dev_${'a'.repeat(64)}`;
-    anonymousDevicesRepository.findByToken.mockResolvedValue({
-      id: 'device-1',
-    });
+    anonymousDevicesService.resolveOptionalDeviceId.mockResolvedValue(
+      'device-1',
+    );
     assistantService.chat.mockResolvedValue({
       text: 'Respuesta educativa.',
       source: 'glossary',
@@ -124,6 +124,10 @@ describe('AssistantController', () => {
   });
 
   it('rejects invalid optional device tokens', async () => {
+    anonymousDevicesService.resolveOptionalDeviceId.mockRejectedValue(
+      new UnauthorizedException(),
+    );
+
     await expect(
       controller.chat(
         {

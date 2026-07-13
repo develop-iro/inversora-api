@@ -4,9 +4,9 @@ import { AppConfigService } from '../../../shared/config/config.service';
 import type { Fund } from '../../funds/entities/fund.schema';
 import { FundsRepository } from '../../funds/repositories/funds.repository';
 import { FundPricesService } from '../../funds/services/fund-prices.service';
-import { ScoringService } from '../../scoring/services/scoring.service';
 import { buildFundTestFixture } from '../../funds/test-utils/fund.entity.fixtures';
 import * as featuredFundsMapper from '../entities/featured-funds.mapper';
+import { buildQuarterMetadata } from '../entities/quarter-metadata.utils';
 import { FeaturedFundsService } from './featured-funds.service';
 
 const fund: Fund = buildFundTestFixture({
@@ -40,14 +40,10 @@ const fund: Fund = buildFundTestFixture({
 describe('FeaturedFundsService', () => {
   let service: FeaturedFundsService;
   let fundsRepository: { findByIsins: jest.Mock };
-  let scoringService: { calculateScoresForFundIds: jest.Mock };
 
   beforeEach(async () => {
     fundsRepository = {
       findByIsins: jest.fn(),
-    };
-    scoringService = {
-      calculateScoresForFundIds: jest.fn().mockResolvedValue(new Map()),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -66,10 +62,6 @@ describe('FeaturedFundsService', () => {
           useValue: {
             getHistoriesByFundIds: jest.fn().mockResolvedValue(new Map()),
           },
-        },
-        {
-          provide: ScoringService,
-          useValue: scoringService,
         },
       ],
     }).compile();
@@ -122,12 +114,7 @@ describe('FeaturedFundsService', () => {
   it('should walk back from an unconfigured current quarter on default requests', async () => {
     const parseSpy = jest
       .spyOn(featuredFundsMapper, 'parseFeaturedQuarterQuery')
-      .mockReturnValue({
-        quarterKey: '2028-Q1',
-        quarterTag: 'Q1 2028',
-        periodStart: '2028-01-01',
-        periodEnd: '2028-03-31',
-      });
+      .mockReturnValue(buildQuarterMetadata({ year: 2028, quarter: 1 }));
 
     fundsRepository.findByIsins
       .mockResolvedValueOnce(new Map())
@@ -165,12 +152,14 @@ describe('FeaturedFundsService', () => {
     expect(response.data[0]?.isFeatured).toBe(true);
   });
 
-  it('should skip curated ISINs when the live score is below the featured threshold', async () => {
+  it('should skip curated ISINs when the persisted score is below the featured threshold', async () => {
+    const lowScoreFund = {
+      ...fund,
+      score: 20,
+    };
+
     fundsRepository.findByIsins.mockResolvedValue(
-      new Map([[fund.isin as string, fund]]),
-    );
-    scoringService.calculateScoresForFundIds.mockResolvedValue(
-      new Map([[fund.id, 20]]),
+      new Map([[lowScoreFund.isin as string, lowScoreFund]]),
     );
 
     const response = await service.getFeaturedFunds({ quarter: '2026-Q2' });

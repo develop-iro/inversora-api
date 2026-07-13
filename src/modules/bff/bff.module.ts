@@ -1,7 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { FundsModule } from '../funds/funds.module';
 import { ProvidersModule } from '../providers/providers.module';
-import { ScoringModule } from '../scoring/scoring.module';
 import { FeaturedFundsController } from './controllers/featured-funds.controller';
 import { FundDetailController } from './controllers/fund-detail.controller';
 import { InvestmentNewsController } from './controllers/investment-news.controller';
@@ -16,11 +15,7 @@ import { InvestmentNewsService } from './services/investment-news.service';
  * Backend-for-frontend module that exposes aggregated mobile contracts.
  */
 @Module({
-  imports: [
-    forwardRef(() => FundsModule),
-    forwardRef(() => ScoringModule),
-    ProvidersModule,
-  ],
+  imports: [forwardRef(() => FundsModule), ProvidersModule],
   controllers: [
     FeaturedFundsController,
     FundDetailController,
