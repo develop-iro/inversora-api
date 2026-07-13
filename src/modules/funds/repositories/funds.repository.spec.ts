@@ -240,6 +240,77 @@ describe('FundsRepository', () => {
     });
   });
 
+  it('should count funds using the provided catalog filters', async () => {
+    prisma.fund.count.mockResolvedValueOnce(7);
+
+    await expect(
+      repository.countMany({
+        currency: 'EUR',
+        catalogVisibility: CatalogVisibility.VISIBLE,
+      }),
+    ).resolves.toBe(7);
+
+    expect(prisma.fund.count).toHaveBeenCalledWith({
+      where: {
+        currency: 'EUR',
+        catalogVisibility: CatalogVisibility.VISIBLE,
+      },
+    });
+  });
+
+  it('should return catalog category metrics grouped by investment theme', async () => {
+    prisma.fund.groupBy.mockResolvedValueOnce([
+      {
+        investmentTheme: InvestmentTheme.GLOBAL_EQUITY,
+        _count: { _all: 4 },
+        _max: { score: new Decimal('91.50') },
+      },
+      {
+        investmentTheme: InvestmentTheme.FIXED_INCOME,
+        _count: { _all: 2 },
+        _max: { score: null },
+      },
+      {
+        investmentTheme: null,
+        _count: { _all: 1 },
+        _max: { score: new Decimal('50.00') },
+      },
+    ]);
+
+    await expect(
+      repository.getCatalogCategoryMetrics({
+        currency: 'EUR',
+      }),
+    ).resolves.toEqual([
+      {
+        id: 'global-equity',
+        fundCount: 4,
+        topScore: 91.5,
+      },
+      {
+        id: 'fixed-income',
+        fundCount: 2,
+        topScore: null,
+      },
+    ]);
+
+    expect(prisma.fund.groupBy).toHaveBeenCalledWith({
+      by: ['investmentTheme'],
+      where: {
+        AND: [
+          {
+            currency: 'EUR',
+          },
+          {
+            investmentTheme: { not: null },
+          },
+        ],
+      },
+      _count: { _all: true },
+      _max: { score: true },
+    });
+  });
+
   it('should find a fund by id', async () => {
     prisma.fund.findUnique.mockResolvedValueOnce(prismaFundRow);
 

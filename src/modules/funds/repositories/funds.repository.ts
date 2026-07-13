@@ -5,6 +5,7 @@ import {
   mapDomainFundProviderToPrisma,
   mapDomainCatalogVisibilityToPrisma,
   mapDomainInvestmentThemeToPrisma,
+  mapPrismaInvestmentTheme,
   mapPrismaCatalogVisibility,
   mapPrismaFundToFund,
   mapUpdateFundEditorialInputToPrismaData,
@@ -28,6 +29,13 @@ export interface FindManyFundsOptions {
   orderBy: Prisma.FundOrderByWithRelationInput;
   skip: number;
   take: number;
+}
+
+/** Aggregate category counts used by catalog facets. */
+export interface CatalogCategoryMetric {
+  id: InvestmentTheme;
+  fundCount: number;
+  topScore: number | null;
 }
 
 /** Input for updating catalog visibility with audit logging. */
@@ -68,6 +76,49 @@ export class FundsRepository {
       items: records.map((record) => mapPrismaFundToFund(record)),
       total,
     };
+  }
+
+  /**
+   * Counts public catalog rows matching the provided filters.
+   *
+   * @param where - Prisma filter shared with list queries.
+   * @returns Matching row count.
+   */
+  async countMany(where: Prisma.FundWhereInput): Promise<number> {
+    return this.prisma.fund.count({ where });
+  }
+
+  /**
+   * Returns category metrics grouped by investment theme without loading funds.
+   *
+   * @param where - Prisma filter shared with list queries.
+   * @returns Count and top score per investment theme.
+   */
+  async getCatalogCategoryMetrics(
+    where: Prisma.FundWhereInput,
+  ): Promise<CatalogCategoryMetric[]> {
+    const groups = await this.prisma.fund.groupBy({
+      by: ['investmentTheme'],
+      where: {
+        AND: [where, { investmentTheme: { not: null } }],
+      },
+      _count: { _all: true },
+      _max: { score: true },
+    });
+
+    return groups.flatMap((group) => {
+      if (group.investmentTheme === null) {
+        return [];
+      }
+
+      return [
+        {
+          id: mapPrismaInvestmentTheme(group.investmentTheme),
+          fundCount: group._count._all,
+          topScore: group._max.score === null ? null : Number(group._max.score),
+        },
+      ];
+    });
   }
 
   /**

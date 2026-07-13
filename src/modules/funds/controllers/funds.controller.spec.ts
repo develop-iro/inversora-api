@@ -7,6 +7,7 @@ describe('FundsController', () => {
   let service: {
     listFunds: jest.Mock;
     getFundById: jest.Mock;
+    getCatalogMetrics: jest.Mock;
     getFundChart: jest.Mock;
     getFundHoldings: jest.Mock;
     getFundCountryExposure: jest.Mock;
@@ -27,6 +28,10 @@ describe('FundsController', () => {
       getFundById: jest.fn().mockResolvedValue({
         id: '550e8400-e29b-41d4-a716-446655440000',
         symbol: 'SPY',
+      }),
+      getCatalogMetrics: jest.fn().mockResolvedValue({
+        total: 0,
+        categories: [],
       }),
       getFundChart: jest.fn().mockResolvedValue({
         fundId: '550e8400-e29b-41d4-a716-446655440000',
@@ -72,6 +77,14 @@ describe('FundsController', () => {
     await controller.listFunds(query);
 
     expect(service.listFunds).toHaveBeenCalledWith(query);
+  });
+
+  it('should delegate catalog metric reads to the service', async () => {
+    const query = { riskProfile: 'low' };
+
+    await controller.getCatalogMetrics(query);
+
+    expect(service.getCatalogMetrics).toHaveBeenCalledWith(query);
   });
 
   it('should delegate chart reads to the service', async () => {

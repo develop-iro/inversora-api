@@ -5,6 +5,7 @@ import { ScoringModule } from '../scoring/scoring.module';
 import { FundsController } from './controllers/funds.controller';
 import { GetFundsUseCase } from './get-funds';
 import { GetCatalogSummaryUseCase } from './get-catalog-summary';
+import { GetFundCatalogMetricsUseCase } from './get-fund-catalog-metrics';
 import { FundSyncScheduler } from './schedulers/fund-sync.scheduler';
 import { CatalogVisibilityService } from './services/catalog-visibility.service';
 import { FundEditorialService } from './services/fund-editorial.service';
@@ -30,6 +31,7 @@ import { FundsService } from './services/funds.service';
     FundsRepository,
     GetFundsUseCase,
     GetCatalogSummaryUseCase,
+    GetFundCatalogMetricsUseCase,
     FundsService,
     FundPricesRepository,
     FundPricesService,
