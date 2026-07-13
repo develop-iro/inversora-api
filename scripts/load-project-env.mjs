@@ -13,6 +13,10 @@ const envPath = resolve(projectRoot, '.env');
  */
 export function loadProjectEnv() {
   if (!existsSync(envPath)) {
+    if (process.env.CI === 'true' && process.env.DATABASE_URL !== undefined) {
+      return;
+    }
+
     throw new Error(
       `Missing ${envPath}. Copy .env.example and configure DATABASE_URL.`,
     );
