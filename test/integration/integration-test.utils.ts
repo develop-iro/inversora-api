@@ -178,16 +178,15 @@ export async function scoreAndPublishIntegrationFundById(
   const fundsRepository = moduleRef.get(FundsRepository);
   const catalogVisibilityService = moduleRef.get(CatalogVisibilityService);
 
-  const computedScore = await scoringService.calculateScoreForFundId(fundId);
+  const scoringResult = await scoringService.recalculateAllScores();
+  const scoredFund = await fundsRepository.findById(fundId);
 
-  if (computedScore === null) {
+  if (
+    scoredFund === null ||
+    !scoringResult.results.some((result) => result.fundId === fundId)
+  ) {
     throw new Error(`Unable to calculate score for fund ${fundId}`);
   }
-
-  const scoredFund = await fundsRepository.updateScore(
-    fundId,
-    computedScore.score,
-  );
 
   return catalogVisibilityService.applyAutomaticVisibilityRules(scoredFund);
 }
