@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FundsRepository } from '../funds/repositories/funds.repository';
+import { FundPricesService } from '../funds/services/fund-prices.service';
 import { RANKING_FIXTURE_FUNDS } from './entities/ranking.fixtures';
 import { GetRankingsUseCase } from './get-rankings';
 
@@ -18,6 +19,7 @@ describe('GetRankingsUseCase', () => {
     findRankingFundsForQuery: jest.Mock;
     findRankingFundsAggregation: jest.Mock;
   };
+  let fundPricesService: { getHistoriesByFundIds: jest.Mock };
 
   beforeEach(async () => {
     fundsRepository = {
@@ -33,6 +35,9 @@ describe('GetRankingsUseCase', () => {
         totalEligibleFunds: 4,
       }),
     };
+    fundPricesService = {
+      getHistoriesByFundIds: jest.fn().mockResolvedValue(new Map()),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -40,6 +45,10 @@ describe('GetRankingsUseCase', () => {
         {
           provide: FundsRepository,
           useValue: fundsRepository,
+        },
+        {
+          provide: FundPricesService,
+          useValue: fundPricesService,
         },
       ],
     }).compile();

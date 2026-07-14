@@ -1,13 +1,10 @@
 import { z } from 'zod';
+import { catalogRiskProfileSchema } from './catalog-risk-profile.schema';
 import { fundListQuerySchema } from './fund-list.schema';
 import { investmentThemeSchema } from '../../../modules/funds/entities/investment-theme.schema';
 
-export const catalogRiskProfileSchema = z.enum([
-  'all',
-  'low',
-  'medium',
-  'high',
-]);
+export { catalogRiskProfileSchema } from './catalog-risk-profile.schema';
+export type { CatalogRiskProfile } from './catalog-risk-profile.schema';
 
 export const fundCatalogMetricsQuerySchema = fundListQuerySchema
   .omit({

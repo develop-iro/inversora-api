@@ -59,10 +59,10 @@ describe('fundListQuerySchema', () => {
     ).toMatchObject({ idealForBeginnersOnly: false });
   });
 
-  it('should parse investmentTheme filter', () => {
-    expect(
-      fundListQuerySchema.parse({ investmentTheme: 'us-equity' }),
-    ).toMatchObject({ investmentTheme: 'us-equity' });
+  it('should parse riskProfile filter', () => {
+    expect(fundListQuerySchema.parse({ riskProfile: 'medium' })).toMatchObject({
+      riskProfile: 'medium',
+    });
   });
 });
 

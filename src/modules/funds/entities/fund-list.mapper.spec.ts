@@ -118,6 +118,21 @@ describe('fund-list.mapper', () => {
     ]);
   });
 
+  it('should filter by risk profile ranges aligned with app labels', () => {
+    expect(
+      buildFundListWhereInput({
+        riskProfile: 'medium',
+      }),
+    ).toEqual({
+      AND: [
+        buildPublicCatalogVisibilityWhereInput(),
+        {
+          OR: [{ riskLevel: null }, { riskLevel: { gte: 3, lte: 5 } }],
+        },
+      ],
+    });
+  });
+
   it('should filter by materialized return thresholds', () => {
     expect(
       buildFundListWhereInput({

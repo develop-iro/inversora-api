@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AppConfigService } from '../../shared/config/config.service';
 import { FundsRepository } from './repositories/funds.repository';
 import { GetFundsUseCase } from './get-funds';
+import { FundPricesService } from './services/fund-prices.service';
 import { buildFundTestFixture } from './test-utils/fund.entity.fixtures';
 
 const fund = buildFundTestFixture({
@@ -37,6 +38,7 @@ describe('GetFundsUseCase', () => {
   let useCase: GetFundsUseCase;
   let repository: { findMany: jest.Mock };
   let configService: { brandfetchClientId: string | undefined };
+  let fundPricesService: { getHistoriesByFundIds: jest.Mock };
 
   beforeEach(async () => {
     repository = {
@@ -47,6 +49,9 @@ describe('GetFundsUseCase', () => {
     };
     configService = {
       brandfetchClientId: 'test-client-id',
+    };
+    fundPricesService = {
+      getHistoriesByFundIds: jest.fn().mockResolvedValue(new Map()),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -59,6 +64,10 @@ describe('GetFundsUseCase', () => {
         {
           provide: AppConfigService,
           useValue: configService,
+        },
+        {
+          provide: FundPricesService,
+          useValue: fundPricesService,
         },
       ],
     }).compile();
@@ -210,6 +219,62 @@ describe('GetFundsUseCase', () => {
 
     expect(findManyCall?.where?.AND).toEqual(
       expect.arrayContaining([{ return1y: { gte: 5 } }]),
+    );
+  });
+
+  it('should fall back to stored prices when materialized one-year return is null', async () => {
+    fundPricesService.getHistoriesByFundIds.mockResolvedValue(
+      new Map([
+        [
+          fund.id,
+          [
+            {
+              id: 'price-1',
+              fundId: fund.id,
+              date: '2025-06-01',
+              open: 100,
+              high: 100,
+              low: 100,
+              close: 100,
+              volume: null,
+              change: null,
+              changePercent: null,
+              vwap: null,
+              createdAt: new Date('2025-06-01T00:00:00.000Z'),
+              updatedAt: new Date('2025-06-01T00:00:00.000Z'),
+            },
+            {
+              id: 'price-2',
+              fundId: fund.id,
+              date: '2026-06-01',
+              open: 120,
+              high: 120,
+              low: 120,
+              close: 120,
+              volume: null,
+              change: null,
+              changePercent: null,
+              vwap: null,
+              createdAt: new Date('2026-06-01T00:00:00.000Z'),
+              updatedAt: new Date('2026-06-01T00:00:00.000Z'),
+            },
+          ],
+        ],
+      ]),
+    );
+
+    const response = await useCase.execute({
+      page: '1',
+      limit: '20',
+      sortBy: 'score',
+      sortOrder: 'desc',
+    });
+
+    expect(response.data[0]?.returns.oneYear).toBeCloseTo(20, 1);
+    expect(response.data[0]?.returns.asOf).toBe('2026-06-01');
+    expect(fundPricesService.getHistoriesByFundIds).toHaveBeenCalledWith(
+      [fund.id],
+      expect.objectContaining({ from: '2025-06-09' }),
     );
   });
 });

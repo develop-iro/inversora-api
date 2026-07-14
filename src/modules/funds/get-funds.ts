@@ -23,11 +23,16 @@ import {
 } from './entities/fund-list.mapper';
 
 import { mapFundsToApiFunds } from './entities/fund-api.mapper';
+import {
+  collectFundIdsNeedingReturnFallback,
+  loadReturnSnapshotFallbacksByFundIds,
+} from './entities/fund-returns.enricher';
 
 import type { FundApi } from './entities/fund-api.schema';
+import type { Fund } from './entities/fund.schema';
 
 import { FundsRepository } from './repositories/funds.repository';
-
+import { FundPricesService } from './services/fund-prices.service';
 /**
 
  * Use case for paginated public fund catalog reads (`GET /funds`).
@@ -40,8 +45,9 @@ export class GetFundsUseCase {
     private readonly fundsRepository: FundsRepository,
 
     private readonly configService: AppConfigService,
-  ) {}
 
+    private readonly fundPricesService: FundPricesService,
+  ) {}
   /**
 
    * Returns a paginated, filtered, and sorted fund list.
@@ -73,7 +79,7 @@ export class GetFundsUseCase {
       take: query.limit,
     });
 
-    const data = this.mapFundsToListPayload(items);
+    const data = await this.mapFundsToListPayload(items);
 
     return parseApiResponse(
       fundListResponseSchema,
@@ -89,19 +95,24 @@ export class GetFundsUseCase {
   }
 
   /**
-
-   * Maps persisted funds to public list payloads using materialized columns only.
-
+   * Maps persisted funds to public list payloads, falling back to price history
+   * when materialized return columns are still null.
    *
-
    * @param items - Persisted fund rows for the current page.
-
    */
+  private async mapFundsToListPayload(
+    items: readonly Fund[],
+  ): Promise<FundApi[]> {
+    const returnFallbacks = await loadReturnSnapshotFallbacksByFundIds(
+      this.fundPricesService,
+      collectFundIdsNeedingReturnFallback(items),
+    );
 
-  private mapFundsToListPayload(
-    items: Awaited<ReturnType<FundsRepository['findMany']>>['items'],
-  ): FundApi[] {
-    return mapFundsToApiFunds(items, this.configService.brandfetchClientId);
+    return mapFundsToApiFunds(
+      items,
+      this.configService.brandfetchClientId,
+      returnFallbacks,
+    );
   }
 
   private parseListQuery(rawQuery: Record<string, unknown>): FundListQuery {

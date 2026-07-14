@@ -114,6 +114,63 @@ export function buildCatalogListReturnSnapshotsFromPrices(
 }
 
 /**
+ * Merges a primary return snapshot with optional price-derived fallbacks.
+ *
+ * Materialized columns win when present; null fields are filled from prices.
+ *
+ * @param primary - Materialized or pre-resolved snapshot.
+ * @param fallback - Optional snapshot built from stored price history.
+ */
+export function mergeReturnSnapshots(
+  primary: FundReturnSnapshot,
+  fallback: FundReturnSnapshot | undefined,
+): FundReturnSnapshot {
+  if (fallback === undefined) {
+    return primary;
+  }
+
+  return {
+    ytd: primary.ytd ?? fallback.ytd,
+    oneYear: primary.oneYear ?? fallback.oneYear,
+    threeYear: primary.threeYear ?? fallback.threeYear,
+    asOf: primary.asOf ?? fallback.asOf,
+  };
+}
+
+/**
+ * Returns fund ids whose materialized one-year return is still null.
+ *
+ * @param funds - Persisted funds for the current read.
+ */
+export function collectFundIdsNeedingReturnFallback(
+  funds: readonly {
+    readonly id: string;
+    readonly materialized: { readonly return1y: number | null };
+  }[],
+): string[] {
+  return funds
+    .filter((fund) => fund.materialized.return1y === null)
+    .map((fund) => fund.id);
+}
+
+/**
+ * Loads price-derived return fallbacks for funds missing materialized 1Y data.
+ *
+ * @param fundPricesService - Fund prices application service.
+ * @param fundIds - Persisted fund identifiers.
+ */
+export async function loadReturnSnapshotFallbacksByFundIds(
+  fundPricesService: FundPricesService,
+  fundIds: readonly string[],
+): Promise<Map<string, FundReturnSnapshot>> {
+  if (fundIds.length === 0) {
+    return new Map();
+  }
+
+  return loadCatalogListReturnSnapshotsByFundIds(fundPricesService, fundIds);
+}
+
+/**
  * Resolves a fund return snapshot from a preloaded map.
  *
  * @param snapshots - Return snapshots keyed by fund id.

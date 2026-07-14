@@ -13,6 +13,7 @@ import type {
   FundListSortOrder,
 } from './fund-list.schema';
 import type { CatalogVisibility } from './catalog-visibility.schema';
+import { buildRiskProfileWhereInput } from './fund-risk-profile.mapper';
 
 export type PrismaFundListSortField = FundListSortField;
 
@@ -133,7 +134,13 @@ export function buildFundListWhereInput(
     });
   }
 
-  if (query.riskLevel !== undefined) {
+  if (query.riskProfile !== undefined && query.riskProfile !== 'all') {
+    const riskWhere = buildRiskProfileWhereInput(query.riskProfile);
+
+    if (riskWhere !== null) {
+      conditions.push(riskWhere);
+    }
+  } else if (query.riskLevel !== undefined) {
     conditions.push({ riskLevel: query.riskLevel });
   }
 
