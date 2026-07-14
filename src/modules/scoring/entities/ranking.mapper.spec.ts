@@ -99,6 +99,33 @@ describe('buildRankingsResponse', () => {
     });
   });
 
+  it('should fall back to price-derived returns when materialized one-year is null', () => {
+    const fund = RANKING_FIXTURE_FUNDS[1];
+    const response = buildRankingsResponse(
+      [fund],
+      rankingsQuerySchema.parse({ benchmark: 'S&P 500', limit: 1 }),
+      undefined,
+      new Map([
+        [
+          fund.id,
+          {
+            ytd: null,
+            oneYear: 14.2,
+            threeYear: null,
+            asOf: '2026-06-01',
+          },
+        ],
+      ]),
+    );
+
+    expect(response.data[0]?.funds[0]?.returns).toEqual({
+      ytd: null,
+      oneYear: 14.2,
+      threeYear: null,
+      asOf: '2026-06-01',
+    });
+  });
+
   it('should group eligible funds by benchmark without mixing peer groups', () => {
     const response = buildRankingsResponse(
       RANKING_FIXTURE_FUNDS,

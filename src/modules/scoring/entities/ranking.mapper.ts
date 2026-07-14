@@ -1,5 +1,7 @@
 import type { Fund } from '../../funds/entities/fund.schema';
 import { mapMaterializedFieldsToReturnSnapshot } from '../../funds/entities/fund-materialized.mapper';
+import { mergeReturnSnapshots } from '../../funds/entities/fund-returns.enricher';
+import type { FundReturnSnapshot } from '../../funds/entities/fund-return-snapshot.schema';
 import { isCatalogVisible } from '../../funds/entities/catalog-visibility.schema';
 import { resolveScoringPeerGroupKey } from './fund-scoring-metrics.builder';
 import type {
@@ -63,11 +65,18 @@ function compareRankableFunds(left: Fund, right: Fund): number {
  *
  * @param fund - Persisted fund entity.
  * @param rank - 1-based position inside the benchmark group.
+ * @param returnFallbacks - Optional price-derived return snapshots keyed by fund id.
  */
 export function mapFundToRankedEntry(
   fund: Fund,
   rank: number,
+  returnFallbacks?: ReadonlyMap<string, FundReturnSnapshot>,
 ): RankedFundEntry {
+  const returns = mergeReturnSnapshots(
+    mapMaterializedFieldsToReturnSnapshot(fund.materialized),
+    returnFallbacks?.get(fund.id),
+  );
+
   return {
     rank: fund.materialized.peerRank ?? rank,
     id: fund.id,
@@ -79,7 +88,7 @@ export function mapFundToRankedEntry(
     currency: fund.currency,
     riskLevel: fund.riskLevel,
     ter: fund.metrics.ter!,
-    returns: mapMaterializedFieldsToReturnSnapshot(fund.materialized),
+    returns,
   };
 }
 
@@ -89,11 +98,13 @@ export function mapFundToRankedEntry(
  * @param funds - Persisted fund entities (typically top-N per group from SQL).
  * @param query - Validated rankings query.
  * @param aggregation - Optional precomputed group totals for bounded SQL reads.
+ * @param returnFallbacks - Optional price-derived return snapshots keyed by fund id.
  */
 export function buildRankingsResponse(
   funds: readonly Fund[],
   query: RankingsQuery,
   aggregation?: RankingFundsAggregation,
+  returnFallbacks?: ReadonlyMap<string, FundReturnSnapshot>,
 ): RankingsResponse {
   const benchmarkFilter =
     query.benchmark === undefined
@@ -153,7 +164,7 @@ export function buildRankingsResponse(
         benchmarkKey,
         total: aggregation?.groupTotals.get(benchmarkKey) ?? sortedFunds.length,
         funds: limitedFunds.map((fund, index) =>
-          mapFundToRankedEntry(fund, index + 1),
+          mapFundToRankedEntry(fund, index + 1, returnFallbacks),
         ),
       };
     },

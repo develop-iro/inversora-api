@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { catalogRiskProfileSchema } from './catalog-risk-profile.schema';
 import { fundApiSchema } from '../../../modules/funds/entities/fund-api.schema';
 import {
   fundCategorySchema,
@@ -48,6 +49,7 @@ export const fundListQuerySchema = z.object({
   provider: fundProviderSchema.optional(),
   benchmark: z.string().trim().min(1).optional(),
   riskLevel: z.coerce.number().int().min(1).max(7).optional(),
+  riskProfile: catalogRiskProfileSchema.optional(),
   minScore: z.coerce.number().min(0).max(100).optional(),
   maxScore: z.coerce.number().min(0).max(100).optional(),
   minTer: z.coerce.number().nonnegative().optional(),

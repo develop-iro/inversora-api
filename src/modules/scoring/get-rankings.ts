@@ -10,15 +10,21 @@ import type {
   RankingsResponse,
 } from '../../core/api/schemas/rankings.schema';
 import { FundsRepository } from '../funds/repositories/funds.repository';
+import { FundPricesService } from '../funds/services/fund-prices.service';
+import {
+  collectFundIdsNeedingReturnFallback,
+  loadReturnSnapshotFallbacksByFundIds,
+} from '../funds/entities/fund-returns.enricher';
 import { buildRankingsResponse } from './entities/ranking.mapper';
-
 /**
  * Use case for benchmark-scoped fund rankings (`GET /rankings`).
  */
 @Injectable()
 export class GetRankingsUseCase {
-  constructor(private readonly fundsRepository: FundsRepository) {}
-
+  constructor(
+    private readonly fundsRepository: FundsRepository,
+    private readonly fundPricesService: FundPricesService,
+  ) {}
   /**
    * Returns funds ranked by Inversora Score inside comparable benchmark groups.
    *
@@ -31,8 +37,16 @@ export class GetRankingsUseCase {
       this.fundsRepository.findRankingFundsForQuery(query),
       this.fundsRepository.findRankingFundsAggregation(query),
     ]);
-    const baseResponse = buildRankingsResponse(funds, query, aggregation);
-
+    const returnFallbacks = await loadReturnSnapshotFallbacksByFundIds(
+      this.fundPricesService,
+      collectFundIdsNeedingReturnFallback(funds),
+    );
+    const baseResponse = buildRankingsResponse(
+      funds,
+      query,
+      aggregation,
+      returnFallbacks,
+    );
     return parseApiResponse(
       rankingsResponseSchema,
       baseResponse,

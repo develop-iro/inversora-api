@@ -10,6 +10,7 @@ import {
 } from '../../core/api/schemas/fund-catalog-metrics.schema';
 import type { FundListQuery } from '../../core/api/schemas/fund-list.schema';
 import { buildFundListWhereInput } from './entities/fund-list.mapper';
+import { buildRiskProfileWhereInput } from './entities/fund-risk-profile.mapper';
 import type { InvestmentTheme } from './entities/fund.schema';
 import { FundsRepository } from './repositories/funds.repository';
 
@@ -87,16 +88,7 @@ export class GetFundCatalogMetricsUseCase {
   private buildRiskProfileWhereInput(
     riskProfile: FundCatalogMetricsQuery['riskProfile'],
   ): Prisma.FundWhereInput | null {
-    switch (riskProfile) {
-      case 'low':
-        return { riskLevel: { gte: 1, lte: 2 } };
-      case 'medium':
-        return { riskLevel: { gte: 3, lte: 5 } };
-      case 'high':
-        return { riskLevel: { gte: 6, lte: 7 } };
-      case 'all':
-        return null;
-    }
+    return buildRiskProfileWhereInput(riskProfile);
   }
 
   private parseMetricsQuery(

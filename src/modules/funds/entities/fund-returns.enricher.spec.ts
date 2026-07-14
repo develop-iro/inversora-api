@@ -2,9 +2,11 @@ import type { FundPrice } from './fund-price.schema';
 import {
   buildCatalogListReturnSnapshotsFromPrices,
   buildReturnSnapshotsFromPrices,
+  collectFundIdsNeedingReturnFallback,
   EMPTY_FUND_RETURN_SNAPSHOT,
   loadCatalogListReturnSnapshotsByFundIds,
   loadReturnSnapshotsByFundIds,
+  mergeReturnSnapshots,
   resolveFundReturnSnapshot,
 } from './fund-returns.enricher';
 import type { FundPricesService } from '../services/fund-prices.service';
@@ -121,5 +123,44 @@ describe('fund returns enricher', () => {
 
     expect(historyCall?.[0]).toEqual(['fund-1']);
     expect(historyCall?.[1]?.from).toEqual(expect.any(String));
+  });
+
+  it('should merge materialized returns with price-derived fallbacks', () => {
+    expect(
+      mergeReturnSnapshots(
+        {
+          ytd: null,
+          oneYear: null,
+          threeYear: 12,
+          asOf: null,
+        },
+        {
+          ytd: 2,
+          oneYear: 8,
+          threeYear: null,
+          asOf: '2026-06-01',
+        },
+      ),
+    ).toEqual({
+      ytd: 2,
+      oneYear: 8,
+      threeYear: 12,
+      asOf: '2026-06-01',
+    });
+  });
+
+  it('should collect only funds missing materialized one-year returns', () => {
+    expect(
+      collectFundIdsNeedingReturnFallback([
+        {
+          id: 'fund-1',
+          materialized: { return1y: null },
+        },
+        {
+          id: 'fund-2',
+          materialized: { return1y: 10 },
+        },
+      ]),
+    ).toEqual(['fund-1']);
   });
 });

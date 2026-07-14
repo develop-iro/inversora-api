@@ -84,10 +84,22 @@ describe('GetFundCatalogMetricsUseCase', () => {
     expect(repository.getCatalogCategoryMetrics).toHaveBeenCalledTimes(1);
   });
 
-  it.each([
-    ['medium', '"riskLevel":{"gte":3,"lte":5}'],
-    ['high', '"riskLevel":{"gte":6,"lte":7}'],
-  ])(
+  it('should include unknown risk levels in the medium profile', async () => {
+    repository.countMany.mockImplementation((where: unknown) => {
+      expect(JSON.stringify(where)).toContain('"riskLevel":null');
+      expect(JSON.stringify(where)).toContain('"riskLevel":{"gte":3,"lte":5}');
+
+      return Promise.resolve(12);
+    });
+    repository.getCatalogCategoryMetrics.mockResolvedValue([]);
+
+    await expect(useCase.execute({ riskProfile: 'medium' })).resolves.toEqual({
+      total: 12,
+      categories: [],
+    });
+  });
+
+  it.each([['high', '"riskLevel":{"gte":6,"lte":7}']])(
     'should map %s risk profile to the expected risk range',
     async (riskProfile, expected) => {
       repository.countMany.mockImplementation((where: unknown) => {
