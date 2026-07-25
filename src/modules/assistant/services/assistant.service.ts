@@ -109,29 +109,35 @@ export class AssistantService {
 
     const promptVersion = this.config.assistantPromptVersion;
 
-    const glossaryMatch = this.glossaryService.match(request.message);
-
-    if (glossaryMatch !== null) {
-      return this.guardrails.assertResponse({
-        title: glossaryMatch.entry.term,
-
-        text: glossaryMatch.entry.explanation,
-
-        source: 'glossary',
-
-        cached: false,
-
-        disclaimer: ASSISTANT_EDUCATIONAL_DISCLAIMER,
-
-        promptVersion,
-      });
-    }
-
     const intent = this.intentClassifier.classify(
       request.message,
 
       fundIsin !== undefined,
     );
+
+    const preferDeterministicTemplate =
+      fundIsin !== undefined &&
+      this.intentClassifier.supportsDeterministicTemplate(intent);
+
+    if (!preferDeterministicTemplate) {
+      const glossaryMatch = this.glossaryService.match(request.message);
+
+      if (glossaryMatch !== null) {
+        return this.guardrails.assertResponse({
+          title: glossaryMatch.entry.term,
+
+          text: glossaryMatch.entry.explanation,
+
+          source: 'glossary',
+
+          cached: false,
+
+          disclaimer: ASSISTANT_EDUCATIONAL_DISCLAIMER,
+
+          promptVersion,
+        });
+      }
+    }
 
     const cacheKey = buildAssistantCacheKey({
       intent,
@@ -287,53 +293,59 @@ export class AssistantService {
             8,
           );
 
-    const glossaryMatch = this.glossaryService.match(request.message);
-
-    if (glossaryMatch !== null) {
-      const response = this.guardrails.assertResponse({
-        title: glossaryMatch.entry.term,
-
-        text: glossaryMatch.entry.explanation,
-
-        source: 'glossary',
-
-        cached: false,
-
-        disclaimer: ASSISTANT_EDUCATIONAL_DISCLAIMER,
-
-        promptVersion,
-
-        sessionId,
-      });
-
-      await this.conversationRepository.saveTurn({
-        sessionId,
-
-        surface: request.surface,
-
-        locale,
-
-        userMessage: request.message,
-
-        intent: 'glossary',
-
-        response,
-
-        runtime: this.config.assistantRuntime,
-
-        relatedFundIsins: requestedFundIsins,
-
-        deviceId,
-      });
-
-      return response;
-    }
-
     const intent = this.intentClassifier.classify(
       request.message,
 
       requestedFundIsins.length > 0,
     );
+
+    const preferDeterministicTemplate =
+      requestedFundIsins.length > 0 &&
+      this.intentClassifier.supportsDeterministicTemplate(intent);
+
+    if (!preferDeterministicTemplate) {
+      const glossaryMatch = this.glossaryService.match(request.message);
+
+      if (glossaryMatch !== null) {
+        const response = this.guardrails.assertResponse({
+          title: glossaryMatch.entry.term,
+
+          text: glossaryMatch.entry.explanation,
+
+          source: 'glossary',
+
+          cached: false,
+
+          disclaimer: ASSISTANT_EDUCATIONAL_DISCLAIMER,
+
+          promptVersion,
+
+          sessionId,
+        });
+
+        await this.conversationRepository.saveTurn({
+          sessionId,
+
+          surface: request.surface,
+
+          locale,
+
+          userMessage: request.message,
+
+          intent: 'glossary',
+
+          response,
+
+          runtime: this.config.assistantRuntime,
+
+          relatedFundIsins: requestedFundIsins,
+
+          deviceId,
+        });
+
+        return response;
+      }
+    }
 
     const normalizedQuery = normalizeAssistantQuery(request.message);
 

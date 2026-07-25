@@ -153,6 +153,19 @@ describe('AssistantService', () => {
     expect(llmOrchestrator.generate).not.toHaveBeenCalled();
   });
 
+  it('answers the home fondo indexado prompt from glossary', async () => {
+    const response = await service.explain({
+      surface: 'home',
+      message: '¿Qué es un fondo indexado?',
+    });
+
+    expect(response.source).toBe('glossary');
+    expect(response.title).toBe('Fondo indexado');
+    expect(response.text).toMatch(/replica un índice/i);
+    expect(response.text).not.toMatch(/instrucciones operativas/i);
+    expect(llmOrchestrator.generate).not.toHaveBeenCalled();
+  });
+
   it('returns deterministic template responses without calling the LLM', async () => {
     deterministicAssistant.tryBuild.mockReturnValue({
       title: 'Explicacion del Score Inversora',
@@ -169,6 +182,23 @@ describe('AssistantService', () => {
     expect(response.title).toBe('Explicacion del Score Inversora');
     expect(llmOrchestrator.generate).not.toHaveBeenCalled();
     expect(cacheRepository.save).toHaveBeenCalled();
+  });
+
+  it('prefers fund score templates over the generic score glossary entry', async () => {
+    deterministicAssistant.tryBuild.mockReturnValue({
+      title: 'Explicacion del Score Inversora',
+      text: 'Este fondo concreto tiene score 82 por TER y tracking.',
+    });
+
+    const response = await service.explain({
+      surface: 'fund-detail',
+      message: '¿Por qué este fondo tiene este score?',
+      fund: { isin: 'IE00B4L5Y983' },
+    });
+
+    expect(response.source).toBe('template');
+    expect(response.text).toMatch(/este fondo concreto/i);
+    expect(llmOrchestrator.generate).not.toHaveBeenCalled();
   });
 
   it('returns deterministic compare templates in chat mode', async () => {
@@ -291,14 +321,14 @@ describe('AssistantService', () => {
 
     const response = await service.explain({
       surface: 'home',
-      message: 'Explicame la diferencia entre dos fondos indexados',
+      message: 'Explicame la diferencia entre estos dos fondos del ranking',
     });
 
     expect(response.source).toBe('openai');
     expect(llmOrchestrator.generate).not.toHaveBeenCalled();
     expect(pythonAgentAssistant.generate).toHaveBeenCalledWith(
       expect.objectContaining({ surface: 'home', intent: 'compare' }),
-      'Explicame la diferencia entre dos fondos indexados',
+      'Explicame la diferencia entre estos dos fondos del ranking',
     );
   });
 
@@ -367,7 +397,7 @@ describe('AssistantService', () => {
 
     await service.chat({
       surface: 'home',
-      message: 'Y como afecta a largo plazo?',
+      message: 'Y como afecta en este ejemplo concreto?',
       sessionId: 'session-1',
     });
 
@@ -478,14 +508,14 @@ describe('AssistantService', () => {
 
     const response = await service.chat({
       surface: 'home',
-      message: 'Pregunta general sobre fondos indexados',
+      message: 'Pregunta general sobre diversificacion a largo plazo',
     });
 
     expect(response.sessionId).toMatch(/^sora_/);
     expect(conversationRepository.saveTurn).toHaveBeenCalledWith(
       expect.objectContaining({
         sessionId: response.sessionId,
-        userMessage: 'Pregunta general sobre fondos indexados',
+        userMessage: 'Pregunta general sobre diversificacion a largo plazo',
       }),
     );
   });

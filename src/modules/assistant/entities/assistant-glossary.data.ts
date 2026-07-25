@@ -5,13 +5,165 @@ export type GlossaryEntry = {
   readonly keywords: readonly string[];
 };
 
-/** Static investment glossary aligned with the mobile app FUND_GLOSSARY. */
+/**
+ * Static educational glossary for beginner questions.
+ *
+ * Covers fund metrics (aligned with the mobile FUND_GLOSSARY), curriculum
+ * concepts from `/learn`, and the conceptual prompts SORA suggests in-app.
+ */
 export const ASSISTANT_GLOSSARY: readonly GlossaryEntry[] = [
+  {
+    term: 'Fondo indexado',
+    explanation:
+      'Un fondo indexado replica un índice de mercado (por ejemplo, el IBEX 35 o el S&P 500) con reglas claras. No busca batir al mercado cada trimestre: intenta seguirlo con la menor desviación y coste posibles.',
+    keywords: [
+      'fondo indexado',
+      'fondos indexados',
+      'indexacion',
+      'gestion pasiva',
+      'gestion indexada',
+    ],
+  },
+  {
+    term: 'ETF y fondo indexado',
+    explanation:
+      'Ambos pueden seguir un índice. Un ETF cotiza en bolsa como una acción durante la sesión; un fondo indexado tradicional suele suscribirse al valor liquidativo. En Inversora el foco educativo son fondos indexados comparables, no ejecutar operaciones.',
+    keywords: [
+      'etf y fondo indexado',
+      'diferencia entre etf y fondo',
+      'diferencia entre etf',
+      'etf y fondo',
+      'fondo o etf',
+      'etf',
+    ],
+  },
+  {
+    term: 'Índice de mercado',
+    explanation:
+      'Un índice agrupa valores con reglas públicas (por ejemplo, las mayores empresas de un país o región). Sirve de referencia: el fondo indexado intenta copiar ese conjunto, no elegir valores uno a uno.',
+    keywords: [
+      'indice de mercado',
+      'que es un indice',
+      'que es el indice',
+      'indices bursatiles',
+    ],
+  },
+  {
+    term: 'Diversificación',
+    explanation:
+      'Consiste en repartir el riesgo entre muchos activos, sectores o regiones. Un fondo indexado amplio ya diversifica dentro de su índice, aunque sigue expuesto al riesgo de mercado.',
+    keywords: ['diversificacion', 'diversificar', 'repartir el riesgo'],
+  },
+  {
+    term: 'Ahorrar e invertir',
+    explanation:
+      'Ahorrar conserva liquidez para imprevistos. Invertir busca crecimiento a largo plazo, pero el valor puede bajar temporalmente. Conviene tener un colchón de emergencia antes de asumir más riesgo.',
+    keywords: [
+      'ahorrar e invertir',
+      'ahorrar o invertir',
+      'ahorro e inversion',
+      'diferencia entre ahorrar',
+    ],
+  },
+  {
+    term: 'Horizonte temporal',
+    explanation:
+      'Es el tiempo que puedes dejar el dinero invertido sin necesitarlo. A horizontes más largos suele haber más margen para recuperar caídas temporales, pero nunca hay garantías.',
+    keywords: [
+      'horizonte temporal',
+      'horizonte de inversion',
+      'largo plazo',
+      'plazo de inversion',
+      'invertir a largo plazo',
+    ],
+  },
+  {
+    term: 'Interés compuesto',
+    explanation:
+      'Reinvertir las ganancias hace que el capital base pueda crecer con el tiempo. Es un concepto educativo: la calculadora de Inversora muestra escenarios ilustrativos, no predicciones ni promesas de rentabilidad.',
+    keywords: [
+      'interes compuesto',
+      'capitalizacion compuesta',
+      'reinvertir ganancias',
+    ],
+  },
+  {
+    term: 'Riesgo al invertir',
+    explanation:
+      'Asumir riesgo significa aceptar que el valor puede subir o bajar. La volatilidad son esas oscilaciones normales. Más plazo no elimina el riesgo, aunque puede dar más margen para recuperarse; no hay garantías.',
+    keywords: [
+      'asumir riesgo',
+      'que es el riesgo',
+      'que significa el riesgo',
+      'riesgo al invertir',
+      'riesgo de inversion',
+    ],
+  },
+  {
+    term: 'Perfil orientativo',
+    explanation:
+      'El cuestionario educativo resume horizonte, tolerancia al riesgo y objetivos de aprendizaje. Es orientativo: no sustituye un test de idoneidad ni asesoramiento personalizado.',
+    keywords: [
+      'perfil orientativo',
+      'perfil inversor',
+      'cuestionario educativo',
+      'perfil educativo',
+    ],
+  },
+  {
+    term: 'Categorías de fondos',
+    explanation:
+      'Las categorías agrupan fondos con exposición similar (por región, tipo de activo o estilo). Filtra por categoría para comparar de forma más homogénea: mezclar categorías distintas puede llevar a conclusiones engañosas.',
+    keywords: [
+      'categorias de fondos',
+      'categoria de fondos',
+      'filtrar fondos',
+      'filtrar por categoria',
+      'diferencia entre categorias',
+      'diferencia hay entre categorias',
+      'tipos de fondos',
+    ],
+  },
+  {
+    term: 'Cómo comparar fondos',
+    explanation:
+      'Compara fondos de la misma categoría o benchmark cuando sea posible. Mira TER, Score Inversora, tracking error y riesgo. La comparación es educativa: no indica cuál debes contratar.',
+    keywords: [
+      'como comparar',
+      'comparar fondos',
+      'diferencias principales',
+      'diferencias educativas',
+      'resume las diferencias',
+    ],
+  },
+  {
+    term: 'Límites de Inversora',
+    explanation:
+      'Inversora es informativa y educativa. No ejecuta operaciones sobre fondos, no conecta con brókers y no ofrece recomendaciones personalizadas. Puedes aprender conceptos, explorar el catálogo y comparar métricas con calma.',
+    keywords: [
+      'puedo comprar',
+      'comprar fondos aqui',
+      'me recomienda',
+      'recomienda fondos',
+      'asesoramiento personalizado',
+      'conectar broker',
+      'es un broker',
+      'puedo invertir aqui',
+    ],
+  },
   {
     term: 'Comisión anual',
     explanation:
       'Coste anual del fondo (TER). Cuanto más baja, menos se resta de la rentabilidad bruta. No incluye comisiones de tu banco o bróker.',
-    keywords: ['comision anual', 'comision', 'coste anual', 'gasto anual'],
+    keywords: [
+      'comision anual',
+      'comisiones',
+      'comision',
+      'coste anual',
+      'gasto anual',
+      'importan las comisiones',
+      'por que importan las comisiones',
+    ],
   },
   {
     term: 'Riesgo orientativo',
@@ -28,12 +180,21 @@ export const ASSISTANT_GLOSSARY: readonly GlossaryEntry[] = [
   {
     term: 'Score Inversora',
     explanation:
-      'Puntuación objetiva de 0 a 100 basada en comisiones, seguimiento del índice, tamaño y antigüedad. La IA solo explica este resultado; no lo calcula.',
+      'Puntuación objetiva de 0 a 100 basada en comisiones, seguimiento del índice, tamaño, antigüedad y calidad de datos. Ayuda a comparar dentro de una categoría; no garantiza rentabilidad futura ni es una recomendación de compra. La IA solo explica el resultado; no lo calcula.',
     keywords: [
       'score inversora',
+      'inversora score',
       'puntuacion inversora',
       'puntuacion',
       'ranking inversora',
+      'criterios del ranking',
+      'criterios usa el ranking',
+      'como funciona el score',
+      'como funciona el inversora score',
+      'score garantiza rentabilidad',
+      'el score garantiza',
+      'score garantiza',
+      'garantiza rentabilidad',
       'score',
     ],
   },
@@ -46,8 +207,15 @@ export const ASSISTANT_GLOSSARY: readonly GlossaryEntry[] = [
   {
     term: 'TER',
     explanation:
-      'Total Expense Ratio: comisión total anual del fondo expresada en porcentaje.',
-    keywords: ['ter', 'total expense ratio', 'comision ter'],
+      'Total Expense Ratio: comisión total anual del fondo expresada en porcentaje. Al comparar TER, usa fondos de la misma categoría: un coste bajo ayuda, pero no es el único criterio ni garantiza mejores resultados.',
+    keywords: [
+      'ter',
+      'total expense ratio',
+      'comision ter',
+      'comparar ter',
+      'menor ter',
+      'mirar al comparar ter',
+    ],
   },
   {
     term: 'Benchmark',
@@ -70,11 +238,14 @@ export const ASSISTANT_GLOSSARY: readonly GlossaryEntry[] = [
   {
     term: 'Rentabilidad pasada',
     explanation:
-      'Resultado histórico en un periodo concreto. No garantiza resultados futuros; ayuda a entender cómo se ha comportado el fondo.',
+      'Resultado histórico en un periodo concreto. No garantiza resultados futuros; ayuda a entender cómo se ha comportado el fondo. Elegir solo por rentabilidad pasada es un error frecuente.',
     keywords: [
       'rentabilidad pasada',
       'rentabilidad historica',
       'rendimiento pasado',
+      'garantiza el futuro',
+      'garantiza resultados futuros',
+      'solo por rentabilidad',
     ],
   },
   {
