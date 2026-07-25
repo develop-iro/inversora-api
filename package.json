@@ -6,7 +6,10 @@
   "private": true,
   "license": "SEE LICENSE IN LICENSE.md",
   "overrides": {
-    "@hono/node-server": "1.19.13"
+    "@hono/node-server": "1.19.13",
+    "fast-uri": "3.1.4",
+    "body-parser": "2.3.0",
+    "valibot": "1.4.2"
   },
   "scripts": {
     "build": "prisma generate && nest build",

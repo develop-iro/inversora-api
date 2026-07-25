@@ -8,10 +8,12 @@ describe('AnonymousDevicesController', () => {
   let controller: AnonymousDevicesController;
   let registerDevice: jest.Mock;
   let upsertEducationalProfile: jest.Mock;
+  let deleteCurrentDevice: jest.Mock;
 
   beforeEach(async () => {
     registerDevice = jest.fn();
     upsertEducationalProfile = jest.fn();
+    deleteCurrentDevice = jest.fn();
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AnonymousDevicesController],
@@ -22,6 +24,7 @@ describe('AnonymousDevicesController', () => {
             registerDevice,
             heartbeat: jest.fn(),
             upsertEducationalProfile,
+            deleteCurrentDevice,
           },
         },
       ],
@@ -84,5 +87,17 @@ describe('AnonymousDevicesController', () => {
       profileVersion: 2,
       completedAt: '2026-07-11T12:00:00.000Z',
     });
+  });
+
+  it('deletes the current anonymous device', () => {
+    deleteCurrentDevice.mockReturnValue({
+      deleted: true,
+      deviceId: 'device-1',
+    });
+
+    const response = controller.deleteCurrentDevice({ deviceId: 'device-1' });
+
+    expect(response).toEqual({ deleted: true, deviceId: 'device-1' });
+    expect(deleteCurrentDevice).toHaveBeenCalledWith('device-1');
   });
 });

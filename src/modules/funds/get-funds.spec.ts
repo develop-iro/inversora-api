@@ -3,6 +3,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AppConfigService } from '../../shared/config/config.service';
 import { FundsRepository } from './repositories/funds.repository';
 import { GetFundsUseCase } from './get-funds';
+import { FUND_CATALOG_LIST_RETURN_LOOKBACK_DAYS } from './entities/fund-returns.enricher';
+import {
+  addDaysToIsoDate,
+  getTodayIsoDate,
+} from './entities/fund-price.mapper';
 import { FundPricesService } from './services/fund-prices.service';
 import { buildFundTestFixture } from './test-utils/fund.entity.fixtures';
 
@@ -274,7 +279,12 @@ describe('GetFundsUseCase', () => {
     expect(response.data[0]?.returns.asOf).toBe('2026-06-01');
     expect(fundPricesService.getHistoriesByFundIds).toHaveBeenCalledWith(
       [fund.id],
-      expect.objectContaining({ from: '2025-06-09' }),
+      expect.objectContaining({
+        from: addDaysToIsoDate(
+          getTodayIsoDate(),
+          -FUND_CATALOG_LIST_RETURN_LOOKBACK_DAYS,
+        ),
+      }),
     );
   });
 });

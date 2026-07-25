@@ -85,7 +85,7 @@ Si la documentación de la app menciona Supabase Edge Functions como backend pla
 ### Incluido
 
 - Health check y documentación OpenAPI (Swagger).
-- Registro de dispositivos anónimos y sync del perfil educativo derivado (`anonymous-devices`).
+- Registro de dispositivos anónimos, sync del perfil educativo derivado y eliminación self-service (`anonymous-devices`).
 - Ingesta de eventos de analytics anónimos (`analytics`, HU-41).
 - Sincronización de productos indexados desde FMP (metadata + precios EOD).
 - Endpoints de lectura: listado, detalle, gráfico histórico, holdings, exposición sectorial y geográfica, score, rankings.

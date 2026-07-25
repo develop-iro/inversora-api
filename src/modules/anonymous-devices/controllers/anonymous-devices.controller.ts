@@ -1,9 +1,18 @@
-import { Body, Controller, Patch, Post, Put, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Patch,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
 import { CurrentAnonymousDevice } from '../decorators/current-anonymous-device.decorator';
@@ -15,7 +24,10 @@ import {
 import type { AnonymousDeviceRequestContext } from '../guards/device-token.guard';
 import { DeviceTokenGuard } from '../guards/device-token.guard';
 import { AnonymousDevicesService } from '../services/anonymous-devices.service';
-import { DeviceRegisterThrottle } from '../../../shared/http/named-throttle.decorator';
+import {
+  DeviceDeleteThrottle,
+  DeviceRegisterThrottle,
+} from '../../../shared/http/named-throttle.decorator';
 
 @ApiTags('anonymous-devices')
 @Controller('anonymous-devices')
@@ -60,5 +72,23 @@ export class AnonymousDevicesController {
       device.deviceId,
       profile,
     );
+  }
+
+  @Delete('me')
+  @DeviceDeleteThrottle()
+  @UseGuards(DeviceTokenGuard)
+  @ApiOperation({
+    summary:
+      'Delete the current anonymous device and cascaded related server data',
+  })
+  @ApiOkResponse({
+    description:
+      'Device deleted. Cascades educational profile, analytics, feedback, and SORA conversations.',
+  })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid device token.' })
+  deleteCurrentDevice(
+    @CurrentAnonymousDevice() device: AnonymousDeviceRequestContext,
+  ) {
+    return this.anonymousDevicesService.deleteCurrentDevice(device.deviceId);
   }
 }

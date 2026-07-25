@@ -81,6 +81,7 @@ describe('AnonymousDevicesRepository', () => {
         [AnonymousDeviceFindUniqueInput]
       >;
       update: jest.Mock<Promise<unknown>, [AnonymousDeviceUpdateInput]>;
+      delete: jest.Mock<Promise<unknown>, [{ where: { id: string } }]>;
     };
     anonymousEducationalProfile: {
       upsert: jest.Mock<
@@ -119,6 +120,7 @@ describe('AnonymousDevicesRepository', () => {
           [AnonymousDeviceFindUniqueInput]
         >(),
         update: jest.fn<Promise<unknown>, [AnonymousDeviceUpdateInput]>(),
+        delete: jest.fn<Promise<unknown>, [{ where: { id: string } }]>(),
       },
       anonymousEducationalProfile: {
         upsert: jest.fn<
@@ -266,6 +268,14 @@ describe('AnonymousDevicesRepository', () => {
         knowledgeLevel: 'beginner',
         completedAt: new Date('2026-07-11T12:00:00.000Z'),
       },
+    });
+  });
+
+  it('deletes devices by id', async () => {
+    await repository.deleteDeviceById('device-9');
+
+    expect(prisma.anonymousDevice.delete).toHaveBeenCalledWith({
+      where: { id: 'device-9' },
     });
   });
 });

@@ -69,7 +69,7 @@ NestJS + PostgreSQL is the canonical backend for Inversora. The mobile app (`inv
 | `scoring` | `src/modules/scoring/` | Inversora Score calculation |
 | `assistant` | `src/modules/assistant/` | Assistant tools and context (explanatory layer) |
 | `analytics` | `src/modules/analytics/` | Anonymous analytics events (HU-41) |
-| `anonymous-devices` | `src/modules/anonymous-devices/` | Device token and derived educational profile sync |
+| `anonymous-devices` | `src/modules/anonymous-devices/` | Device token, derived educational profile sync, and self-service data deletion |
 | `admin` | `src/modules/admin/` | Manual sync and catalog visibility |
 
 **Framework & Conventions**

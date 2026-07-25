@@ -32,6 +32,7 @@ describe('buildThrottlerModuleOptions', () => {
       throttleAssistantLimit: 30,
       throttleAnalyticsLimit: 60,
       throttleDeviceRegisterLimit: 10,
+      throttleDeviceDeleteLimit: 5,
       throttleRedisUrl: undefined,
     } as never) as ResolvedThrottlerModuleOptions;
 
@@ -56,6 +57,11 @@ describe('buildThrottlerModuleOptions', () => {
         ttl: 60_000,
         limit: 10,
       },
+      {
+        name: 'device-delete',
+        ttl: 60_000,
+        limit: 5,
+      },
     ]);
     expect(options.storage).toBeUndefined();
     expect(ThrottlerStorageRedisService).not.toHaveBeenCalled();
@@ -68,6 +74,7 @@ describe('buildThrottlerModuleOptions', () => {
       throttleAssistantLimit: 30,
       throttleAnalyticsLimit: 60,
       throttleDeviceRegisterLimit: 10,
+      throttleDeviceDeleteLimit: 5,
       throttleRedisUrl: 'redis://localhost:6379',
     } as never) as ResolvedThrottlerModuleOptions;
 

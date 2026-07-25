@@ -373,6 +373,13 @@ export class AppConfigService {
     });
   }
 
+  /** Maximum anonymous device self-deletion requests per IP/window. */
+  get throttleDeviceDeleteLimit(): number {
+    return this.configService.get('THROTTLE_DEVICE_DELETE_LIMIT', {
+      infer: true,
+    });
+  }
+
   /** Optional Redis URL for distributed rate-limit storage. */
   get throttleRedisUrl(): string | undefined {
     return this.configService.get('THROTTLE_REDIS_URL', { infer: true });

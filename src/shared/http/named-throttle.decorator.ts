@@ -43,3 +43,20 @@ export function DeviceRegisterThrottle(): MethodDecorator & ClassDecorator {
     }),
   );
 }
+
+/**
+ * Applies the anonymous device self-deletion rate limit.
+ */
+export function DeviceDeleteThrottle(): MethodDecorator & ClassDecorator {
+  return applyDecorators(
+    Throttle({
+      'device-delete': {
+        limit: resolvePositiveNumber(
+          process.env.THROTTLE_DEVICE_DELETE_LIMIT,
+          5,
+        ),
+        ttl: resolveThrottleTtl(),
+      },
+    }),
+  );
+}

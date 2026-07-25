@@ -3,6 +3,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import type { AnonymousEducationalProfileInput } from '../entities/anonymous-educational-profile.schema';
 import { isDeviceTokenFormatValid } from '../entities/device-token.utils';
 import type {
+  DeleteAnonymousDeviceResponse,
   HeartbeatAnonymousDeviceInput,
   RegisterAnonymousDeviceInput,
   RegisterAnonymousDeviceResponse,
@@ -71,6 +72,22 @@ export class AnonymousDevicesService {
 
     return {
       saved: true,
+      deviceId,
+    };
+  }
+
+  /**
+   * Deletes the authenticated anonymous device and cascaded related data.
+   *
+   * @param deviceId - Anonymous device identifier.
+   */
+  async deleteCurrentDevice(
+    deviceId: string,
+  ): Promise<DeleteAnonymousDeviceResponse> {
+    await this.anonymousDevicesRepository.deleteDeviceById(deviceId);
+
+    return {
+      deleted: true,
       deviceId,
     };
   }
