@@ -80,6 +80,22 @@ describe('AnonymousDevicesService', () => {
     expect(result).toEqual({ ok: true });
   });
 
+  it('deletes the authenticated anonymous device', async () => {
+    const deleteDeviceById = jest.fn().mockResolvedValue(undefined);
+
+    const repository: Pick<AnonymousDevicesRepository, 'deleteDeviceById'> = {
+      deleteDeviceById,
+    };
+
+    const service = new AnonymousDevicesService(
+      repository as AnonymousDevicesRepository,
+    );
+    const result = await service.deleteCurrentDevice('device-1');
+
+    expect(deleteDeviceById).toHaveBeenCalledWith('device-1');
+    expect(result).toEqual({ deleted: true, deviceId: 'device-1' });
+  });
+
   it('returns undefined when no device token header is provided', async () => {
     const repository: Pick<AnonymousDevicesRepository, 'findByToken'> = {
       findByToken: jest.fn(),

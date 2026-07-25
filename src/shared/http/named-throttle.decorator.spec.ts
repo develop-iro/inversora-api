@@ -2,6 +2,7 @@ import { Throttle } from '@nestjs/throttler';
 
 import {
   AnalyticsThrottle,
+  DeviceDeleteThrottle,
   DeviceRegisterThrottle,
 } from './named-throttle.decorator';
 
@@ -25,9 +26,11 @@ describe('named throttle decorators', () => {
     process.env.THROTTLE_TTL_SECONDS = '30';
     process.env.THROTTLE_ANALYTICS_LIMIT = '25';
     process.env.THROTTLE_DEVICE_REGISTER_LIMIT = '5';
+    process.env.THROTTLE_DEVICE_DELETE_LIMIT = '2';
 
     AnalyticsThrottle();
     DeviceRegisterThrottle();
+    DeviceDeleteThrottle();
 
     expect(Throttle).toHaveBeenNthCalledWith(1, {
       analytics: {
@@ -41,15 +44,23 @@ describe('named throttle decorators', () => {
         ttl: 30_000,
       },
     });
+    expect(Throttle).toHaveBeenNthCalledWith(3, {
+      'device-delete': {
+        limit: 2,
+        ttl: 30_000,
+      },
+    });
   });
 
   it('falls back when env values are missing or invalid', () => {
     process.env.THROTTLE_TTL_SECONDS = '0';
     process.env.THROTTLE_ANALYTICS_LIMIT = 'not-a-number';
     delete process.env.THROTTLE_DEVICE_REGISTER_LIMIT;
+    delete process.env.THROTTLE_DEVICE_DELETE_LIMIT;
 
     AnalyticsThrottle();
     DeviceRegisterThrottle();
+    DeviceDeleteThrottle();
 
     expect(Throttle).toHaveBeenNthCalledWith(1, {
       analytics: {
@@ -60,6 +71,12 @@ describe('named throttle decorators', () => {
     expect(Throttle).toHaveBeenNthCalledWith(2, {
       'device-register': {
         limit: 10,
+        ttl: 60_000,
+      },
+    });
+    expect(Throttle).toHaveBeenNthCalledWith(3, {
+      'device-delete': {
+        limit: 5,
         ttl: 60_000,
       },
     });

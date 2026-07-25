@@ -226,7 +226,7 @@ model AssistantConversation {
   updatedAt     DateTime           @updatedAt
   lastMessageAt DateTime           @default(now())
   messages      AssistantMessage[]
-  device        AnonymousDevice?   @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+  device        AnonymousDevice?   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
 
   @@index([deviceId, lastMessageAt])
   @@index([lastMessageAt])
@@ -245,7 +245,7 @@ model AnalyticsEvent {
   appEnv     String?
   appVersion String?
   createdAt  DateTime         @default(now())
-  device     AnonymousDevice? @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+  device     AnonymousDevice? @relation(fields: [deviceId], references: [id], onDelete: Cascade)
 
   @@index([event, occurredAt])
   @@index([sessionId, occurredAt])
@@ -293,7 +293,7 @@ model ProductFeedback {
   appEnv      String?
   appVersion  String?
   createdAt   DateTime         @default(now())
-  device      AnonymousDevice? @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+  device      AnonymousDevice? @relation(fields: [deviceId], references: [id], onDelete: Cascade)
 
   @@index([createdAt])
   @@index([clarity, createdAt])

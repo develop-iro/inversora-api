@@ -39,6 +39,7 @@ Operational checklist and conventions for securing **inversora-api** and the **i
 | `THROTTLE_ASSISTANT_LIMIT` | SORA routes per IP/window | `30` |
 | `THROTTLE_ANALYTICS_LIMIT` | Analytics events per IP/window | `60` |
 | `THROTTLE_DEVICE_REGISTER_LIMIT` | Anonymous device registrations per IP/window | `10` |
+| `THROTTLE_DEVICE_DELETE_LIMIT` | Anonymous device self-deletion requests per IP/window | `5` |
 | `THROTTLE_REDIS_URL` | Optional distributed throttler storage | unset |
 | `ASSISTANT_AGENT_API_KEY` | Auth for Python `/agent/respond` | required when agent runtime enabled |
 | `ASSISTANT_DAILY_LLM_LIMIT` | Daily LLM calls accepted by SORA; `0` disables the guard | `0` |

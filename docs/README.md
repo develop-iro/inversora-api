@@ -80,7 +80,7 @@ La app móvil/web vive en el repositorio hermano `invesora`. **No duplicar** reg
 | `scoring` | Cálculo y persistencia del Score Inversora |
 | `assistant` | Herramientas y contexto del Asistente Inversora (fase explicativa) |
 | `analytics` | Ingesta de eventos anónimos (HU-41) |
-| `anonymous-devices` | Registro de dispositivo y sync del perfil educativo derivado |
+| `anonymous-devices` | Registro de dispositivo, sync del perfil educativo derivado y self-service de eliminación (`DELETE /anonymous-devices/me`) |
 | `admin` | Sync manual y gestión de visibilidad (`POST /admin/sync`, `GET/PATCH /admin/funds/*`, CLI `npm run sync:run`) |
 | `shared` | Configuración, Prisma, cliente HTTP, Swagger |
 

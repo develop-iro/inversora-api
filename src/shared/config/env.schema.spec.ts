@@ -66,6 +66,7 @@ describe('validateEnv', () => {
       THROTTLE_ASSISTANT_LIMIT: 30,
       THROTTLE_ANALYTICS_LIMIT: 60,
       THROTTLE_DEVICE_REGISTER_LIMIT: 10,
+      THROTTLE_DEVICE_DELETE_LIMIT: 5,
     });
   });
 
@@ -131,6 +132,7 @@ describe('validateEnv', () => {
       THROTTLE_ASSISTANT_LIMIT: 30,
       THROTTLE_ANALYTICS_LIMIT: 60,
       THROTTLE_DEVICE_REGISTER_LIMIT: 10,
+      THROTTLE_DEVICE_DELETE_LIMIT: 5,
     });
   });
 

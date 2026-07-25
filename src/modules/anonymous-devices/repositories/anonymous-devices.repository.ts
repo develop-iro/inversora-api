@@ -123,4 +123,15 @@ export class AnonymousDevicesRepository {
       },
     });
   }
+
+  /**
+   * Deletes an anonymous device and cascaded related rows.
+   *
+   * @param deviceId - Anonymous device identifier.
+   */
+  async deleteDeviceById(deviceId: string): Promise<void> {
+    await this.prisma.anonymousDevice.delete({
+      where: { id: deviceId },
+    });
+  }
 }

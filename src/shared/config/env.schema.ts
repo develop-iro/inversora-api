@@ -141,6 +141,7 @@ export const envSchema = z
       .int()
       .positive()
       .default(10),
+    THROTTLE_DEVICE_DELETE_LIMIT: z.coerce.number().int().positive().default(5),
     THROTTLE_REDIS_URL: z.string().url().optional(),
     SENTRY_DSN: z.string().url().optional(),
   })

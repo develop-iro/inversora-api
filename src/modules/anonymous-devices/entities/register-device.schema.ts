@@ -37,3 +37,12 @@ export const upsertAnonymousEducationalProfileResponseSchema = z.object({
 export type UpsertAnonymousEducationalProfileResponse = z.infer<
   typeof upsertAnonymousEducationalProfileResponseSchema
 >;
+
+export const deleteAnonymousDeviceResponseSchema = z.object({
+  deleted: z.literal(true),
+  deviceId: z.string().min(1),
+});
+
+export type DeleteAnonymousDeviceResponse = z.infer<
+  typeof deleteAnonymousDeviceResponseSchema
+>;

@@ -241,6 +241,7 @@ describe('AppConfigService', () => {
                 THROTTLE_ASSISTANT_LIMIT: '15',
                 THROTTLE_ANALYTICS_LIMIT: '40',
                 THROTTLE_DEVICE_REGISTER_LIMIT: '8',
+                THROTTLE_DEVICE_DELETE_LIMIT: '3',
                 THROTTLE_REDIS_URL: 'redis://localhost:6379',
                 ASSISTANT_AGENT_API_KEY: 'change-me-agent-key',
                 BRANDFETCH_CLIENT_ID: 'brandfetch-id',
@@ -258,6 +259,7 @@ describe('AppConfigService', () => {
     expect(service.throttleAssistantLimit).toBe(15);
     expect(service.throttleAnalyticsLimit).toBe(40);
     expect(service.throttleDeviceRegisterLimit).toBe(8);
+    expect(service.throttleDeviceDeleteLimit).toBe(3);
     expect(service.throttleRedisUrl).toBe('redis://localhost:6379');
     expect(service.assistantAgentApiKey).toBe('change-me-agent-key');
     expect(service.brandfetchClientId).toBe('brandfetch-id');

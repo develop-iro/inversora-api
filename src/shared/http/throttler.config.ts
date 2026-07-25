@@ -39,6 +39,11 @@ export function buildThrottlerModuleOptions(
         ttl: ttlMs,
         limit: config.throttleDeviceRegisterLimit,
       },
+      {
+        name: 'device-delete',
+        ttl: ttlMs,
+        limit: config.throttleDeviceDeleteLimit,
+      },
     ],
     storage,
   };
