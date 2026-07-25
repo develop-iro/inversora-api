@@ -59,8 +59,8 @@ Implementación en `src/shared/http/cors.config.ts`:
 
 | Opción | Valor |
 |--------|-------|
-| Métodos | `GET`, `HEAD`, `OPTIONS`, `POST` |
-| Cabeceras | `Content-Type`, `Accept` |
+| Métodos | `GET`, `HEAD`, `OPTIONS`, `POST`, `PUT`, `PATCH`, `DELETE` |
+| Cabeceras | `Content-Type`, `Accept`, `X-Device-Token` |
 | Credenciales | `false` (el MVP no usa cookies ni sesión en navegador) |
 | `maxAge` preflight | 86400 s (24 h) |
 

@@ -20,6 +20,7 @@ export const CORS_ALLOWED_METHODS = [
   'POST',
   'PUT',
   'PATCH',
+  'DELETE',
 ] as const;
 
 /** Request headers allowed on cross-origin browser calls. */

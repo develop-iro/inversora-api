@@ -16,6 +16,10 @@ describe('buildNestCorsOptions', () => {
       maxAge: 86_400,
     });
   });
+
+  it('should allow DELETE for browser self-service deletion', () => {
+    expect(CORS_ALLOWED_METHODS).toContain('DELETE');
+  });
 });
 
 describe('resolveCorsOrigins', () => {

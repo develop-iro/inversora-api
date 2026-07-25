@@ -36,6 +36,21 @@ describe('CORS (e2e)', () => {
       .expect('Access-Control-Allow-Headers', /content-type/i);
   });
 
+  it('should allow DELETE in preflight for self-service data deletion', () => {
+    return request(app.getHttpServer())
+      .options('/health')
+      .set('Origin', allowedOrigin)
+      .set('Access-Control-Request-Method', 'DELETE')
+      .set(
+        'Access-Control-Request-Headers',
+        'accept,content-type,x-device-token',
+      )
+      .expect(204)
+      .expect('Access-Control-Allow-Origin', allowedOrigin)
+      .expect('Access-Control-Allow-Methods', /DELETE/)
+      .expect('Access-Control-Allow-Headers', /x-device-token/i);
+  });
+
   it('should include CORS headers on GET for an allowed origin', () => {
     return request(app.getHttpServer())
       .get('/health')
