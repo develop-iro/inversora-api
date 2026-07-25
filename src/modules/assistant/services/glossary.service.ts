@@ -41,7 +41,7 @@ export class GlossaryService {
           continue;
         }
 
-        if (!normalized.includes(normalizedKeyword)) {
+        if (!keywordMatchesQuery(normalized, normalizedKeyword)) {
           continue;
         }
 
@@ -85,4 +85,30 @@ export class GlossaryService {
 
     return null;
   }
+}
+
+/**
+ * Returns true when a normalized keyword matches as a whole phrase/token.
+ *
+ * Single-token keywords require word boundaries so short terms like `ter`
+ * do not match inside `interes` or `criterios`.
+ *
+ * @param normalizedQuery - Normalized user message.
+ * @param normalizedKeyword - Normalized glossary keyword.
+ */
+export function keywordMatchesQuery(
+  normalizedQuery: string,
+  normalizedKeyword: string,
+): boolean {
+  if (normalizedKeyword.includes(' ')) {
+    return normalizedQuery.includes(normalizedKeyword);
+  }
+
+  const escaped = normalizedKeyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(
+    `(?:^|[^\\p{L}\\p{N}])${escaped}(?:$|[^\\p{L}\\p{N}])`,
+    'u',
+  );
+
+  return pattern.test(normalizedQuery);
 }

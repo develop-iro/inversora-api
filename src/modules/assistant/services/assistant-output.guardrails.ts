@@ -3,14 +3,18 @@ import { Injectable } from '@nestjs/common';
 import type { AssistantExplainResponse } from '../entities/assistant-context.schema';
 
 const FORBIDDEN_OUTPUT_PATTERNS: readonly RegExp[] = [
-  /\bcompra(r|me|lo|la)?\b/i,
-  /\bvende(r|me|lo|la)?\b/i,
+  // Imperative / advisory "compra", not educational phrases like "recomendacion de compra".
+  /\bcompra(r|me|lo|la)\b/i,
+  /\bcompra\s+(este|el|la|estos|estas|ahora|ya)\b/i,
+  /\bvende(r|me|lo|la)\b/i,
+  /\bvende\s+(este|el|la|estos|estas|ahora|ya)\b/i,
   /\bsuscrib(e|ete|ir)\b/i,
   /\bsuscribe(te)?\b/i,
-  /\binvierte?\s+en\b/i,
+  // Advisory "invertir", not descriptive "el fondo invierte en...".
   /\bdeberias\s+invertir\b/i,
   /\bdebes\s+invertir\b/i,
   /\binvierte\s+(ahora|ya)\b/i,
+  /\bte\s+recomiendo\s+invertir\b/i,
   /\bte recomiendo\b/i,
   /\bmi recomendacion\b/i,
   /\bmejor opcion\b/i,

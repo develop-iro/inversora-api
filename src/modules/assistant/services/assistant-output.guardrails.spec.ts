@@ -22,6 +22,22 @@ describe('AssistantOutputGuardrailsService', () => {
     expect(() => service.sanitize('Es la mejor opcion para ti.')).toThrow(
       /prohibited recommendation language/i,
     );
+    expect(() => service.sanitize('Compra este fondo ahora.')).toThrow(
+      /prohibited recommendation language/i,
+    );
+  });
+
+  it('allows educational descriptions that mention invertir or compra', () => {
+    expect(
+      service.sanitize(
+        'Un fondo indexado invierte en una cesta de valores del indice de referencia.',
+      ),
+    ).toMatch(/fondo indexado/i);
+    expect(
+      service.sanitize(
+        'Es orientativa, no una recomendacion de compra ni asesoramiento personalizado.',
+      ),
+    ).toMatch(/recomendacion de compra/i);
   });
 
   it('rejects English recommendation language', () => {
