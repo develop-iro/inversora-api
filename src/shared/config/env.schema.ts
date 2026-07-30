@@ -3,6 +3,7 @@ import {
   applyAppEnvironmentDefaults,
   requiresLiveFmpDataSource,
 } from './app-environment';
+import { applyPostgresDefaultsFromDatabaseUrl } from './postgres-connection.utils';
 
 /**
  * Zod schema for environment variables.
@@ -266,7 +267,9 @@ export type Env = z.infer<typeof envSchema>;
  * @throws {Error} When validation fails.
  */
 export function validateEnv(config: Record<string, unknown>): Env {
-  const prepared = applyAppEnvironmentDefaults(config);
+  const prepared = applyPostgresDefaultsFromDatabaseUrl(
+    applyAppEnvironmentDefaults(config),
+  );
   const parsed = envSchema.safeParse(prepared);
 
   if (!parsed.success) {

@@ -1,3 +1,5 @@
+import { isUnsetEnvironmentValue } from './postgres-connection.utils';
+
 /** Supported Inversora API deployment profiles. */
 export const APP_ENVIRONMENTS = ['local', 'qa', 'pro'] as const;
 
@@ -47,19 +49,6 @@ export function parseAppEnvironment(raw: unknown): AppEnvironment {
   }
 
   return 'local';
-}
-
-/**
- * Returns whether an environment variable is unset or blank.
- *
- * @param value - Raw environment variable value.
- */
-function isUnsetEnvironmentValue(value: unknown): boolean {
-  if (value === undefined || value === null) {
-    return true;
-  }
-
-  return typeof value === 'string' && value.trim().length === 0;
 }
 
 /**
