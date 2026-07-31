@@ -223,14 +223,11 @@ lint → prisma-validate → build → unit-tests + integration-tests + e2e-test
 Secrets requeridos para `sync-production-data`:
 
 ```text
-DATABASE_URL_PRODUCTION
-POSTGRES_USER_PRODUCTION
-POSTGRES_PASSWORD_PRODUCTION
-POSTGRES_DB_PRODUCTION
-POSTGRES_HOST_PRODUCTION
-POSTGRES_PORT_PRODUCTION
-FMP_API_KEY_PRODUCTION
+DATABASE_URL_PRODUCTION   # o DATABASE_URL
+FMP_API_KEY_PRODUCTION    # o FMP_API_KEY (secret o variable de Actions)
 ```
+
+`POSTGRES_*` ya no son obligatorios en CI: si faltan, la API los deriva de `DATABASE_URL` al arrancar. Puedes seguir definiendo `POSTGRES_*_PRODUCTION` (o equivalentes sin sufijo) como override explícito.
 
 Variables opcionales de GitHub Actions:
 
@@ -238,6 +235,7 @@ Variables opcionales de GitHub Actions:
 PRODUCTION_SYNC_PRICE_BATCH_SIZE  # default 120
 PRODUCTION_SYNC_MAX_BATCHES       # default 1
 PRODUCTION_SYNC_PAUSE_MS          # default 65000
+FMP_API_KEY / FMP_API_KEY_PRODUCTION  # solo si no usas el secret homónimo
 ```
 
 ### `market-data-sync.yml` — Sync programado

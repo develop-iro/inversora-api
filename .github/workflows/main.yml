@@ -274,13 +274,15 @@ jobs:
     env:
       APP_ENV: pro
       NODE_ENV: production
-      DATABASE_URL: ${{ secrets.DATABASE_URL_PRODUCTION }}
-      POSTGRES_USER: ${{ secrets.POSTGRES_USER_PRODUCTION }}
-      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD_PRODUCTION }}
-      POSTGRES_DB: ${{ secrets.POSTGRES_DB_PRODUCTION }}
-      POSTGRES_HOST: ${{ secrets.POSTGRES_HOST_PRODUCTION }}
-      POSTGRES_PORT: ${{ secrets.POSTGRES_PORT_PRODUCTION }}
-      FMP_API_KEY: ${{ secrets.FMP_API_KEY_PRODUCTION }}
+      # Prefer *_PRODUCTION secrets; fall back to unscoped secrets/vars when present.
+      DATABASE_URL: ${{ secrets.DATABASE_URL_PRODUCTION || secrets.DATABASE_URL }}
+      FMP_API_KEY: ${{ secrets.FMP_API_KEY_PRODUCTION || secrets.FMP_API_KEY || vars.FMP_API_KEY_PRODUCTION || vars.FMP_API_KEY }}
+      # Optional overrides. When blank, Nest derives these from DATABASE_URL.
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER_PRODUCTION || secrets.POSTGRES_USER || vars.POSTGRES_USER_PRODUCTION || vars.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD_PRODUCTION || secrets.POSTGRES_PASSWORD || vars.POSTGRES_PASSWORD_PRODUCTION || vars.POSTGRES_PASSWORD }}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB_PRODUCTION || secrets.POSTGRES_DB || vars.POSTGRES_DB_PRODUCTION || vars.POSTGRES_DB }}
+      POSTGRES_HOST: ${{ secrets.POSTGRES_HOST_PRODUCTION || secrets.POSTGRES_HOST || vars.POSTGRES_HOST_PRODUCTION || vars.POSTGRES_HOST }}
+      POSTGRES_PORT: ${{ secrets.POSTGRES_PORT_PRODUCTION || secrets.POSTGRES_PORT || vars.POSTGRES_PORT_PRODUCTION || vars.POSTGRES_PORT }}
       FMP_DATA_SOURCE: live
       FMP_SAVE_FIXTURES: false
       SYNC_SCHEDULER_ENABLED: false
@@ -309,12 +311,17 @@ jobs:
       - name: Validate production sync secrets
         run: |
           missing=0
-          for key in DATABASE_URL POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB POSTGRES_HOST POSTGRES_PORT FMP_API_KEY; do
-            if [ -z "${!key}" ]; then
-              echo "::error::Missing required production sync secret: ${key}"
-              missing=1
-            fi
-          done
+          if [ -z "${DATABASE_URL}" ]; then
+            echo "::error::Missing DATABASE_URL. Add repository secret DATABASE_URL_PRODUCTION (or DATABASE_URL)."
+            missing=1
+          fi
+          if [ -z "${FMP_API_KEY}" ]; then
+            echo "::error::Missing FMP_API_KEY. Add repository secret FMP_API_KEY_PRODUCTION (or FMP_API_KEY / Actions variable with the same name)."
+            missing=1
+          fi
+          if [ "${missing}" -ne 0 ]; then
+            echo "::notice::POSTGRES_* secrets are optional; the API derives them from DATABASE_URL when blank."
+          fi
           exit "${missing}"
 
       - name: Sync missing production price history and scoring
@@ -323,7 +330,6 @@ jobs:
           --price-batch-size "${PRODUCTION_SYNC_PRICE_BATCH_SIZE}"
           --max-batches "${PRODUCTION_SYNC_MAX_BATCHES}"
           --pause-ms "${PRODUCTION_SYNC_PAUSE_MS}"
-
   # ── Phase 3: Report ─────────────────────────────────────────────────────────
 
   report:

@@ -29,7 +29,7 @@ Guía paso a paso para publicar **inversora-api** en un entorno staging comparti
 
 4. Guárdala en un gestor de secretos (no la commitees). La usarás como `DATABASE_URL` en Railway.
 
-5. Deriva también estos valores para las variables `POSTGRES_*` (el schema de la API las exige):
+5. Opcional: las variables `POSTGRES_*` se pueden omitir si solo configuras `DATABASE_URL`. La API las deriva del URI al arrancar. Si prefieres definirlas a mano:
 
    | Variable | Ejemplo (ajusta al tuyo) |
    |----------|--------------------------|
