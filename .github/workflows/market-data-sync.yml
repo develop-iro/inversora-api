@@ -64,7 +64,8 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        # Job NODE_ENV=production would omit ts-node (devDependency); the CLI needs it.
+        run: npm ci --include=dev
 
       - name: Validate production sync secrets
         run: |
